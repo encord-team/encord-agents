@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "encord-agents"
+version = "0.1.0"
+description = "A framework for easily producing custom agens for your Encord Workflows."
+authors = ["Encord Team"]
+readme = "README.md"
+packages = [{ include = "encord_agents" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
