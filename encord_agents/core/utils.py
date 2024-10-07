@@ -22,9 +22,9 @@ def get_user_client() -> EncordUserClient:
     :param settings: system settings to tell where ssh key file is stored.
     :return: An EncordUserClient using the right credentials and connection string.
     """
-    settings = Settings()
+    settings = Settings()  # type: ignore
     return EncordUserClient.create_with_ssh_private_key(
-        ssh_private_key_path=settings.ssh_key_file,
+        ssh_private_key=settings.ssh_key,
     )
 
 
@@ -36,7 +36,7 @@ def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:
     :return: An initialised label row matched on data_hash.
     """
     user_client = get_user_client()
-    project = user_client.get_project(frame_data.project_hash)
+    project = user_client.get_project(str(frame_data.project_hash))
     matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])
     num_matches = len(matched_lrs)
     if num_matches > 1:
@@ -99,15 +99,13 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
 
 
 @contextmanager
-def download_asset(
-    lr: LabelRowV2, frame_number: int | None
-) -> Generator[Path, None, None]:
+def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, None]:
     """
     Download the underlying asset being annotated (video, image) in a specific label row to disk.
     The downloaded asset will be named `lr.data_hash.{suffix}`.
     When the context is exited, the downloaded file will be removed.
     :param lr: The label row for whose asset should be downloaded.
-    :param frame_number The frame to extract of the entire thing as is if None
+    :param frame The frame to extract of the entire thing as is if None
     :return: The path to which the asset was downloaded.
     """
     video_item, images_list = lr._project_client.get_data(
@@ -116,9 +114,9 @@ def download_asset(
     if lr.data_type in [DataType.VIDEO, DataType.IMAGE] and video_item:
         url = video_item["file_link"]
     elif lr.data_type == DataType.IMG_GROUP and images_list:
-        if frame_number is None:
+        if frame is None:
             raise NotImplementedError("Downloading entire image group is not supported")
-        url = images_list[frame_number]["file_link"]
+        url = images_list[frame]["file_link"]
     else:
         raise ValueError("Couldn't load asset")
 
@@ -131,14 +129,12 @@ def download_asset(
         f.write(response.content)
 
     files_to_unlink = [file_path]
-    if (
-        lr.data_type == DataType.VIDEO and frame_number is not None
-    ):  # Get that exact frame
-        frame = get_frame(file_path, frame_number)
-        frame_file = file_path.with_name(
-            f"{file_path.name}_{frame_number}"
-        ).with_suffix(".png")
-        cv2.imwrite(frame_file.as_posix(), frame)
+    if lr.data_type == DataType.VIDEO and frame is not None:  # Get that exact frame
+        frame_content = get_frame(file_path, frame)
+        frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(
+            ".png"
+        )
+        cv2.imwrite(frame_file.as_posix(), frame_content)
         files_to_unlink.append(frame_file)
         file_path = frame_file
     try:
@@ -193,7 +189,7 @@ def download_asset(
 # def get_video_frames_and_time_stamps(
 #     lr: LabelRowV2, start: int, extend: int = 50
 # ) -> Generator[tuple[list[Path], list[str]], None, None]:
-#     with download_asset(lr, frame_number=None) as video_path:
+#     with download_asset(lr, frame=None) as video_path:
 #         frame_paths, time_stamps = extract_frames_from_video(
 #             video_path, lr.data_hash, max_secs=extend, start_at_frame=start
 #         )

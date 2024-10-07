@@ -51,18 +51,18 @@ def generate_response() -> Response:
 
 
 @overload
-def agent_wrapper(
+def editor_agent(
     asset: Literal[True],
 ) -> AgentWrapperWithAsset: ...
 
 
 @overload
-def agent_wrapper(
+def editor_agent(
     asset: Literal[False] = False,
 ) -> AgentWrapperNoAsset: ...
 
 
-def agent_wrapper(
+def editor_agent(
     asset: bool = False,
 ) -> AgentWrapper:
     def context_wrapper_inner(func: AgentFunction) -> Callable:
@@ -77,7 +77,7 @@ def agent_wrapper(
                 fn(frame_data, label_row=label_row)
             else:
                 fn = cast(RequestLabelRowAndAssetCallable, func)
-                with download_asset(label_row, frame_data.frame_number) as asset_path:
+                with download_asset(label_row, frame_data.frame) as asset_path:
                     fn(
                         frame_data,
                         label_row=label_row,
