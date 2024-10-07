@@ -9,24 +9,41 @@ packages = [{ include = "encord_agents" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 encord = "^0.1.139"
-pydantic-settings = "^2.5.2"
 pydantic = "^2.9.2"
+pydantic-settings = "^2.5.2"
 opencv-python = "^4.10.0.84"
 numpy = "^2.1.1"
-requests = "^2.32.3"
 
 
 [tool.poetry.group.gcp-functions]
 optional = true
 
-[tool.poetry.group.gcp-functions.dependencies]
-flask = "^3.0.3"
-functions-framework = "^3.8.1"
-
-
 [tool.poetry.group.fastapi.dependencies]
-fastapi = "^0.115.0"
 uvicorn = "^0.31.0"
+
+[tool.poetry.group.gcp-functions.dependencies]
+# These dependencies already exist on GCP hosted so just need to install it locally for testing purposes
+click = "8.1.7"
+cloudevents = "1.11.0"
+deprecation = "2.1.0"
+Flask = "2.2.5"
+functions-framework = "3.8.1"
+gunicorn = "23.0.0"
+importlib-metadata = "6.7.0"
+itsdangerous = "2.1.2"
+jinja2 = "3.1.4"
+MarkupSafe = "2.1.5"
+packaging = "24.0"
+watchdog = "3.0.0"
+Werkzeug = "2.2.3"
+zipp = "3.15.0"
+
+
+
+[tool.poetry.group.dev.dependencies]
+ipdb = "^0.13.13"
+ipython = "^8.28.0"
+pyfzf = "^0.3.1"
 
 [build-system]
 requires = ["poetry-core"]
