@@ -1,0 +1,12 @@
+digraph DecisionTree {
+    node [shape=box, style="rounded, filled", color="#5E44FF", fontcolor="white"]; // Set nodes to be rectangular and styled
+
+    // Define nodes (decisions or outcomes)
+    A [label="What should trigger the agent?"];
+    B [label="Task Agent"];
+    C [label="Editor Agent"];
+
+    // Define edges with labels (conditions or outcomes)
+    A -> B [label="The project workflow"];
+    A -> C [label="The annotator"];
+}

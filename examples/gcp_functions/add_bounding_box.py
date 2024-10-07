@@ -1,4 +1,14 @@
-from pathlib import Path
+"""
+You can try this editor agent by running 
+
+```shell
+encord-gcp-agents build <project_name> --src-file /path/to/this/file/add_bounding_box.py
+cd <project_name>
+ENCORD_SSH_KEY_FILE=/path/to/private_key encord-gcp-agents run
+```
+
+Please see README for more details.
+"""
 
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -7,12 +17,8 @@ from encord_agents.core.data_model import FrameData
 from encord_agents.gcp_functions import editor_agent
 
 
-@editor_agent(asset=True)
-def add_bounding_box(frame_data: FrameData, label_row: LabelRowV2, asset: Path) -> None:
-    print(frame_data)
-    print(label_row.label_hash)
-    print(asset.stat())
-
+@editor_agent()
+def add_bounding_box(frame_data: FrameData, label_row: LabelRowV2) -> None:
     ins = label_row.ontology_structure.objects[0].create_instance()
     ins.set_for_frames(
         frames=frame_data.frame,
