@@ -231,6 +231,12 @@ def test_frame(
             help="Paste the url that you're currently looking at in the Label Editor."
         ),
     ],
+    port: Annotated[
+        int,
+        Option(
+            help="Local host port",
+        ),
+    ] = 8080,
 ):
     import requests
 
@@ -240,7 +246,7 @@ def test_frame(
     frame = int(rest[0]) if rest else 0
     payload = {"projectHash": project_hash, "dataHash": data_hash, "frame": frame}
     response = requests.post(
-        f"http://localhost:8080/{target}",
+        f"http://localhost:{port}/{target}",
         json=payload,
         headers={"Content-type": "application/json"},
     )

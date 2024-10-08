@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Generator
 
 import cv2
-import numpy as np
 import requests
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -13,6 +12,8 @@ from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData
 from encord_agents.core.settings import Settings
+
+from .video import get_frame
 
 
 @lru_cache(maxsize=1)
@@ -115,10 +116,12 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         url = video_item["file_link"]
     elif lr.data_type == DataType.IMG_GROUP and images_list:
         if frame is None:
-            raise NotImplementedError("Downloading entire image group is not supported")
+            raise NotImplementedError(
+                "Downloading entire image group is not supported. Please contact Encord at support@encord.com for help or submit a PR with an implementation."
+            )
         url = images_list[frame]["file_link"]
     else:
-        raise ValueError("Couldn't load asset")
+        raise ValueError(f"Couldn't load asset of type {lr.data_type}")
 
     response = requests.get(url)
     response.raise_for_status()
@@ -141,81 +144,3 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         yield file_path
     finally:
         [f.unlink(missing_ok=True) for f in files_to_unlink]
-
-
-# def extract_frames_from_video(
-#     video_file_path: Path,
-#     data_hash: str,
-#     max_secs: int | None = None,
-#     start_at_frame: int = 0,
-# ) -> tuple[list[Path], list[str]]:
-#     logging.info(
-#         f"Extracting {video_file_path} at one frame per second. This might take a bit..."
-#     )
-#     frames_dir = Path(data_hash)
-#     frames_dir.mkdir(exist_ok=True)
-#
-#     vidcap = cv2.VideoCapture(video_file_path.as_posix())
-#     vidcap.set(cv2.CAP_PROP_POS_FRAMES, start_at_frame)
-#
-#     fps = vidcap.get(cv2.CAP_PROP_FPS)
-#     output_file_prefix = video_file_path.stem.replace(".", "_")
-#     frame_count = 0
-#     count = 0
-#     paths = []
-#     time_strings = []
-#
-#     while vidcap.isOpened():
-#         success, frame = vidcap.read()
-#         if not success or (max_secs and len(paths) >= max_secs):  # End of video
-#             break
-#         if (count // fps) == frame_count:  # Extract a frame every second
-#             min = frame_count // 60
-#             sec = frame_count % 60
-#             time_string = f"{min:02d}:{sec:02d}"
-#             image_name = f"{output_file_prefix}_frame{time_string}.jpg"
-#             output_file = frames_dir / image_name
-#             cv2.imwrite(output_file.as_posix(), frame)
-#             frame_count += 1
-#             time_strings.append(time_string)
-#             paths.append(output_file)
-#         count += 1
-#     vidcap.release()  # Release the capture object\n",
-#     return paths, time_strings
-#
-#
-
-# @contextmanager
-# def get_video_frames_and_time_stamps(
-#     lr: LabelRowV2, start: int, extend: int = 50
-# ) -> Generator[tuple[list[Path], list[str]], None, None]:
-#     with download_asset(lr, frame=None) as video_path:
-#         frame_paths, time_stamps = extract_frames_from_video(
-#             video_path, lr.data_hash, max_secs=extend, start_at_frame=start
-#         )
-#     try:
-#         yield (frame_paths, time_stamps)
-#     finally:
-#         shutil.rmtree(frame_paths[0].parent)
-#
-
-
-def get_frame(video_path: Path, desired_frame: int) -> np.ndarray:
-    """
-    Extract a given frame from a downloaded video.
-    :param video_path: The path to which the video was downloaded.
-    :param desired_frame: The frame which you would like to extract.
-    :return: The extracted frame.
-    """
-    cap = cv2.VideoCapture(video_path.as_posix())
-    if not cap.isOpened():
-        raise Exception("Error opening video file.")
-
-    cap.set(cv2.CAP_PROP_POS_FRAMES, desired_frame)
-
-    ret, frame = cap.read()
-    if not ret:
-        raise Exception("Error retrieving frame.")
-
-    cap.release()
-    return frame
