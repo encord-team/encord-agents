@@ -19,24 +19,25 @@ numpy = "^2.1.1"
 optional = true
 
 [tool.poetry.group.fastapi.dependencies]
-uvicorn = "^0.31.0"
+uvicorn = { version = "^0.31.0", optional = true }
+fastapi = { extras = ["standard"], version = "^0.115.0", optional = true }
 
 [tool.poetry.group.gcp-functions.dependencies]
 # These dependencies already exist on GCP hosted so just need to install it locally for testing purposes
-click = "8.1.7"
-cloudevents = "1.11.0"
-deprecation = "2.1.0"
-Flask = "2.2.5"
-functions-framework = "3.8.1"
-gunicorn = "23.0.0"
-importlib-metadata = "6.7.0"
-itsdangerous = "2.1.2"
-jinja2 = "3.1.4"
-MarkupSafe = "2.1.5"
-packaging = "24.0"
-watchdog = "3.0.0"
-Werkzeug = "2.2.3"
-zipp = "3.15.0"
+click = { version = "8.1.7", optional = true }
+cloudevents = { version = "1.11.0", optional = true }
+deprecation = { version = "2.1.0", optional = true }
+Flask = { version = "2.2.5", optional = true }
+functions-framework = { version = "3.8.1", optional = true }
+gunicorn = { version = "23.0.0", optional = true }
+importlib-metadata = { version = "6.7.0", optional = true }
+itsdangerous = { version = "2.1.2", optional = true }
+jinja2 = { version = "3.1.4", optional = true }
+MarkupSafe = { version = "2.1.5", optional = true }
+packaging = { version = "24.0", optional = true }
+watchdog = { version = "3.0.0", optional = true }
+Werkzeug = { version = "2.2.3", optional = true }
+zipp = { version = "3.15.0", optional = true }
 
 
 [tool.poetry.group.dev.dependencies]
@@ -44,6 +45,26 @@ ipdb = "^0.13.13"
 ipython = "^8.28.0"
 pyfzf = "^0.3.1"
 typer = "^0.12.5"
+
+
+[tool.poetry.extras]
+fastapi = ["fastapi", "uvicorn"]
+gcp-functions = [
+  "click",
+  "cloudevents",
+  "deprecation",
+  "Flask",
+  "function",
+  "gunicorn",
+  "importli",
+  "itsdangerous",
+  "jinja2",
+  "MarkupSafe",
+  "packaging",
+  "watchdog",
+  "Werkzeug",
+  "zipp",
+]
 
 [tool.poetry.scripts]
 encord-gcp-agents = "encord_agents.cli.gcp_agent:app"
