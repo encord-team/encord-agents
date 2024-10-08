@@ -4,7 +4,9 @@ from shutil import copy, copytree
 from typing import Optional
 
 import rich
+from rich.console import Group
 from rich.panel import Panel
+from rich.tree import Tree
 from typer import Abort, Argument, Option, Typer
 from typing_extensions import Annotated
 
@@ -16,6 +18,13 @@ app = Typer(
 )
 
 _SOURCE_CODE_PATH = Path(__file__).parent.parent
+
+
+# TODO update encord-agents dependency
+_DEPENDENCIES = """
+functions-framework
+-e git+ssh://git@github.com/encord-team/encord_agents.git@63f142b4e117af19102d61e631a08966aea943ec#egg=encord_agents[gcp-functions]
+"""
 
 _TEMPLATE_CONTENT_W_ASSET = """
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -56,23 +65,9 @@ def my_editor_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
 """
 
 
-def make_clean_build_dir(destination: Path):
-    destination.mkdir()
-    lib_path = destination / "encord_agtents"
-    lib_path.mkdir()
-
-    copytree(_SOURCE_CODE_PATH / "core", lib_path / "core")
-    copytree(_SOURCE_CODE_PATH / "gcp_functions", lib_path / "gcp_functions")
-
-
 def write_dependencies(destination: Path):
-    content = subprocess.run(
-        "poetry export --without-hashes --format=requirements.txt --no-cache",
-        capture_output=True,
-        shell=True,
-    )
     with (destination / "requirements.txt").open("w") as f:
-        f.write(content.stdout.decode("utf-8"))
+        f.write(_DEPENDENCIES)
 
 
 def move_src(src_file: Path, destination: Path):
@@ -84,6 +79,42 @@ def write_template_file(destination: Path, with_asset: bool):
     (destination / "main.py").write_text(
         _TEMPLATE_CONTENT_W_ASSET if with_asset else _TEMPLATE_CONTENT_WO_ASSET
     )
+
+
+def print_instructions(destination: Path):
+    cwd = Path.cwd()
+    rel_path = (
+        destination.relative_to(cwd) if destination.is_relative_to(cwd) else destination
+    )
+
+    tree = Tree(f":open_file_folder: {rel_path}")
+    tree.add(":page_facing_up: requirements.txt")
+    tree.add("🐍 main.py")
+    panel = Panel(
+        Group(
+            f"""
+A project [blue]`{rel_path}`[/blue] was created with the following files:
+    """,
+            tree,
+            f"""
+To start using the project, follow these steps
+
+[magenta]
+cd {rel_path}
+python -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt
+[/magenta]
+
+Now you can edit the [blue]`main.py`[/blue] to your needs.
+
+To test your function, please see [link=https://google.com]the docs :open_book:[/link] 
+to learn how to use [cyan]`encord-gcp-agents run`[/cyan] and [cyan]`encord-gcp-agents test`[/cyan].
+""",
+        ),
+        title=":star2: Project successfully created :star2:",
+    )
+    rich.print(panel)
 
 
 @app.command(
@@ -109,12 +140,14 @@ def build(
     if destination.exists():
         raise Abort("Cannot create project with that name. It already exists.")
 
-    make_clean_build_dir(destination)
+    destination.mkdir()
     write_dependencies(destination)
     if src_file is not None:
         move_src(src_file, destination)
     else:
         write_template_file(destination, with_asset)
+
+    print_instructions(destination)
 
 
 @app.command("run", help="Run the agent function on localhost for testing purposes.")

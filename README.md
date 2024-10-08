@@ -55,8 +55,7 @@ Please expand the example below that suits you the best.
 > There are multiple "nice" utilities in the `encord_agents.core` module which might be useful in other hosting senarios.
 > There is, e.g., code for extracting the right frame based on the message from the editor. # TODO make link
 
-<details>
-<summary>GCP Cloud function examples</summary>
+## GCP Cloud function examples
 
 ### Installation
 
@@ -64,8 +63,8 @@ To use the repo, make sure that you have [Poetry][poetry] installed.
 Then, run the following commands.
 
 ```shell
-git clone git@github.com:encord-team/encord_agents.git
-cd encord_agents
+git clone git@github.com:encord-team/encord-agents.git
+cd encord-agents
 poetry install --with gcp-functions
 ```
 

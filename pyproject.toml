@@ -7,23 +7,22 @@ readme = "README.md"
 packages = [{ include = "encord_agents" }]
 
 [tool.poetry.dependencies]
+# CLI-only dependencies
 python = "^3.11"
-encord = "^0.1.139"
 pydantic = "^2.9.2"
 pydantic-settings = "^2.5.2"
+typer = "^0.12.5"
+
+# No-CLI dependencies
+encord = "^0.1.139"
 opencv-python = "^4.10.0.84"
 numpy = "^2.1.1"
 
-
-[tool.poetry.group.gcp-functions]
-optional = true
-
-[tool.poetry.group.fastapi.dependencies]
+# FastAPI dependencies
 uvicorn = { version = "^0.31.0", optional = true }
 fastapi = { extras = ["standard"], version = "^0.115.0", optional = true }
 
-[tool.poetry.group.gcp-functions.dependencies]
-# These dependencies already exist on GCP hosted so just need to install it locally for testing purposes
+# GCP run function dependencies
 click = { version = "8.1.7", optional = true }
 cloudevents = { version = "1.11.0", optional = true }
 deprecation = { version = "2.1.0", optional = true }
@@ -44,12 +43,14 @@ zipp = { version = "3.15.0", optional = true }
 ipdb = "^0.13.13"
 ipython = "^8.28.0"
 pyfzf = "^0.3.1"
-typer = "^0.12.5"
 
 
 [tool.poetry.extras]
-fastapi = ["fastapi", "uvicorn"]
+fastapi = ["numpy", "opencv-python", "encord", "fastapi", "uvicorn"]
 gcp-functions = [
+  "numpy",
+  "opencv-python",
+  "encord",
   "click",
   "cloudevents",
   "deprecation",
