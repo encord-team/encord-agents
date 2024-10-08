@@ -30,6 +30,8 @@ If you plan to build a label agent, please go to the [Task agents section](#task
 
 # Installation
 
+> We recommend that you use python 3.11. Few things will have to be adapted if you want to use a later version.
+
 This repo can be installed as a slim command-line interface (CLI) to help setup and test projects and as a dependency for the implementation of an agent.
 
 ### CLI
@@ -149,24 +151,25 @@ def my_editor_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
 
 In the code, we:
 
-1. We mark our function with the `@editor_agent` decorator. That will provide us with two arguments to the function.
+1. We mark our function with the [`@editor_agent`][editor-agent] decorator. That will provide us with two arguments to the function.
 
-   1. A [`FrameData`](TODO) instance which tells which `project_hash`, `data_hash`, and `frame` the agent was triggered from.
+   1. A [`FrameData`][frame-data-code] instance which tells which `project_hash`, `data_hash`, and `frame` the agent was triggered from.
    2. A [`LabelRowV2`][label_row_v2] instance already instantiated with the current label state.
 
 2. Create an object instance (assuming that the first object in the ontology is a bounding box object) and call `set_for_frames` with bounding box coordinates and a given frame.
 3. Add the new instance to the `label_row`.
 4. Save the label row.
 
-From within the directory, you can use the CLI to test the function.
+> 💡 Hint: For more information on how to use the SDK to manipulate labels, please see the [SDK documentation][docs-sdk-label] 📖
+
+From within the directory, you can start the agent by running
 
 ```
 encord-agents gcp run add_bunding_box
 ```
 
-From another shell, run `encord-agents gcp test <editor_url>` where `<editor_url>` is the url you see in the browser when you are running editing an image/frame of a video.
-
-### Testing
+From another shell, run `encord-agents gcp test <editor_url>` to trigger the agent.
+`<editor_url>` is the url you see in the browser when you are editing an image/frame of a video on the platform.
 
 ### Other examples
 
@@ -176,11 +179,16 @@ From another shell, run `encord-agents gcp test <editor_url>` where `<editor_url
 
 ### Deployment
 
--- TODO ask Ali for a bit of help
+While we refer to the [google documentation][google-gcp-functions-docs] for deployment of cloud run functions, we do provide an example command via the CLI:
 
-</details>
+```shell
+encord-agents gcp deploy <target_function>
+```
 
-### Installation
+This will print a template for the command to run against `gcloud` in order to push your function to the cloud.
+
+> :bulb: Remember to configure secrets for the `ENCORD_SSH_KEY`/`ENCORD_SSH_KEY_FILE` variable.
+> Documentation is [here 📖][google-gcp-secrets-docs].
 
 # Task agents
 
@@ -192,4 +200,9 @@ From another shell, run `encord-agents gcp test <editor_url>` where `<editor_url
 [poetry]: https://python-poetry.org/
 [label_row_v2]: https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2
 [pipx]: https://github.com/pypa/pipx
+[frame-data-code]: https://github.com/encord-team/encord-agents/blob/main/encord_agents/core/data_model.py#L6
+[editor-agent]: https://github.com/encord-team/encord-agents/blob/main/encord_agents/gcp_functions/wrappers.py#L65
 [docs-ssh-key-access]: https://docs.encord.com/sdk-documentation/sdk-references/EncordUserClient#create-with-ssh-private-key
+[docs-sdk-label]: https://docs.encord.com/sdk-documentation/sdk-labels/sdk-working-with-labels
+[google-gcp-functions-docs]: https://cloud.google.com/functions/docs/create-deploy-gcloud
+[google-gcp-secrets-docs]: https://cloud.google.com/functions/docs/configuring/secrets

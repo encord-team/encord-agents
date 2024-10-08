@@ -190,7 +190,8 @@ def deploy(
         f"""
 This is an example of how you can deploy the function to the cloud.
 Make sure to authenticate `gcloud` and select the appropriate project first.
-[blue]https://cloud.google.com/functions/docs/create-deploy-gcloud[/blue]
+
+[blue][link=https://cloud.google.com/functions/docs/create-deploy-gcloud]https://cloud.google.com/functions/docs/create-deploy-gcloud[/link][/blue]
 
 [magenta]```
 cloud functions deploy {target} \\
@@ -205,7 +206,7 @@ cloud functions deploy {target} \\
 
 Notice how we set secrets (the ssh key that the agent should use).
 Please see the google docs for more details.
-[blue]https://cloud.google.com/functions/docs/configuring/secrets[/blue]
+[blue][link=https://cloud.google.com/functions/docs/configuring/secrets]https://cloud.google.com/functions/docs/configuring/secrets[/link][/blue]
 """,
         title="Example deployment script",
         expand=False,
