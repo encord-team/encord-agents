@@ -28,14 +28,69 @@ Think of these agents as agents that will _automatically_ trigger as soon as a t
 
 If you plan to build a label agent, please go to the [Task agents section](#task-agents).
 
+# Installation
+
+This repo can be installed as a slim command-line interface (CLI) to help setup and test projects and as a dependency for the implementation of an agent.
+
+### CLI
+
+For the CLI, we recommend installing it via [`pipx`][pipx].
+
+```shell
+pipx install https://github.com/encord-team/encord-agents.git
+```
+
+Now, you can, e.g., do `encord-agents gcp init <your_project_name>` to initialize a new python project with the
+required dependencies for a GCP project.
+See [GCP functions](#gcp-cloud-function-examples) below for more details.
+
+### Dependency
+
+There are multiple different extras that you can install - depending on how you want to setup your project.
+If you are building a new FastAPI application for editor agents, you should install the project with
+
+```
+python -m pip install "encord-agents[fastapi]"
+```
+
+if you plan to use the project with GCPs `functions_framework`, then do
+
+```
+python -m pip install "encord-agents[gcp-functions]"
+```
+
+Finally, if you want to manage all the dependencies on your own, the only necessary dependencies for the `core` module
+can be installed with
+
+```
+python -m pip install "encord-agents[core]"
+```
+
+### Settings
+
+The tool will in many cases have to authenticate with Encord.
+For that, environment variables are used.  
+Specifically, you need to [setup an ssh key]() for a service account and use the private key to authenticate with.
+For any project where you want to use your agent, you will have to assign that service account admin rights.
+
+> 💡 Note: for testing, you can may want to use your own personal ssh-key.
+
+To set the environment variables, you should do one of the following two:
+
+1. Set the `ENCORD_SSH_KEY` env variable with the raw key content.
+2. Set the `ENCORD_SSH_KEY_FILE` env variable with the absolute path to the key.
+
+If none of them are set, the code will cast a pydantic validation error the first time it needs the ssh key.
+
+> :information_source: Effectively, [this part][docs-ssh-key-access] of the `encord` SDK is used.
+
 # Editor agents
 
 [[📚 full docs][editor_agents]] [[👆 to the top][to_top]]
 
 For the examples in this section, you have two choices for setups.
 You can host your agent via GCP cloud functions or via a self-hosted FastAPI server.
-For light-weight application like a label check, we recommend cloud functions, while agents that employ more heavy deep learning models are more suited for a FastAPI setup.
-Please expand the example below that suits you the best.
+For light-weight application like a label checks, we recommend cloud functions, while agents that employ more heavy deep learning models are more suited for a FastAPI setup.
 
 > 💡 **Do you prefer another type of hosting?**  
 > While we show you two ways in which you can host an editor agent, the options are endless.
@@ -56,26 +111,6 @@ Please expand the example below that suits you the best.
 > There is, e.g., code for extracting the right frame based on the message from the editor. # TODO make link
 
 ## GCP Cloud function examples
-
-### Installation
-
-To use the repo, make sure that you have [Poetry][poetry] installed.
-Then, run the following commands.
-
-```shell
-git clone git@github.com:encord-team/encord-agents.git
-cd encord-agents
-poetry install --with gcp-functions
-```
-
-Afterwards, every time you want to develope or publish your code, you need to source the poetry environment.
-That can be done in a couple of ways:
-
-```shell
-poetry run <your command>  # for one command only
-poetry shell               # for the shell
-source $(poetry env info --path)/bin/activate  # just the python `venv` (Unix only)
-```
 
 ### Add a bounding box
 
@@ -116,12 +151,16 @@ In the code, we:
 > Follow these commands from a shell with the poetry enviroinment activated.
 
 ```
-encord-gcp-agents build test-project --src-file /path/to/encord_gents/examples/gcp_functions/add_bounding_box.py
+git clone https://github.com/encord-team/encord-agents.git
+encord-agents gcp init test-project --src-file encord-agents/examples/gcp_functions/add_bounding_box.py
 cd test-project
-encord-gcp-agents run add_bunding_box
+python -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt
+encord-agents gcp run add_bunding_box
 ```
 
-from another shell, run `encord-gcp-agents test <editor_url>` where `<editor_url>` is the url you see in the browser when you are running editing an image/frame of a video.
+from another shell, run `encord-agents gcp test <editor_url>` where `<editor_url>` is the url you see in the browser when you are running editing an image/frame of a video.
 
 ### Testing
 
@@ -148,3 +187,5 @@ from another shell, run `encord-gcp-agents test <editor_url>` where `<editor_url
 [to_top]: #encord-agents-framework
 [poetry]: https://python-poetry.org/
 [label_row_v2]: https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2
+[pipx]: https://github.com/pypa/pipx
+[docs-ssh-key-access]: https://docs.encord.com/sdk-documentation/sdk-references/EncordUserClient#create-with-ssh-private-key

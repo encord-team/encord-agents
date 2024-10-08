@@ -2,9 +2,9 @@
 You can try this editor agent by running 
 
 ```shell
-encord-gcp-agents build <project_name> --src-file /path/to/this/file/add_bounding_box.py
+encord-agents gcp init <project_name> --src-file /path/to/this/file/add_bounding_box.py
 cd <project_name>
-ENCORD_SSH_KEY_FILE=/path/to/private_key encord-gcp-agents run
+ENCORD_SSH_KEY_FILE=/path/to/private_key encord-agents gcp run add_bounding_box
 ```
 
 Please see README for more details.

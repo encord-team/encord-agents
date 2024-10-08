@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from shutil import copy, copytree
+from shutil import copy
 from typing import Optional
 
 import rich
@@ -11,14 +11,11 @@ from typer import Abort, Argument, Option, Typer
 from typing_extensions import Annotated
 
 app = Typer(
-    name="encord-gcp-agent",
+    name="gcp",
     help="Utility to setup and run GCP agents locally",
     rich_markup_mode="rich",
     no_args_is_help=True,
 )
-
-_SOURCE_CODE_PATH = Path(__file__).parent.parent
-
 
 # TODO update encord-agents dependency
 _DEPENDENCIES = """
@@ -109,7 +106,7 @@ python -m pip install -r requirements.txt
 Now you can edit the [blue]`main.py`[/blue] to your needs.
 
 To test your function, please see [link=https://google.com]the docs :open_book:[/link] 
-to learn how to use [cyan]`encord-gcp-agents run`[/cyan] and [cyan]`encord-gcp-agents test`[/cyan].
+to learn how to use [cyan]`encord-agents gcp run`[/cyan] and [cyan]`encord-agents gcp test`[/cyan].
 """,
         ),
         title=":star2: Project successfully created :star2:",
@@ -118,10 +115,10 @@ to learn how to use [cyan]`encord-gcp-agents run`[/cyan] and [cyan]`encord-gcp-a
 
 
 @app.command(
-    "build",
-    help="Build a fresh directory with the necessary files for publishing on GCP.",
+    "init",
+    help="Initialize a fresh directory with the necessary files for running an agent with GCP run functions.",
 )
-def build(
+def init(
     project_name: Annotated[str, Argument(help="Name of new project directory")],
     src_file: Annotated[
         Optional[Path],
@@ -159,6 +156,19 @@ def run(
         ),
     ]
 ):
+    from pydantic import ValidationError
+
+    try:
+        from encord_agents.core.settings import Settings
+
+        Settings()
+    except ValidationError as e:
+        print(e)
+
+        import typer
+
+        raise typer.Abort("Aborted because of missing settings")
+
     subprocess.run(
         f"functions-framework --target '{target}' --debug",
         cwd=Path.cwd(),
