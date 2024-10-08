@@ -116,6 +116,17 @@ For light-weight application like a label checks, we recommend cloud functions, 
 
 This example shows how to add a bounding box to the given frame that an annotator is triggering the agent from.
 
+First, let's setup a project.
+
+```shell
+git clone https://github.com/encord-team/encord-agents.git
+encord-agents gcp init bounding_box_project --src-file encord-agents/examples/gcp_functions/add_bounding_box.py
+```
+
+Follow the instructions in the terminal to create virtual enviroment and install dependencies.
+
+In the `bounding_box_project` directory, you should have a `main.py` file looking like this:
+
 ```python
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -147,20 +158,13 @@ In the code, we:
 3. Add the new instance to the `label_row`.
 4. Save the label row.
 
-> **Quickly replicate the example:**  
-> Follow these commands from a shell with the poetry enviroinment activated.
+From within the directory, you can use the CLI to test the function.
 
 ```
-git clone https://github.com/encord-team/encord-agents.git
-encord-agents gcp init test-project --src-file encord-agents/examples/gcp_functions/add_bounding_box.py
-cd test-project
-python -m venv venv
-source venv/bin/activate
-python -m pip install -r requirements.txt
 encord-agents gcp run add_bunding_box
 ```
 
-from another shell, run `encord-agents gcp test <editor_url>` where `<editor_url>` is the url you see in the browser when you are running editing an image/frame of a video.
+From another shell, run `encord-agents gcp test <editor_url>` where `<editor_url>` is the url you see in the browser when you are running editing an image/frame of a video.
 
 ### Testing
 

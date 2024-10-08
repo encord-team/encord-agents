@@ -163,11 +163,12 @@ def run(
 
         Settings()
     except ValidationError as e:
-        print(e)
+        import sys
 
         import typer
 
-        raise typer.Abort("Aborted because of missing settings")
+        print(e, file=sys.stderr)
+        raise typer.Abort()
 
     subprocess.run(
         f"functions-framework --target '{target}' --debug",
