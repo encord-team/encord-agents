@@ -1,6 +1,36 @@
+🚧 UNDER CONSTRUCTION 🚧
+
+1. [Installation](#installation)
+   1. [CLI](#cli)
+   2. [Dependency](#dependency)
+   3. [Settings](#settings)
+2. [Editor agents](#editor-agents)
+   1. [GCP Cloud run functions](#gcp-cloud-run-functions)
+      1. [GCP Examples](#gcp-examples)
+         1. [Add a bounding box](#add-a-bounding-box)
+         2. [Call GPT-4o to verify classifications](#call-gpt-4o-to-verify-classifications)
+         3. [Label verification](#label-verification)
+      2. [GCP Cloud run function deployment](#gcp-cloud-run-function-deployment)
+   1. [FastAPI](#fastapi)
+      1. [FastAPI Examples](#fastapi-examples)
+         1. [Add a bounding box](#add-a-bounding-box)
+         2. [Run inference with an object detection model](#run-inference-with-an-object-detection-model)
+         3. [Call GPT-4o to verify classifications](#call-gpt-4o-to-verify-classifications)
+         4. [Label verification](#label-verification)
+      2. [FastAPI Deployment](#fastapi-deployment)
+3. [Task agents](#task-agents)
+
 # Encore Agents Framework
 
 This repository provides utility functions and examples for building both [editor agents][editor_agents] and [task agents][task_agents].
+
+The framework allows you to do the following things
+
+1. Initialize a template project GCP Cloud functions as an agent.
+2. Easily load data via the Encord SDK for model inference or quality control.
+3. Create FastAPI applications for agents with pre built dependencies for loading labels and data.
+4. [coming soon] Start long running process to act as Agent nodes in Encord project workflows.
+
 Here's how you decide which of the patterns to follow.
 
 ![Decision tree for which agent to use](graphics/decision_tree.png)
@@ -43,7 +73,7 @@ pipx install https://github.com/encord-team/encord-agents.git
 ```
 
 Now, you can, e.g., do `encord-agents gcp init <your_project_name>` to initialize a new python project with the
-required dependencies for a GCP project.
+required dependencies for a GCP cloud run function project.
 See [GCP functions](#gcp-cloud-run-functions) below for more details.
 
 ### Dependency
@@ -114,7 +144,9 @@ For light-weight application like a label checks, we recommend cloud functions, 
 
 ## GCP Cloud run functions
 
-### Add a bounding box
+### GCP Examples
+
+#### Add a bounding box
 
 This example shows how to add a bounding box to the given frame that an annotator is triggering the agent from.
 
@@ -173,13 +205,19 @@ From another shell, run `encord-agents test local <target> <editor_url>` to trig
 `<target>` is the name of the function.
 `<editor_url>` is the url you see in the browser when you are editing an image/frame of a video on the platform.
 
-### Other examples
+---
 
-#### Call GPT-4o to varify classifications
+#### Call GPT-4o to verify classifications
+
+[coming soon]
+
+---
 
 #### Label verification
 
-### Deployment
+[coming soon]
+
+### GCP Cloud run function deployment
 
 While we refer to the [google documentation][google-gcp-functions-docs] for deployment of cloud run functions, we do provide an example command via the CLI:
 
@@ -194,7 +232,9 @@ This will print a template for the command to run against `gcloud` in order to p
 
 ## FastAPI
 
-### Add a bounding box
+### FastAPI Examples
+
+#### Add a bounding box
 
 This example shows how to create a FastAPI project which adds a bounding box the a give frame based on a trigger from the label editor.
 
@@ -269,13 +309,204 @@ From another shell, run `encord-agents test local --port 8000 <editor_url>` to t
 `<editor_url>` is the url you see in the browser when you are editing an image/frame of a video on the platform.
 Now, try to refresh the browser to see the bounding box appear in the label editor.
 
-### Other examples
+---
+
+#### Run inference with an object detection model
+
+This example will show you how to run inference with a (pretrained) model from hugging face.
+
+We'll assume the following setup:
+
+> You have a project with an ontology of bounding box objects for which the names overlap with the names of the coco classes.
+
+An example could be this ontology structure:
+
+```json
+{
+  "objects": [
+    {
+      "id": "1",
+      "name": "Person",
+      "color": "#D33115",
+      "shape": "bounding_box",
+      "featureNodeHash": "2f9d0818"
+    },
+    {
+      "id": "2",
+      "name": "Bus",
+      "color": "#E27300",
+      "shape": "bounding_box",
+      "featureNodeHash": "c5a44abb"
+    },
+    {
+      "id": "3",
+      "name": "Dog",
+      "color": "#16406C",
+      "shape": "bounding_box",
+      "featureNodeHash": "65282ca1"
+    }
+  ],
+  "classifications": []
+}
+```
+
+**Setup:**
+From an empty project directory, create a new virtual python environment and install a couple of dependencies:
+
+```
+pyenv local 3.12
+python -m venv venv
+source venv/bin/activate
+python -m pip install "encord-agents[fastapi]" pytorch torchvision transformers
+```
+
+Then create a `main.py` file with this content:
+
+```python
+import numpy as np
+import torch
+import torch.nn as nn
+from encord.objects.common import Shape
+from encord.objects.coordinates import BoundingBoxCoordinates
+from encord.objects.ontology_labels_impl import LabelRowV2
+from encord_agents import FrameData
+from encord_agents.fastapi.dependencies import dep_asset, dep_label_row
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
+from transformers import DetrForObjectDetection, DetrImageProcessor
+from typing_extensions import Annotated
+
+THRESHOLD = 0.8
+
+# Load the model from HF
+device = torch.device(
+    next(
+        filter(
+            None,
+            (
+                "mps" if torch.backends.mps.is_available() else None,
+                "cuda" if torch.cuda.is_available() else None,
+                "cpu",
+            ),
+        )
+    )
+)
+print(device)
+
+processor = DetrImageProcessor.from_pretrained(
+    "facebook/detr-resnet-50", revision="no_timm"
+)
+model = DetrForObjectDetection.from_pretrained(
+    "facebook/detr-resnet-50", revision="no_timm"
+).to(device)
+
+# Create a fast api server
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://app.encord.com"],
+)
+
+
+def _center_to_xywh(bboxes_center: torch.Tensor) -> torch.Tensor:
+    """
+    Translate bounding boxes
+    relative [cx, cy, w, h] => relative [x, y, w, h]
+    """
+    center_x, center_y, width, height = bboxes_center.unbind(-1)
+    bbox_corners = torch.stack(
+        [(center_x - 0.5 * width), (center_y - 0.5 * height), width, height],
+        dim=-1,
+    )
+    return bbox_corners
+
+
+# Create the endpoint
+@app.post("/predict")
+def predict_bounding_boxes(
+    frame_data: FrameData,
+    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    asset: Annotated[np.ndarray, Depends(dep_asset)],
+):
+    # Map between HF model label names to encord objects
+    ont_lookup = {
+        o.name.lower(): o
+        for o in label_row.ontology_structure.objects
+        if o.shape == Shape.BOUNDING_BOX
+    }
+
+    # Run inference
+    with torch.inference_mode():
+        image = Image.fromarray(asset).convert("RGB")
+        inputs = processor(images=image, return_tensors="pt").to(device)
+        outputs = model(**inputs)
+
+    # Transform results
+    bboxes, logits = outputs.pred_boxes[0], outputs.logits[0]
+    bboxes = _center_to_xywh(bboxes).cpu()
+
+    prob = nn.functional.softmax(logits, -1).cpu()
+    scores, labels = prob[..., :-1].max(-1)
+
+    # Assign labels
+    for score, label, box in zip(scores, labels, bboxes):
+        if score < THRESHOLD:
+            continue
+
+        label_name = model.config.id2label[label.item()]
+
+        ontology_object = ont_lookup.get(label_name.lower())
+        if not ontology_object:
+            continue
+
+        ins = ontology_object.create_instance()
+        x, y, w, h = box.tolist()
+        ins.set_for_frames(
+            frames=frame_data.frame,
+            coordinates=BoundingBoxCoordinates(
+                top_left_x=x, top_left_y=y, width=w, height=h
+            ),
+        )
+        label_row.add_object_instance(ins)
+
+    label_row.save()
+```
+
+To run the server in development mode:
+
+```
+ENCORD_SSH_KEY_FILE=/path/to/your/private_key fastapi dev main.py
+```
+
+Test the agent by:
+
+1. Going to the label editor of that project you want to use the agent for
+2. Copy the browser url
+3. From a fresh terminal run the following command:
+
+```shell
+encord-agents test local --port 8000 predict <your_editor_url>
+```
+
+4. Refresh the browser
+
+Now you should see some predictions pre-labeled.
+Please refer to the [deployment section](#fastapi-deployment) once you're ready to deploy your agent.
+
+---
 
 #### Call GPT-4o to verify classifications
 
+[coming soon]
+
+---
+
 #### Label verification
 
-### Deployment
+[coming soon]
+
+### FastAPI Deployment
 
 While we refer to the [fastapi documentation][fastapi-deploy-docs] for best practices on deployment of fastapi apps, we do provide a basic docker file setup here:
 

@@ -5,8 +5,6 @@ from typing import Iterator
 import cv2
 import numpy as np
 
-from .data_model import VideoFrame
-
 
 def get_frame(video_path: Path, desired_frame: int) -> np.ndarray:
     """
