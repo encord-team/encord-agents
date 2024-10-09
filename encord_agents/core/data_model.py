@@ -1,17 +1,6 @@
-from dataclasses import dataclass
 from uuid import UUID
 
-import numpy as np
 from pydantic import BaseModel, Field
-
-
-@dataclass(frozen=True)
-class VideoFrame:
-    frame: int
-    content: np.ndarray
-    """
-    The content will be [h,w,c] np.arrays in RGB format.
-    """
 
 
 class FrameData(BaseModel):

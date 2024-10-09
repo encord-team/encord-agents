@@ -1,3 +1,3 @@
-from .core.data_model import FrameData, VideoFrame
+from .core.data_model import FrameData
 
-__ALL__ = ["FrameData", "VideoFrame"]
+__ALL__ = ["FrameData"]

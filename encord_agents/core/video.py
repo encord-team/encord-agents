@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
@@ -26,6 +27,15 @@ def get_frame(video_path: Path, desired_frame: int) -> np.ndarray:
 
     cap.release()
     return frame
+
+
+@dataclass(frozen=True)
+class VideoFrame:
+    frame: int
+    content: np.ndarray
+    """
+    The content will be [h,w,c] np.arrays in RGB format.
+    """
 
 
 def iter_video(video_path: Path) -> Iterator[VideoFrame]:
