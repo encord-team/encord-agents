@@ -6,7 +6,7 @@ from typing import Callable, Literal, Protocol, cast, overload
 from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
-from encord_agents.core.data_model import FrameData
+from encord_agents import FrameData
 from encord_agents.core.utils import download_asset, get_initialised_label_row
 
 

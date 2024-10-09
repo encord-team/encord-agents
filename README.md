@@ -122,7 +122,7 @@ First, let's setup a project.
 
 ```shell
 git clone https://github.com/encord-team/encord-agents.git
-encord-agents gcp init bounding_box_project --src-file encord-agents/examples/gcp_functions/add_bounding_box.py
+encord-agents gcp init bounding_box_project --src-file encord-agents/examples/gcp/add_bounding_box.py
 ```
 
 Follow the instructions in the terminal to create virtual enviroment and install dependencies.
@@ -133,7 +133,8 @@ In the `bounding_box_project` directory, you should have a `main.py` file lookin
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.gcp_functions import FrameData, editor_agent
+from encord_agents import FrameData
+from encord_agents.gcp import editor_agent
 
 
 @editor_agent()
@@ -201,7 +202,7 @@ This will print a template for the command to run against `gcloud` in order to p
 [label_row_v2]: https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2
 [pipx]: https://github.com/pypa/pipx
 [frame-data-code]: https://github.com/encord-team/encord-agents/blob/main/encord_agents/core/data_model.py#L6
-[editor-agent]: https://github.com/encord-team/encord-agents/blob/main/encord_agents/gcp_functions/wrappers.py#L65
+[editor-agent]: https://github.com/encord-team/encord-agents/blob/main/encord_agents/gcp/wrappers.py#L65
 [docs-ssh-key-access]: https://docs.encord.com/sdk-documentation/sdk-references/EncordUserClient#create-with-ssh-private-key
 [docs-sdk-label]: https://docs.encord.com/sdk-documentation/sdk-labels/sdk-working-with-labels
 [google-gcp-functions-docs]: https://cloud.google.com/functions/docs/create-deploy-gcloud

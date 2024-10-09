@@ -26,7 +26,7 @@ functions-framework
 _TEMPLATE_CONTENT_W_ASSET = """
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.gcp_functions import FrameData, editor_agent
+from encord_agents.gcp import FrameData, editor_agent
 
 
 @editor_agent(asset=True)
@@ -45,7 +45,7 @@ def my_editor_agent(frame_data: FrameData, label_row: LabelRowV2, asset: Path) -
 _TEMPLATE_CONTENT_WO_ASSET = """
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.gcp_functions import FrameData, editor_agent
+from encord_agents.gcp import FrameData, editor_agent
 
 
 @editor_agent(asset=False)
@@ -106,7 +106,7 @@ python -m pip install -r requirements.txt
 Now you can edit the [blue]`main.py`[/blue] to your needs.
 
 To test your function, please see [link=https://google.com]the docs :open_book:[/link] 
-to learn how to use [cyan]`encord-agents gcp run`[/cyan] and [cyan]`encord-agents gcp test`[/cyan].
+to learn how to use [cyan]`encord-agents gcp run`[/cyan] and [cyan]`encord-agents test local`[/cyan].
 """,
         ),
         title=":star2: Project successfully created :star2:",
@@ -212,43 +212,3 @@ Please see the google docs for more details.
         expand=False,
     )
     rich.print(panel)
-
-
-@app.command(
-    "test",
-    help="Test a running cloud function against the frame you are currently looking at in the Label Editor",
-)
-def test_frame(
-    target: Annotated[
-        str,
-        Argument(
-            help="The name of the function within the [blue]`main.py`[/blue] file to use as cloud function."
-        ),
-    ],
-    url: Annotated[
-        str,
-        Argument(
-            help="Paste the url that you're currently looking at in the Label Editor."
-        ),
-    ],
-    port: Annotated[
-        int,
-        Option(
-            help="Local host port",
-        ),
-    ] = 8080,
-):
-    import requests
-
-    splits = url.split("/")
-    idx = splits.index("label_editor")
-    project_hash, data_hash, *rest = splits[idx + 1 :]
-    frame = int(rest[0]) if rest else 0
-    payload = {"projectHash": project_hash, "dataHash": data_hash, "frame": frame}
-    response = requests.post(
-        f"http://localhost:{port}/{target}",
-        json=payload,
-        headers={"Content-type": "application/json"},
-    )
-    print(response.status_code)
-    print(response.content.decode("utf-8"))

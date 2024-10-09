@@ -14,7 +14,7 @@ from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 
 from encord_agents.core.data_model import FrameData
-from encord_agents.gcp_functions import editor_agent
+from encord_agents.gcp import editor_agent
 
 
 @editor_agent()

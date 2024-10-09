@@ -44,8 +44,7 @@ def dep_asset(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Fra
     # TODO test if this will work for reading it from within the fastapi function
     with download_asset(lr, frame_data.frame) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
-    img = np.asarray(img, dtype=np.uint8)
-    return img
+    return np.asarray(img, dtype=np.uint8)
 
 
 def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]):
