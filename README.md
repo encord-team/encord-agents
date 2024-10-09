@@ -44,7 +44,7 @@ pipx install https://github.com/encord-team/encord-agents.git
 
 Now, you can, e.g., do `encord-agents gcp init <your_project_name>` to initialize a new python project with the
 required dependencies for a GCP project.
-See [GCP functions](#gcp-cloud-function-examples) below for more details.
+See [GCP functions](#gcp-cloud-run-functions) below for more details.
 
 ### Dependency
 
@@ -112,7 +112,7 @@ For light-weight application like a label checks, we recommend cloud functions, 
 > There are multiple "nice" utilities in the `encord_agents.core` module which might be useful in other hosting senarios.
 > There is, e.g., code for extracting the right frame based on the message from the editor. # TODO make link
 
-## GCP Cloud function examples
+## GCP Cloud run functions
 
 ### Add a bounding box
 
@@ -169,7 +169,8 @@ From within the directory, you can start the agent by running
 encord-agents gcp run add_bunding_box
 ```
 
-From another shell, run `encord-agents gcp test <editor_url>` to trigger the agent.
+From another shell, run `encord-agents test local <target> <editor_url>` to trigger the agent.
+`<target>` is the name of the function.
 `<editor_url>` is the url you see in the browser when you are editing an image/frame of a video on the platform.
 
 ### Other examples
@@ -191,6 +192,114 @@ This will print a template for the command to run against `gcloud` in order to p
 > :bulb: Remember to configure secrets for the `ENCORD_SSH_KEY`/`ENCORD_SSH_KEY_FILE` variable.
 > Documentation is [here 📖][google-gcp-secrets-docs].
 
+## FastAPI
+
+### Add a bounding box
+
+This example shows how to create a FastAPI project which adds a bounding box the a give frame based on a trigger from the label editor.
+
+First, let's setup a project.
+
+```shell
+pyenv local 3.11 # (optional): we use pyenv to manage python versions
+python -m venv venv
+source venv/bin/activate
+python -m pip install -e "git+ssh://git@github.com/encord-team/encord_agents.git#egg=encord-agents[fastapi]" # 'TODO FIX ME'
+```
+
+> 💡 Hint: If you want to manage dependencies like, e.g., `fastapi` and `uvicorn` on your own, you can install `encord[core]`.
+> Please see the [dependencies](#dependency) section for more about details.
+
+Now, let's setup a simple server.
+In the directory, create a file called `main.py` with the following content:
+
+```python
+from encord.objects.coordinates import BoundingBoxCoordinates
+from encord.objects.ontology_labels_impl import LabelRowV2
+from encord_agents import FrameData
+from encord_agents.fastapi.dependencies import dep_label_row
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from typing_extensions import Annotated
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://app.encord.com"],
+)
+
+
+@app.post("/add_bounding_box")
+def tmp(
+    frame_data: FrameData, label_row: Annotated[LabelRowV2, Depends(dep_label_row)]
+):
+    ins = label_row.ontology_structure.objects[0].create_instance()
+    ins.set_for_frames(
+        frames=frame_data.frame,
+        coordinates=BoundingBoxCoordinates(
+            top_left_x=0.2, top_left_y=0.2, width=0.6, height=0.6
+        ),
+    )
+    label_row.add_object_instance(ins)
+    label_row.save()
+```
+
+In the code, we:
+
+1. Create a new `FastAPI` app which allows cross-origin communication fro "https://app.encord.com" to be able to recieve messages from the label editor.
+
+1. Define a POST endpoint with two parameters.
+
+   1. A [`FrameData`][frame-data-code] instance which tells which `project_hash`, `data_hash`, and `frame` the agent was triggered from.
+   2. A [`LabelRowV2`][label_row_v2] instance already instantiated with the current label state.
+
+1. Create an object instance (assuming that the first object in the ontology is a bounding box object) and call `set_for_frames` with bounding box coordinates and a given frame.
+1. Add the new instance to the `label_row`.
+1. Save the label row.
+
+> 💡 Hint: For more information on how to use the SDK to manipulate labels, please see the [SDK documentation][docs-sdk-label] 📖
+
+From within the directory, you can start the fastapi server by running
+
+```
+ENCORD_SSH_KEY_FILE=/path/to/your/private/key fastapi dev main.py
+```
+
+From another shell, run `encord-agents test local --port 8000 <editor_url>` to trigger the agent.
+`<editor_url>` is the url you see in the browser when you are editing an image/frame of a video on the platform.
+Now, try to refresh the browser to see the bounding box appear in the label editor.
+
+### Other examples
+
+#### Call GPT-4o to verify classifications
+
+#### Label verification
+
+### Deployment
+
+While we refer to the [fastapi documentation][fastapi-deploy-docs] for best practices on deployment of fastapi apps, we do provide a basic docker file setup here:
+
+```shell
+TODO I suppose that we'd want to do this right?
+```
+
+To try the docker image locally, you can run
+
+```shell
+docker build -t my_custom_agent:v1
+docker run \
+    -p 8000:8000 \
+    -v /whatever:. \
+    -e ENCORD_SSH_KEY=`cat $ENCORD_SSH_KEY_FILE` \
+    my_custom_agent:v1
+```
+
+Now you should be able to test it with
+
+```shell
+encord_agents test local --port 8000 <your_endpoint> <editor_url>
+```
+
 # Task agents
 
 [[📚 full docs][task_agents]] [[👆 to the top][to_top]]
@@ -207,3 +316,4 @@ This will print a template for the command to run against `gcloud` in order to p
 [docs-sdk-label]: https://docs.encord.com/sdk-documentation/sdk-labels/sdk-working-with-labels
 [google-gcp-functions-docs]: https://cloud.google.com/functions/docs/create-deploy-gcloud
 [google-gcp-secrets-docs]: https://cloud.google.com/functions/docs/configuring/secrets
+[fastapi-deploy-docs]: https://fastapi.tiangolo.com/deployment/
