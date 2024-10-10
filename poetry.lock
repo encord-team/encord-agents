@@ -1965,4 +1965,4 @@ gcp-functions = ["Flask", "MarkupSafe", "Werkzeug", "click", "cloudevents", "dep
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "83ef896b0cd1524f0d87d5a2a5580b6fcc671db930260ab46dc9425c804ffd16"
+content-hash = "f094e9a75f5b12e64be1781f9a8ce5aaf2c9d7ec40435818a65253aed551214b"

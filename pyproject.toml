@@ -17,7 +17,7 @@ requests = "^2.32.3"
 # No-CLI dependencies
 encord = { version = "^0.1.139", optional = true }
 opencv-python = { version = "^4.10.0.84", optional = true }
-numpy = { version = "^2.1.1", optional = true }
+numpy = { version = ">=1.26.4", optional = true }
 
 # FastAPI dependencies
 uvicorn = { version = "^0.31.0", optional = true }
