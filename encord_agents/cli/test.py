@@ -1,3 +1,7 @@
+"""
+CLI utilities for testing agents.
+"""
+
 from typer import Argument, Option, Typer
 from typing_extensions import Annotated
 
@@ -39,25 +43,27 @@ def local(
     }
     """
     import re
+    import sys
     from pprint import pprint
 
     import requests
+    import rich
+    import typer
 
     parts_regex = r"https:\/\/app.encord.com\/label_editor\/(?P<projectHash>.*?)\/(?P<dataHash>[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12})(/(?P<frame>\d+))?\??"
-    editor_url = "https://app.encord.com/label_editor/a1240d34-e4e7-4f9c-b62c-d09b3dfd010e/5f68f13e-3931-4585-ad80-e15dd2c501b5/0"  # @param { type : "string" }
-
-    # @markdown Upon a 200 response, refresh the label editor to see the result.
 
     try:
-        payload = re.match(parts_regex, editor_url).groupdict()
+        match = re.match(parts_regex, url)
+        if match is None:
+            raise typer.Abort()
+
+        payload = match.groupdict()
         payload["frame"] = payload["frame"] or 0
     except:
-        import sys
-
-        import typer
-
-        print(
-            "Was not able to parse the url. Please make sure that it follows the format 'label_editor/project_hash/data_hash/frame'",
+        rich.print(
+            """Could not match url to the expected format.
+Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{project_hash}[/magenta]/[magenta]{data_hash}[/magenta](/[magenta]{frame}[/magenta])[/blue]
+""",
             file=sys.stderr,
         )
         raise typer.Abort()

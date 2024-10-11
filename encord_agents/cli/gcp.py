@@ -1,3 +1,10 @@
+"""
+GCP related CLI actions.
+
+This file assists in initializing, running, and deploying Google cloud run 
+functions.
+"""
+
 import subprocess
 from pathlib import Path
 from shutil import copy
@@ -64,7 +71,7 @@ def my_editor_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
 """
 
 
-def write_dependencies(destination: Path):
+def write_requirements_file(destination: Path):
     with (destination / "requirements.txt").open("w") as f:
         f.write(_DEPENDENCIES)
 
@@ -81,6 +88,12 @@ def write_template_file(destination: Path, with_asset: bool):
 
 
 def print_instructions(destination: Path):
+    """
+    Print instructions to run the project created by the `init` command.
+
+    Args:
+        destination: The directory where the project was initialized.
+    """
     cwd = Path.cwd()
     rel_path = (
         destination.relative_to(cwd) if destination.is_relative_to(cwd) else destination
@@ -118,7 +131,6 @@ to learn how to use [cyan]`encord-agents gcp run`[/cyan] and [cyan]`encord-agent
 
 @app.command(
     "init",
-    help="Initialize a fresh directory with the necessary files for running an agent with GCP run functions.",
 )
 def init(
     project_name: Annotated[str, Argument(help="Name of new project directory")],
@@ -135,12 +147,15 @@ def init(
         ),
     ] = False,
 ):
+    """
+    Initialize a project with the required files for running an agent with GCP.
+    """
     destination = Path.cwd() / project_name
     if destination.exists():
         raise Abort("Cannot create project with that name. It already exists.")
 
     destination.mkdir()
-    write_dependencies(destination)
+    write_requirements_file(destination)
     if src_file is not None:
         move_src(src_file, destination)
     else:
