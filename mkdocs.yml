@@ -28,7 +28,7 @@ plugins:
       handlers:
         python:
           options:
-            allow_inspection: true
+            allow_inspection: false
             show_if_no_docstring: true
             heading_level: 3
             show_root_full_path: true

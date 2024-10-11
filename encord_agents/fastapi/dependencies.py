@@ -1,7 +1,16 @@
+"""
+Dependencies for injection in FastAPI servers.
+
+This module contains dependencies that you can inject within your api routes.
+Dependencies that depend on others don't need to be used together. They'll
+work just fine alone.
+"""
+
 from typing import Annotated
 
 import cv2
 import numpy as np
+from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 from fastapi import Depends
@@ -18,35 +27,115 @@ from encord_agents.core.video import iter_video
 def dep_client() -> EncordUserClient:
     """
     Dependency to provide an authenticated user client.
+
+    Intended use:
+
+        from encord.user_client import EncordUserClient
+        from encord_agents.fastapi.depencencies import dep_client
+        ...
+        @app.post("/my-route")
+        def my_route(
+            client: Annotated[EncordUserClient, Depends(dep_client)]
+        ):
+            # Client will authenticated and ready to use.
+
     """
     return get_user_client()
 
 
 def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     """
-    Match a unique label row in a project based on data_hash.
-    Additionally, initialise the label row to download the label data.
-    :param frame_data: the data that defines what the user triggering the agent is looking at.
-    :return: An initialised label row matched on data_hash.
+    Dependency to provide an initialized label row.
+
+    Intended use:
+
+        from encord_agents import FrameData
+        from encord_agents.fastapi.depencencies import dep_label_row
+        ...
+
+        @app.post("/my-route")
+        def my_route(
+            frame_data: FrameData,  # <- Automatically injected
+            lr: Annotated[LabelRowV2, Depends(dep_label_row)]
+        ):
+            assert lr.is_labelling_initialised  # will work
+
+    Args:
+        frame_data: the frame data from the route. This parameter is automatically injected
+            if it's a part of your route (see example above)
+
+    Returns:
+        The initialized label row.
+
     """
     return get_initialised_label_row(frame_data)
 
 
 def dep_asset(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData):
     """
-    Download the underlying asset being annotated (video, image) in a specific label row to disk.
+    Dependency to inject the underlying asset of the frame data.
+
     The downloaded asset will be named `lr.data_hash.{suffix}`.
-    When the context is exited, the downloaded file will be removed.
-    :param lr: The label row for whose asset should be downloaded.
-    :param frame_data: The data that defines what the user triggering the agent is looking at.
-    :return: The np.ndarray of shape [h, w, 3] RGB colors.
+    When the function has finished, the downloaded file will be removed from the file system.
+
+    Intended use:
+
+        from encord_agents import FrameData
+        from encord_agents.fastapi.depencencies import dep_asset
+        ...
+
+        @app.post("/my-route")
+        def my_route(
+            frame_data: FrameData,  # <- Automatically injected
+            frame: Annotated[NDArray[np.uint8], Depends(dep_asset)]
+        ):
+            assert arr.ndim == 3, "Will work"
+
+    Args:
+        lr: The label row. Automatically injected (see example above).
+        frame_data: the frame data from the route. This parameter is automatically injected
+            if it's a part of your route (see example above).
+
+    Returns: Numpy array of shape [h, w, 3] RGB colors.
+
     """
-    # TODO test if this will work for reading it from within the fastapi function
     with download_asset(lr, frame_data.frame) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
     return np.asarray(img, dtype=np.uint8)
 
 
 def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]):
+    """
+    Dependency to inject a video frame iterator for doing things over many frames.
+
+    Intended use:
+
+        from encord_agents import FrameData
+        from encord_agents.fastapi.depencencies import dep_video_iterator
+        ...
+
+        @app.post("/my-route")
+        def my_route(
+            frame_data: FrameData,  # <- Automatically injected
+            video_frames: Annotated[Iterator[VideoFrame], Depends(dep_video_iterator)]
+        ):
+            for frame in video_frames:
+                print(frame.frame, frame.content.shape)
+
+    Args:
+        lr: Automatically injected label row dependency.
+
+    Raises:
+        NotImplementedError: Will fail for other data types than video.
+
+    Yields:
+        An iterator.
+
+    """
+    if not lr.data_type == DataType.VIDEO:
+        raise NotImplementedError(
+            "`dep_video_iterator` only supported for video label rows"
+        )
+    # TODO test if this will work in api server
     with download_asset(lr, None) as asset:
         yield iter_video(asset)
