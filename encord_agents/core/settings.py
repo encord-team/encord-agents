@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     def check_key(self):
         assert any(
             map(bool, [self.ssh_key_content, self.ssh_key_file])
-        ), "Must specify either `ENCORD_SSH_KEY_FILE` or `ENCORD_SSH_KEY` env variables"
+        ), "Must specify either `ENCORD_SSH_KEY_FILE` or `ENCORD_SSH_KEY` env variables. "
+        # TODO help people find their way through ssh keys
         return self
 
     @property
