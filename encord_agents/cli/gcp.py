@@ -25,8 +25,9 @@ functions-framework
 
 _TEMPLATE_CONTENT_W_ASSET = """
 from encord.objects.ontology_labels_impl import LabelRowV2
-
-from encord_agents.gcp import FrameData, editor_agent
+from encord.objects.coordinates import BoundingBoxCoordinates
+from encord_agents import FrameData
+from encord_agents.gcp import editor_agent
 
 
 @editor_agent(asset=True)
@@ -44,8 +45,9 @@ def my_editor_agent(frame_data: FrameData, label_row: LabelRowV2, asset: Path) -
 
 _TEMPLATE_CONTENT_WO_ASSET = """
 from encord.objects.ontology_labels_impl import LabelRowV2
-
-from encord_agents.gcp import FrameData, editor_agent
+from encord.objects.coordinates import BoundingBoxCoordinates
+from encord_agents import FrameData
+from encord_agents.gcp import editor_agent
 
 
 @editor_agent(asset=False)

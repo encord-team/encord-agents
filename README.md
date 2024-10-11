@@ -20,7 +20,7 @@
       2. [FastAPI Deployment](#fastapi-deployment)
 3. [Task agents](#task-agents)
 
-# Encore Agents Framework
+# Encord Agents Framework
 
 This repository provides utility functions and examples for building both [editor agents][editor_agents] and [task agents][task_agents].
 
@@ -70,6 +70,9 @@ For the CLI, we recommend installing it via [`pipx`][pipx].
 
 ```shell
 pipx install https://github.com/encord-team/encord-agents.git
+
+# This works for Encordians already hopefully 🤞
+pipx install git+ssh://git@github.com/encord-team/encord_agents.git#egg=encord_agents
 ```
 
 Now, you can, e.g., do `encord-agents gcp init <your_project_name>` to initialize a new python project with the
@@ -114,7 +117,7 @@ To set the environment variables, you should do one of the following two:
 
 If none of them are set, the code will cast a pydantic validation error the first time it needs the ssh key.
 
-> :information_source: Effectively, [this part][docs-ssh-key-access] of the `encord` SDK is used.
+> ℹ️ Effectively, [this part][docs-ssh-key-access] of the `encord` SDK is used.
 
 # Editor agents
 
