@@ -44,6 +44,9 @@ zipp = { version = "3.15.0", optional = true }
 ipdb = "^0.13.13"
 ipython = "^8.28.0"
 pyfzf = "^0.3.1"
+mkdocstrings = {extras = ["python"], version = "^0.26.1"}
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.5.40"
 
 
 [tool.poetry.extras]
