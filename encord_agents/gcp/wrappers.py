@@ -65,6 +65,47 @@ def editor_agent(
 def editor_agent(
     asset: bool = False,
 ) -> AgentWrapper:
+    """
+    Wrapper to define an editor agent.
+
+    With the wrapper, a cloud function is defined as an endpoint for which
+    `frame_data`, `label_row`, and (optionally `asset`) alread loaded.
+
+    > Note that the function definition should be different depending on
+    > whether you set asset to true or false
+
+    Intended use:
+
+
+        # Without the asset
+        @editor_agent(asset=False)
+        def my_editor_agent(
+            frame_data: FrameData,
+            label_row: LabelRowV2
+        ) -> None:
+            ...
+
+
+        # With the asset
+        @editor_agent(asset=True)
+        def my_editor_agent(
+            frame_data: FrameData,
+            label_row: LabelRowV2,
+            asset: Path
+        ) -> None:
+            ...
+
+    Note that the function doesn't have to return anything.
+    Upon exit, a 200 response will automatically be sent.
+
+    Args:
+        asset: indicator of whether you want the underlying asset (image/video)
+            to be downloaded before the function is called.
+
+    Returns: The wrapped function.
+
+    """
+
     def context_wrapper_inner(func: AgentFunction) -> Callable:
         @wraps(func)  # type: ignore
         def wrapper(request: Request) -> Response:

@@ -20,8 +20,10 @@ from .video import get_frame
 def get_user_client() -> EncordUserClient:
     """
     Generate an user client to access Encord.
-    :param settings: system settings to tell where ssh key file is stored.
-    :return: An EncordUserClient using the right credentials and connection string.
+
+    Returns:
+        An EncordUserClient authenticated with the credentials from the encord_agents.core.settings.Settings.
+
     """
     settings = Settings()  # type: ignore
     return EncordUserClient.create_with_ssh_private_key(
@@ -31,10 +33,17 @@ def get_user_client() -> EncordUserClient:
 
 def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:
     """
-    Match a unique label row in a project based on data_hash.
-    Additionally, initialise the label row to download the label data.
-    :param frame_data: FrameData object containing the project_hash and data_hash to match against.
-    :return: An initialised label row matched on data_hash.
+    Get an initialised label row from the frame_data information.
+
+    Args:
+        frame_data: The data pointing to the data asset.
+
+    Raises:
+        Exception: If the `frame_data` cannot be matched to a label row
+
+    Returns:
+        The initialized label row.
+
     """
     user_client = get_user_client()
     project = user_client.get_project(str(frame_data.project_hash))
@@ -51,18 +60,20 @@ def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:
 
 def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
     """
-    Best effort attempt to guess file suffix based on information in following order:
+    Best effort attempt to guess file suffix given a url and label row.
+
+    Guesses are based on information in following order:
 
         0. `url`
         1. `lr.data_title`
         2. `lr.data_type` (fallback)
 
-    args:
-        - url: the data url
+    Args:
+        - url: the data url from which the asset is downloaded.
         - lr: the associated label row
 
-    returns:
-        a file suffix that can be used to store the file. For example, ".jpg" or ".mp4"
+    Returns:
+        A file suffix that can be used to store the file. For example, ".jpg" or ".mp4"
 
     """
     fallback_mimetype = "video/mp4" if lr.data_type == DataType.VIDEO else "image/png"
@@ -102,12 +113,30 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
 @contextmanager
 def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, None]:
     """
-    Download the underlying asset being annotated (video, image) in a specific label row to disk.
-    The downloaded asset will be named `lr.data_hash.{suffix}`.
-    When the context is exited, the downloaded file will be removed.
-    :param lr: The label row for whose asset should be downloaded.
-    :param frame The frame to extract of the entire thing as is if None
-    :return: The path to which the asset was downloaded.
+    Download the asset associated to a label row to disk.
+
+    This function is a context manager. Data will be cleaned up when the context is left.
+
+    Example usage:
+
+        with download_asset(lr, 10) as asset_path:
+            # In here the file exists
+            pixel_values = np.asarray(Image.open(asset_path))
+
+        # outside, it will be cleaned up
+
+    Args:
+        lr: The label row for which you want to download the associated asset.
+        frame: The frame that you need. If frame is none for a video, you will get the video path.
+
+    Raises:
+        NotImplementedError: If you try to get all frames of an image group.
+        ValueError: If you try to download an unsupported data type (e.g., DICOM).
+
+
+    Yields:
+        The file path for the requested asset.
+
     """
     video_item, images_list = lr._project_client.get_data(
         lr.data_hash, get_signed_url=True

@@ -1,3 +1,14 @@
+"""
+Main file for the command line interface.
+
+Collects all the sub commands of the CLI. 
+
+Example usage:
+
+    encord-agents --help
+
+"""
+
 import typer
 
 from .gcp import app as gcp_app
