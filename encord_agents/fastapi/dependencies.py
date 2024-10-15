@@ -6,7 +6,7 @@ Dependencies that depend on others don't need to be used together. They'll
 work just fine alone.
 """
 
-from typing import Annotated
+from typing import Annotated, Generator, Iterator
 
 import cv2
 import numpy as np
@@ -15,7 +15,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 from fastapi import Depends
 
-from encord_agents.core.data_model import FrameData
+from encord_agents.core.data_model import Frame, FrameData
 from encord_agents.core.utils import (
     download_asset,
     get_initialised_label_row,
@@ -104,7 +104,9 @@ def dep_asset(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Fra
     return np.asarray(img, dtype=np.uint8)
 
 
-def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]):
+def dep_video_iterator(
+    lr: Annotated[LabelRowV2, Depends(dep_label_row)]
+) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
