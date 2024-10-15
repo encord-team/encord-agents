@@ -1,4 +1,5 @@
 site_name: "Encord Agents"
+repo_url: https://github.com/encord-team/encord-agents
 
 watch:
   - encord_agents
@@ -7,13 +8,20 @@ theme:
   logo: assets/logo_single.png
   favicon: assets/favicon.png
   name: "material"
+  features:
+    - content.code.copy
 
 nav:
   - "Home": index.md
+  - "Installation": installation.md
+  - "Authentication": authentication.md
+  - "Getting started": getting_started.md
   - "Editor Agents":
       - "Intro": editor_agents/index.md
-      - "Reference": editor_agents/reference.md
-  - "Task Agents": task_agents/index.md
+      - "Examples": editor_agents/examples
+  - "Task Agents":
+      - "Intro": task_agents/index.md
+      - "Examples": task_agents/examples
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
@@ -22,13 +30,24 @@ nav:
 extra:
   homepage: https://encord.com
 
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+
 plugins:
   - search
   - mkdocstrings:
       handlers:
         python:
           options:
-            allow_inspection: false
+            allow_inspection: true
             show_if_no_docstring: true
             heading_level: 3
             show_root_full_path: true
@@ -41,3 +60,4 @@ plugins:
             docstring_section_style: list
             show_docstring_yields: true
             show_docstring_examples: true
+  - glightbox
