@@ -117,7 +117,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
         @app.post("/my-route")
         def my_route(
             frame_data: FrameData,  # <- Automatically injected
-            video_frames: Annotated[Iterator[VideoFrame], Depends(dep_video_iterator)]
+            video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)]
         ):
             for frame in video_frames:
                 print(frame.frame, frame.content.shape)

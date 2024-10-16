@@ -1,72 +1,270 @@
+import inspect
 import time
 import traceback
+from contextlib import ExitStack, contextmanager
+from copy import copy
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from functools import wraps
-from types import MappingProxyType
-from typing import Callable, Iterable, Literal, Optional, Protocol, Type, TypeVar, overload
+from typing import Any, Callable, ForwardRef, Iterable, Iterator, Optional, TypeVar, cast
 from uuid import UUID
 
 import rich
-from encord.exceptions import AuthenticationError, AuthorisationError
+from encord.exceptions import InvalidArgumentsError
+from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord.orm.dataset import DatasetAccessSettings
 from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
 from encord.workflow.stages.agent import AgentTask
+from pydantic._internal._typing_extra import eval_type_lenient as evaluate_forwardref
+from tqdm.auto import tqdm
 from typer import Abort
+from typing_extensions import Annotated, get_args, get_origin
 
-from encord_agents.core.data_model import Frame
-from encord_agents.core.utils import download_asset, get_user_client
-from encord_agents.core.video import iter_video
+from encord_agents.core.utils import get_user_client
 
+DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., Any])
 
-class BareAgent(Protocol):
-    def __call__(
-        self,
-        lr: LabelRowV2,
-    ) -> str: ...
+class Depends:
+    def __init__(
+        self, dependency: Optional[Callable[..., Any]] = None
+    ):
+        self.dependency = dependency
 
+    def __repr__(self) -> str:
+        attr = getattr(self.dependency, "__name__", type(self.dependency).__name__)
+        return f"{self.__class__.__name__}({attr})"
 
-class MetadataAgent(Protocol):
-    def __call__(
-        self,
-        lr: LabelRowV2,
-        metadata: dict | None,
-    ) -> str: ...
+@dataclass
+class _Field:
+    name: str
+    type_annotation: Any
 
-
-class IteratorAgent(Protocol):
-    def __call__(self, lr: LabelRowV2, *, frames: Iterable[Frame]) -> str: ...
-
-
-class MetadataIteratorAgent(Protocol):
-    def __call__(
-        self,
-        lr: LabelRowV2,
-        *,
-        frames: Iterable[Frame],
-        metadata: dict | None,
-    ) -> str: ...
+@dataclass
+class Dependant:
+    name: Optional[str] = None
+    func: Optional[Callable[..., Any]] = None
+    dependencies: list["Dependant"] = field(default_factory=list)
+    field_params: list[_Field] = field(default_factory=list)
+    needs_label_row: bool = False
 
 
-TaskAgent = BareAgent | MetadataAgent | IteratorAgent | MetadataIteratorAgent
+@dataclass
+class ParamDetails:
+    type_annotation: Any
+    depends: Optional[Depends]
 
-BareWrapper = Callable[[BareAgent], BareAgent]
-MetadataWrapper = Callable[[MetadataAgent], MetadataAgent]
-IteratorWrapper = Callable[[IteratorAgent], IteratorAgent]
-MetadataIteratorWrapper = Callable[[MetadataIteratorAgent], MetadataIteratorAgent]
 
-AgentWrapper = BareWrapper | MetadataWrapper | IteratorWrapper | MetadataIteratorWrapper
+class RunnerAgent:
+    def __init__(self, name: str, callable: Callable[..., str]):
+        self.name = name
+        self.callable = callable
+        self.dependant: Dependant = get_dependant(func=callable)
 
-TASK_TYPE_LOOKUP: dict[tuple[bool, bool], Type[TaskAgent]] = {
-    # (metadata, frame_iter): type
-    (False, False): Type[BareAgent],
-    (False, True): Type[IteratorAgent],
-    (True, False): Type[MetadataAgent],
-    (True, True): Type[MetadataIteratorAgent],
-}
 
-DecoratedTaskAgent = TypeVar("DecoratedTaskAgent", bound=TaskAgent)
+def get_typed_annotation(annotation: Any, globalns: dict[str, Any]) -> Any:
+    if isinstance(annotation, str):
+        annotation = ForwardRef(annotation)
+        annotation = evaluate_forwardref(annotation, globalns, globalns)
+    return annotation
+
+
+def get_typed_signature(call: Callable[..., Any]) -> inspect.Signature:
+    signature = inspect.signature(call)
+    globalns = getattr(call, "__globals__", {})
+    typed_params = [
+        inspect.Parameter(
+            name=param.name,
+            kind=param.kind,
+            default=param.default,
+            annotation=get_typed_annotation(param.annotation, globalns),
+        )
+        for param in signature.parameters.values()
+    ]
+    typed_signature = inspect.Signature(typed_params)
+    return typed_signature
+
+def get_dependant(
+    *,
+    func: Callable[..., Any],
+    name: Optional[str] = None,
+) -> Dependant:
+    endpoint_signature = get_typed_signature(func)
+    signature_params = endpoint_signature.parameters
+    dependant = Dependant(
+        func=func,
+        name=name,
+    )
+    for param_name, param in signature_params.items():
+        param_details = analyze_param(
+            param_name=param_name,
+            annotation=param.annotation,
+            value=param.default,
+        )
+        if param_details.depends is not None:
+            sub_dependant = get_param_sub_dependant(
+                param_name=param_name,
+                depends=param_details.depends,
+            )
+            dependant.dependencies.append(sub_dependant)
+        else:
+            dependant.field_params.append(_Field(name=param_name, type_annotation=param_details.type_annotation))
+
+    return dependant
+
+
+
+def get_param_sub_dependant(
+    *,
+    param_name: str,
+    depends: Depends,
+) -> Dependant:
+    assert depends.dependency
+    return get_sub_dependant(
+        dependency=depends.dependency,
+        name=param_name,
+    )
+
+
+def get_sub_dependant(
+    *,
+    dependency: Callable[..., Any],
+    name: Optional[str] = None,
+) -> Dependant:
+    sub_dependant = get_dependant(
+        func=dependency,
+        name=name,
+    )
+    return sub_dependant
+
+
+def analyze_param(
+    *,
+    param_name: str,
+    annotation: Any,
+    value: Any,
+) -> ParamDetails:
+    depends = None
+    type_annotation: Any = Any
+    use_annotation: Any = Any
+    if annotation is not inspect.Signature.empty:
+        use_annotation = annotation
+        type_annotation = annotation
+    # Extract Annotated info
+    origin = get_origin(use_annotation)
+    if origin is Annotated:
+        annotated_args = get_args(annotation)
+        type_annotation = annotated_args[0]
+        dependency_args = [
+            arg
+            for arg in annotated_args[1:]
+            if isinstance(arg, Depends)
+        ]
+        if dependency_args:
+            agent_annotation: Depends | None = (
+                dependency_args[-1]
+            )
+        else:
+            agent_annotation = None
+
+        if isinstance(agent_annotation, Depends):
+            depends = agent_annotation
+    elif annotation is LabelRowV2 or annotation is AgentTask:
+        return ParamDetails(type_annotation=annotation, depends=None)
+
+
+    # Get Depends from default value
+    if isinstance(value, Depends):
+        assert depends is None, (
+            "Cannot specify `Depends` in `Annotated` and default value"
+            f" together for {param_name!r}"
+        )
+        depends = value
+
+    # Get Depends from type annotation
+    if depends is not None and depends.dependency is None:
+        # Copy `depends` before mutating it
+        depends = copy(depends)
+        depends.dependency = type_annotation
+
+    return ParamDetails(type_annotation=type_annotation, depends=depends)
+
+
+@dataclass
+class SolvedDependency:
+    values: dict[str, Any]
+    dependency_cache: Optional[dict[Callable[..., Any], Any]] = None
+
+
+def is_gen_callable(call: Callable[..., Any]) -> bool:
+    if inspect.isgeneratorfunction(call):
+        return True
+    dunder_call = getattr(call, "__call__", None)  # noqa: B004
+    return inspect.isgeneratorfunction(dunder_call)
+
+
+def solve_generator(
+    *, call: Callable[..., Any], stack: ExitStack, sub_values: dict[str, Any]
+) -> Any:
+    cm = contextmanager(call)(**sub_values)
+    return stack.enter_context(cm)
+
+
+def get_field_values(deps: list[_Field], agent_task: AgentTask, label_row: LabelRowV2) -> dict[str, AgentTask | LabelRowV2]:
+    values: dict[str, AgentTask | LabelRowV2] = {}
+    for param_field in deps:
+        if param_field.type_annotation is AgentTask:
+            values[param_field.name] = agent_task
+        elif param_field.type_annotation is LabelRowV2:
+            values[param_field.name] = label_row
+        else:
+            raise ValueError(f"Agent function is specifying a field `{param_field.name} ({param_field.type_annotation})` which is not supported. Consider wrapping it in a `Depends` to define how this value should be obtained.")
+    return values
+
+def solve_dependencies(
+    *,
+    agent_task: AgentTask,
+    label_row: LabelRowV2,
+    dependant: Dependant,
+    stack: ExitStack,
+    dependency_cache: Optional[dict[Callable[..., Any], Any]] = None
+) -> SolvedDependency:
+    values: dict[str, Any] = {}
+    dependency_cache = dependency_cache or {}
+    sub_dependant: Dependant
+    for sub_dependant in dependant.dependencies:
+        sub_dependant.func = cast(Callable[..., Any], sub_dependant.func)
+        func = sub_dependant.func
+        use_sub_dependant = sub_dependant
+
+        solved_result = solve_dependencies(
+            agent_task=agent_task,
+            label_row=label_row,
+            dependant=use_sub_dependant,
+            stack=stack,
+            dependency_cache=dependency_cache,
+        )
+
+        dependency_cache.update(solved_result.dependency_cache or {})
+
+        if sub_dependant.func in dependency_cache:
+            solved = dependency_cache[sub_dependant.func]
+        elif is_gen_callable(func):
+            solved = solve_generator(
+                call=func, stack=stack, sub_values=solved_result.values
+            )
+        else:
+            solved = func(**solved_result.values)
+
+        if sub_dependant.name is not None:
+            values[sub_dependant.name] = solved
+
+    field_values = get_field_values(dependant.field_params, agent_task, label_row)
+    values.update(field_values)
+
+    return SolvedDependency(
+        values=values,
+        dependency_cache=dependency_cache,
+    )
 
 
 class Runner:
@@ -90,33 +288,15 @@ class Runner:
                 s.title for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT
             }
 
-        self.agents: dict[str, BareAgent] = {}
-        self.agent_types: dict[str, Type[TaskAgent]] = {}
+        self.agents: list[RunnerAgent] = []
 
-        self.datasets: dict[str, dict[UUID, MappingProxyType | None]] = {}
-        """
-        Holds dictionaries of <dataset_hash, <data_hash, metadata>> entries.
-        """
+    def _add_stage_agent(self, name: str, func: Callable[..., Any]):
+        self.agents.append(RunnerAgent(name=name, callable=func))
 
 
-    @overload
-    def stage(self, stage: str, *, metadata: Literal[True], frame_iterator: Literal[True]) -> MetadataIteratorWrapper:
-        ...
 
-    @overload
-    def stage(self, stage: str, *, metadata: Literal[False], frame_iterator: Literal[True]) -> IteratorWrapper:
-        ...
-
-    @overload
-    def stage(self, stage: str, *, metadata: Literal[True], frame_iterator: Literal[False]) -> MetadataWrapper:
-        ...
-
-    @overload
-    def stage(self, stage: str, *, metadata: Literal[False] = False, frame_iterator: Literal[False] = False) -> BareWrapper:
-        ...
-
-    def stage(self, stage: str, *, metadata: bool = False, frame_iterator: bool = False) -> AgentWrapper:
-        if stage in self.agents:
+    def stage(self, stage: str) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        if stage in [a.name for a in self.agents]:
             self.abort_with_message(
                 f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
             )
@@ -127,62 +307,38 @@ class Runner:
                 rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
             )
 
-        def context_wrapper_inner(func: DecoratedTaskAgent) -> DecoratedTaskAgent:
-            self.agent_types[stage] = TASK_TYPE_LOOKUP[(metadata, frame_iterator)]
+        def decorator(func: DecoratedCallable) -> DecoratedCallable:
+            self._add_stage_agent(stage, func)
+            return func
 
-            @wraps(func)  # type: ignore
-            def wrapper(fn: TaskAgent, lr: LabelRowV2):
-                kwargs = {}
-                if metadata:
-                    kwargs["metadata"] = self.datasets.get(lr.dataset_hash, {}).get(UUID(lr.data_hash))
-
-                if frame_iterator:
-                    with download_asset(lr, frame=None) as asset_path:
-                        kwargs["frames"] = iter_video(asset_path)
-                        return fn(lr, **kwargs)
-
-            self.agents[stage] = wrapper # type: ignore
-
-            return wrapper  # type: ignore
-
-        return context_wrapper_inner
-
-    def _add_dataset_from_label_row(self, lr: LabelRowV2):
-        if lr.dataset_hash in self.datasets:
-            return
-
-        try:
-            dataset = self.client.get_dataset(
-                lr.dataset_hash,
-                dataset_access_settings=DatasetAccessSettings(fetch_client_metadata=True)
-            )
-            self.datasets[lr.dataset_hash] = {UUID(dr.uid): dr.client_metadata for dr in dataset.data_rows}
-
-        except (AuthorisationError, AuthenticationError):
-                    dataset_title = lr.dataset_title
-                    dataset_hash = lr.dataset_hash
-                    self.abort_with_message(
-                        f"Was not able to access the dataset with [blue]`{dataset_hash=}`[/blue] "
-                        f"and [magenta]'{dataset_title=}'[/magenta]. The dataset is needed to be "
-                        "able to fetch client metadata. Disable the `metadata` flag or give the "
-                        "account access to the dataset.")
-
+        return decorator
 
     def _execute_tasks(
         self,
         tasks: Iterable[tuple[AgentTask, LabelRowV2]],
-        agent: BareAgent,
-        num_threads: int,
+        runner_agent: RunnerAgent,
+        # num_threads: int,
         num_retries: int,
+        pbar: tqdm | None = None
     ) -> None:
-        for task, label_row in tasks:
-            for attempt in range(1, num_retries + 1):
-                try:
-                    next_stage = agent(label_row)  # TODO handle dynamic parameters
-                    task.proceed(pathway_name=next_stage)
-                except Exception:
-                    print(f"[attempt {attempt}/{num_retries}] Agent failed with error: ")
-                    traceback.print_exc()
+        with Bundle() as bundle:
+            for task, label_row in tasks:
+                with ExitStack() as stack:
+                    for attempt in range(1, num_retries + 1):
+                        try:
+                            dependencies = solve_dependencies(agent_task=task, label_row=label_row, dependant=runner_agent.dependant, stack=stack)
+                            next_stage = runner_agent.callable(**dependencies.values)  
+                            try:
+                                task.proceed(pathway_name=next_stage, bundle=bundle)
+                                if pbar is not None:
+                                    pbar.update(1)
+                                break
+                            except InvalidArgumentsError as e:
+                                print(e)
+                                traceback.print_exc()
+                        except Exception:
+                            print(f"[attempt {attempt}/{num_retries}] Agent failed with error: ")
+                            traceback.print_exc()
 
     @staticmethod
     def abort_with_message(error: str):
@@ -228,30 +384,23 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
 
         # Verify stages
         agent_stages = {s.title: s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT}
-        for stage_name, callable in self.agents.items():
+        for runner_agent in self.agents:
             fn_name = getattr(callable, "__name__", "agent function")
             agent_stage_names = ",".join([f"[magenta]`{k}`[/magenta]" for k in agent_stages.keys()])
-            if stage_name not in agent_stages:
+            if runner_agent.name not in agent_stages:
                 self.abort_with_message(
-                    rf"Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{stage_name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages : \[{agent_stage_names}]"
+                    rf"Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{runner_agent.name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages : \[{agent_stage_names}]"
                 )
 
-            __import__('ipdb').set_trace()
-            stage = agent_stages[stage_name]
+            stage = agent_stages[runner_agent.name]
             if stage.stage_type != WorkflowStageType.AGENT:
                 self.abort_with_message(
                     f"You cannot use the stage of type `{stage.stage_type}` as an agent stage. It has to be one of the agent stages: [{agent_stage_names}]."
                 )
 
-        # Check if we need to initialize datasets
-        metadata_stages = {
-            k: self.agents[k] for k, t in self.agent_types.items() if t in [MetadataAgent, MetadataIteratorAgent]
-        }
-
         # Run
         delta = timedelta(seconds=refresh_every)
         next_execution = None
-
 
         try:
             # TODO do this in background
@@ -262,32 +411,36 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
                     time.sleep(duration.total_seconds())
 
                 next_execution = datetime.now() + delta
-                for stage_name, callable in self.agents.items():
-                    stage = agent_stages[stage_name]
-                    fetch_metadata = stage.title in metadata_stages
+                for runner_agent in self.agents:
+                    stage = agent_stages[runner_agent.name]
 
                     batch: list[AgentTask] = []
-                    for task in stage.get_tasks():
-                        batch.append(task)
+                    batch_lrs: list[LabelRowV2] = []
 
+                    tasks = list(stage.get_tasks())
+                    pbar = tqdm(desc="Executing tasks", total=len(tasks))
+                    for task in tasks:
+                        batch.append(task)
                         if len(batch) == task_batch_size:
                             label_rows = {
                                 UUID(lr.data_hash): lr
                                 for lr in project.list_label_rows_v2(data_hashes=[t.data_hash for t in batch])
                             }
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
-                            with project.create_bundle() as bundle:
+                            with project.create_bundle() as lr_bundle:
                                 for lr in batch_lrs:
-                                    lr.initialise_labels(bundle=bundle)
-                                    if fetch_metadata and lr.dataset_hash not in self.datasets:
-                                        self._add_dataset_from_label_row(lr)                            
+                                    lr.initialise_labels(bundle=lr_bundle)
 
                             self._execute_tasks(
                                 zip(batch, batch_lrs),
-                                callable,
+                                runner_agent,
                                 num_threads,
                                 num_retries,
+                                pbar=pbar,
                             )
+
+                            batch = []
+                            batch_lrs = []
 
                     if len(batch) > 0:
                         label_rows = {
@@ -295,12 +448,10 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
                             for lr in project.list_label_rows_v2(data_hashes=[t.data_hash for t in batch])
                         }
                         batch_lrs = [label_rows[t.data_hash] for t in batch]
-                        with project.create_bundle() as bundle:
+                        with project.create_bundle() as lr_bundle:
                             for lr in batch_lrs:
-                                lr.initialise_labels(bundle=bundle)
-                                if fetch_metadata and lr.dataset_hash not in self.datasets:
-                                    self._add_dataset_from_label_row(lr)                            
-                        self._execute_tasks(zip(batch, batch_lrs), callable, num_threads, num_retries)
+                                lr.initialise_labels(bundle=lr_bundle)
+                        self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_threads, num_retries, pbar=pbar)
 
         except KeyboardInterrupt:
             # TODO run thread until end, then stop
@@ -309,16 +460,18 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
 
 if __name__ == "__main__":
     # TODO remove me
-    project_hash = "2400d7dd-0be2-40fb-bca7-5f58db5b70d3"
+    project_hash = "a918b378-1041-489b-b228-ab684c3fb026"
     runner = Runner(project_hash=project_hash)
 
+    from encord_agents.tasks.dependencies import dep_video_iterator
+    from encord_agents.core.data_model import Frame
+
     @runner.stage(stage="pre-label")
-    def run_something(lr: LabelRowV2):
-        print(lr.data_title)
-        #print(metadata)
-        #for frame in frames:
-        #print(frame.content.shape)
-        #break
+    def run_something(
+        lr: LabelRowV2, 
+        frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)],
+    ):
+        print([f.content.shape[0] for f in frames])
         return "annotate"
 
     from typer import Typer
