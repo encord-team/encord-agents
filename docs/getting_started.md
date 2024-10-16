@@ -49,20 +49,28 @@ In this example, we'll call it `agent.py`.
 Copy paste the following template.
 
 ```python title="agent.py"
-from typing import Any
-
 from encord.objects import LabelRowV2
-from encord_agents.tasks import TaskRunner
+from encord_agents.tasks import Runner
 
-runner = TaskRunner(project_hash="<your_project_hash>")
+runner = Runner(project_hash="<your_project_hash>")
 
-@runner.stage(name="prioritize")
+@runner.stage(name="pre-label")
 def my_agent_logic(lr: LabelRowV2) -> str | None:
-    # This is where well implement the agent logic.
-    pass
+    location = "New York" if "NY" in lr.data_title else "San Francisco"
+
+    priority = 0.
+    if location == "New York":
+        priority = 1.
+    else if location == "San Francisco":
+        priority = 0.5
+
+    label_row.set_priority(priority=priority)
 
 if __name__ == "__main__":
-    runner.run(update_every=3600, max_workers=1, num_retries=3)
+    from typer import Typer
+    app = Typer(add_completion=False, rich_markup_mode="rich")
+    app.command()(runner.__call__)
+    app()
 ```
 
 Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class] instance.
@@ -90,10 +98,17 @@ From `agent.py` above, notice the last part.
 
 ```python
 if __name__ == "__main__":
-    runner.run(update_every=3600, max_workers=1, num_retries=3)
+    from typer import Typer
+    app = Typer(add_completion=False, rich_markup_mode="rich")
+    app.command()(runner.__call__)
+    app()
 ```
 
-By executing the file with the following command:
+Run the agent by executing the following command:
+
+```shell
+python agent.py
+```
 
 [docs-workflow-project]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects
 [docs-workflow-agent]: https://docs.encord.com/platform-documentation/Annotate/annotate-projects/annotate-workflows-and-templates#agent

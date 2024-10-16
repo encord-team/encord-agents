@@ -17,16 +17,19 @@ def dep_client() -> EncordUserClient:
     """
     Dependency to provide an authenticated user client.
 
-    Intended use:
+    **Example:**  
 
-        from encord.user_client import EncordUserClient
-        from encord_agents.fastapi.depencencies import dep_client
-        ...
-        @app.post("/my-route")
-        def my_route(
-            client: Annotated[EncordUserClient, Depends(dep_client)]
-        ):
-            # Client will authenticated and ready to use.
+    ```python
+    from encord.user_client import EncordUserClient
+    from encord_agents.fastapi.depencencies import dep_client
+    ...
+    @app.post("/my-route")
+    def my_route(
+        client: Annotated[EncordUserClient, Depends(dep_client)]
+    ):
+        # Client will authenticated and ready to use.
+        client.get_dataset("")
+    ```
 
     """
     return get_user_client()
@@ -39,18 +42,20 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     The downloaded asset will be named `lr.data_hash.{suffix}`.
     When the function has finished, the downloaded file will be removed from the file system.
 
-    Intended use:
+    **Example:**  
 
-        from encord_agents import FrameData
-        from encord_agents.fastapi.depencencies import dep_asset
-        ...
+    ```python
+    from encord_agents import FrameData
+    from encord_agents.fastapi.depencencies import dep_asset
+    ...
 
-        @runner.stage("<my_stage_name>")
-        def my_agent(
-            lr: LabelRowV2,  # <- Automatically injected
-            frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)] 
-        ):
-            assert frame.ndim == 3, "Will work"
+    @runner.stage("<my_stage_name>")
+    def my_agent(
+        lr: LabelRowV2,  # <- Automatically injected
+        frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)] 
+    ):
+        assert frame.ndim == 3, "Will work"
+    ```
 
     Args:
         lr: The label row. Automatically injected (see example above).
@@ -70,19 +75,21 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
-    Intended use:
+    **Intended use**  
 
-        from encord_agents import FrameData
-        from encord_agents.fastapi.depencencies import dep_video_iterator
-        ...
+    ```python
+    from encord_agents import FrameData
+    from encord_agents.fastapi.depencencies import dep_video_iterator
+    ...
 
-        @runner.stage("<stage-name>")
-        def my_agent(
-            lr: LabelRowV2,  # <- Automatically injected
-            video_frames: Annotated[Iterator[VideoFrame], Depends(dep_video_iterator)]
-        ):
-            for frame in video_frames:
-                print(frame.frame, frame.content.shape)
+    @runner.stage("<stage-name>")
+    def my_agent(
+        lr: LabelRowV2,  # <- Automatically injected
+        video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)]
+    ):
+        for frame in video_frames:
+            print(frame.frame, frame.content.shape)
+    ```
 
     Args:
         lr: Automatically injected label row dependency.

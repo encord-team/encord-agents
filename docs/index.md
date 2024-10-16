@@ -3,7 +3,7 @@
 Easily build agents for the Encord echo system.
 With just few lines of code, you can take automation to the next level.
 
-Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on custom metadata.
+Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on data titles.
 
 ```python title="example_task_agent.py"
 from typing import Any
@@ -13,9 +13,9 @@ from encord_agents.tasks import TaskRunner
 
 runner = TaskRunner(project_hash="<your_project_hash>")
 
-@runner.stage(name="Agent 1", use_client_metadata=True)
-def by_city(lr: LabelRowV2, client_metadata: dict | None) -> str | None:
-    location = (client_metadata or {}).get("location")
+@runner.stage(name="Agent 1")
+def by_city(lr: LabelRowV2) -> str | None:
+    location = "New York" if "NY" in lr.data_title else "San Francisco"
 
     priority = 0.
     if location == "New York":
@@ -26,7 +26,10 @@ def by_city(lr: LabelRowV2, client_metadata: dict | None) -> str | None:
     label_row.set_priority(priority=priority)
 
 if __name__ == "__main__":
-    runner.run(update_every=3600, max_workers=1, num_retries=3)
+    from typer import Typer
+    app = Typer(add_completion=False, rich_markup_mode="rich")
+    app.command()(runner.__call__)
+    app()
 ```
 
 > 💡 For the full end-to-end example, please see [here](TODO).

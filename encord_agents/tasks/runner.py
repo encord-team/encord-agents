@@ -434,7 +434,6 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
                             self._execute_tasks(
                                 zip(batch, batch_lrs),
                                 runner_agent,
-                                num_threads,
                                 num_retries,
                                 pbar=pbar,
                             )
@@ -451,31 +450,10 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
                         with project.create_bundle() as lr_bundle:
                             for lr in batch_lrs:
                                 lr.initialise_labels(bundle=lr_bundle)
-                        self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_threads, num_retries, pbar=pbar)
+                        self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
 
         except KeyboardInterrupt:
             # TODO run thread until end, then stop
             exit()
 
 
-if __name__ == "__main__":
-    # TODO remove me
-    project_hash = "a918b378-1041-489b-b228-ab684c3fb026"
-    runner = Runner(project_hash=project_hash)
-
-    from encord_agents.tasks.dependencies import dep_video_iterator
-    from encord_agents.core.data_model import Frame
-
-    @runner.stage(stage="pre-label")
-    def run_something(
-        lr: LabelRowV2, 
-        frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)],
-    ):
-        print([f.content.shape[0] for f in frames])
-        return "annotate"
-
-    from typer import Typer
-
-    app = Typer(add_completion=False, rich_markup_mode="rich")
-    app.command()(runner.__call__)
-    app()
