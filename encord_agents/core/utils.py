@@ -94,16 +94,12 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
     file_type, suffix = mimetype.split("/")[:2]
 
     if file_type == "video" and lr.data_type != DataType.VIDEO:
-        raise ValueError(
-            f"Mimetype {mimetype} and lr data type {lr.data_type} did not match"
-        )
+        raise ValueError(f"Mimetype {mimetype} and lr data type {lr.data_type} did not match")
     elif file_type == "image" and lr.data_type not in {
         DataType.IMG_GROUP,
         DataType.IMAGE,
     }:
-        raise ValueError(
-            f"Mimetype {mimetype} and lr data type {lr.data_type} did not match"
-        )
+        raise ValueError(f"Mimetype {mimetype} and lr data type {lr.data_type} did not match")
     elif file_type not in {"image", "video"}:
         raise ValueError("File type not video or image")
 
@@ -138,9 +134,7 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         The file path for the requested asset.
 
     """
-    video_item, images_list = lr._project_client.get_data(
-        lr.data_hash, get_signed_url=True
-    )
+    video_item, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
     if lr.data_type in [DataType.VIDEO, DataType.IMAGE] and video_item:
         url = video_item["file_link"]
     elif lr.data_type == DataType.IMG_GROUP and images_list:
@@ -163,9 +157,7 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
     files_to_unlink = [file_path]
     if lr.data_type == DataType.VIDEO and frame is not None:  # Get that exact frame
         frame_content = get_frame(file_path, frame)
-        frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(
-            ".png"
-        )
+        frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
         cv2.imwrite(frame_file.as_posix(), frame_content)
         files_to_unlink.append(frame_file)
         file_path = frame_file

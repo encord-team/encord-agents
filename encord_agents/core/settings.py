@@ -12,24 +12,20 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    ssh_key_file: Optional[Path] = Field(
-        validation_alias="ENCORD_SSH_KEY_FILE", default=None
-    )
+    ssh_key_file: Optional[Path] = Field(validation_alias="ENCORD_SSH_KEY_FILE", default=None)
     """
     The path to the private ssh key file to authenticate with Encord.
 
     Either this or the `ENCORD_SSH_KEY` needs to be set for most use-cases.
-    To setup a key with Encord, please see 
+    To setup a key with Encord, please see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
-    ssh_key_content: Optional[str] = Field(
-        validation_alias="ENCORD_SSH_KEY", default=None
-    )
+    ssh_key_content: Optional[str] = Field(validation_alias="ENCORD_SSH_KEY", default=None)
     """
     The content of the private ssh key file to authenticate with Encord.
 
     Either this or the `ENCORD_SSH_KEY` needs to be set for most use-cases.
-    To setup a key with Encord, please see 
+    To setup a key with Encord, please see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
 
@@ -43,8 +39,4 @@ class Settings(BaseSettings):
 
     @property
     def ssh_key(self) -> str:
-        return (
-            self.ssh_key_content
-            if self.ssh_key_content
-            else self.ssh_key_file.read_text()
-        )
+        return self.ssh_key_content if self.ssh_key_content else self.ssh_key_file.read_text()

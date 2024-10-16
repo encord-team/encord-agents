@@ -1,7 +1,7 @@
 """
 Main file for the command line interface.
 
-Collects all the sub commands of the CLI. 
+Collects all the sub commands of the CLI.
 
 Example usage:
 

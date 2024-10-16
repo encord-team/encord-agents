@@ -1,7 +1,7 @@
 """
 GCP related CLI actions.
 
-This file assists in initializing, running, and deploying Google cloud run 
+This file assists in initializing, running, and deploying Google cloud run
 functions.
 """
 
@@ -82,9 +82,7 @@ def move_src(src_file: Path, destination: Path):
 
 
 def write_template_file(destination: Path, with_asset: bool):
-    (destination / "main.py").write_text(
-        _TEMPLATE_CONTENT_W_ASSET if with_asset else _TEMPLATE_CONTENT_WO_ASSET
-    )
+    (destination / "main.py").write_text(_TEMPLATE_CONTENT_W_ASSET if with_asset else _TEMPLATE_CONTENT_WO_ASSET)
 
 
 def print_instructions(destination: Path):
@@ -95,9 +93,7 @@ def print_instructions(destination: Path):
         destination: The directory where the project was initialized.
     """
     cwd = Path.cwd()
-    rel_path = (
-        destination.relative_to(cwd) if destination.is_relative_to(cwd) else destination
-    )
+    rel_path = destination.relative_to(cwd) if destination.is_relative_to(cwd) else destination
 
     tree = Tree(f":open_file_folder: {rel_path}")
     tree.add(":page_facing_up: requirements.txt")
@@ -120,7 +116,7 @@ python -m pip install -r requirements.txt
 
 Now you can edit the [blue]`main.py`[/blue] to your needs.
 
-To test your function, please see [link=https://google.com]the docs :open_book:[/link] 
+To test your function, please see [link=https://google.com]the docs :open_book:[/link]
 to learn how to use [cyan]`encord-agents gcp run`[/cyan] and [cyan]`encord-agents test local`[/cyan].
 """,
         ),
@@ -168,10 +164,8 @@ def init(
 def run(
     target: Annotated[
         str,
-        Argument(
-            help="The name of the function within the [blue]`main.py`[/blue] file to use as cloud function."
-        ),
-    ]
+        Argument(help="The name of the function within the [blue]`main.py`[/blue] file to use as cloud function."),
+    ],
 ):
     from pydantic import ValidationError
 
@@ -198,10 +192,8 @@ def run(
 def deploy(
     target: Annotated[
         str,
-        Argument(
-            help="The name of the function within the [blue]`main.py`[/blue] file to use as cloud function."
-        ),
-    ]
+        Argument(help="The name of the function within the [blue]`main.py`[/blue] file to use as cloud function."),
+    ],
 ):
     panel = Panel(
         f"""

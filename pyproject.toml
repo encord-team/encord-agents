@@ -44,10 +44,11 @@ zipp = { version = "3.15.0", optional = true }
 ipdb = "^0.13.13"
 ipython = "^8.28.0"
 pyfzf = "^0.3.1"
-mkdocstrings = {extras = ["python"], version = "^0.26.1"}
+mkdocstrings = { extras = ["python"], version = "^0.26.1" }
 mkdocs = "^1.6.1"
 mkdocs-material = "^9.5.40"
 mkdocs-glightbox = "^0.4.0"
+ruff = "^0.6.9"
 
 
 [tool.poetry.extras]
@@ -79,3 +80,11 @@ encord-agents = "encord_agents.cli.main:app"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["W", "Q", "I"]
+ignore = ["F401", "E402", "W291"]

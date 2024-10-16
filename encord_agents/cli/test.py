@@ -20,9 +20,7 @@ app = Typer(
 def local(
     target: Annotated[
         str,
-        Argument(
-            help="Name of the localhost endpoint to hit ('http://localhost/{target}')"
-        ),
+        Argument(help="Name of the localhost endpoint to hit ('http://localhost/{target}')"),
     ],
     url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
     port: Annotated[int, Option(help="Local host port to hit")] = 8080,
@@ -59,7 +57,7 @@ def local(
 
         payload = match.groupdict()
         payload["frame"] = payload["frame"] or 0
-    except:
+    except Exception:
         rich.print(
             """Could not match url to the expected format.
 Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{project_hash}[/magenta]/[magenta]{data_hash}[/magenta](/[magenta]{frame}[/magenta])[/blue]
@@ -76,5 +74,5 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
     print(response.status_code)
     try:
         pprint(response.json())
-    except:
+    except Exception:
         print(response.content.decode("utf-8"))

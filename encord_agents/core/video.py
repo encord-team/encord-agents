@@ -1,10 +1,11 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
 import cv2
 import numpy as np
 from numpy.typing import NDArray
+
+from encord_agents.core.data_model import Frame
 
 
 def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
@@ -38,23 +39,7 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
     return frame.astype(np.uint8)
 
 
-@dataclass(frozen=True)
-class VideoFrame:
-    """
-    A dataclass to hold the content of one frame in a video.
-    """
-
-    frame: int
-    """
-    The frame number within the video
-    """
-    content: NDArray[np.uint8]
-    """
-    A [h,w,c] np.array with color RGB channels RGB.
-    """
-
-
-def iter_video(video_path: Path) -> Iterator[VideoFrame]:
+def iter_video(video_path: Path) -> Iterator[Frame]:
     """
     Iterate video frame by frame.
 
@@ -76,7 +61,7 @@ def iter_video(video_path: Path) -> Iterator[VideoFrame]:
     ret, frame = cap.read()
     while ret:
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        yield VideoFrame(frame=frame_num, content=rgb_frame.astype(np.uint8))
+        yield Frame(frame=frame_num, content=rgb_frame.astype(np.uint8))
 
         ret, frame = cap.read()
         frame_num += 1
