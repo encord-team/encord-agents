@@ -76,7 +76,7 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     return get_initialised_label_row(frame_data)
 
 
-def dep_asset(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData):
+def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData):
     """
     Dependency to inject the underlying asset of the frame data.
 
@@ -86,13 +86,13 @@ def dep_asset(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Fra
     Intended use:
 
         from encord_agents import FrameData
-        from encord_agents.fastapi.depencencies import dep_asset
+        from encord_agents.fastapi.depencencies import dep_single_frame
         ...
 
         @app.post("/my-route")
         def my_route(
             frame_data: FrameData,  # <- Automatically injected
-            frame: Annotated[NDArray[np.uint8], Depends(dep_asset)]
+            frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
         ):
             assert arr.ndim == 3, "Will work"
 

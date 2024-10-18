@@ -46,7 +46,7 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
 
     ```python
     from encord_agents import FrameData
-    from encord_agents.tasks.depencencies import dep_asset
+    from encord_agents.tasks.depencencies import dep_single_frame
     ...
 
     @runner.stage("<my_stage_name>")

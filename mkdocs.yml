@@ -20,10 +20,10 @@ nav:
       - "Intro": editor_agents/index.md
       - "GCP Cloud Functions": editor_agents/gcp.md
       - "FastAPI": editor_agents/fastapi.md
-      - "Examples": editor_agents/examples
+      - "Examples": editor_agents/examples/index.md
   - "Task Agents":
       - "Intro": task_agents/index.md
-      - "Examples": task_agents/examples
+      - "Examples": task_agents/examples/index.md
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md

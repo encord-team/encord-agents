@@ -47,7 +47,7 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     ```python
     from encord_agents import FrameData
     from encord_agents.gcp import editor_agent
-    from encord_agents.gcp.depencencies import dep_asset
+    from encord_agents.gcp.depencencies import dep_single_frame
     ...
 
     @editor_agent()

@@ -77,17 +77,17 @@ Refresh the browser to see the effect happening.
 
 ## Deployment
 
-To deploy your project via GCP, please follow these steps:
+This is an example of how you could deploy the agent to the cloud.
+Here are the official [Google Deploy Docs](https://cloud.google.com/functions/docs/create-deploy-gcloud).
+There are a couple of things that you need to pay attention to:
 
-`TODO didn't finish this yet`
+- You must make sure to authenticate `gcloud` and select the appropriate project first
+- You should configure a secret with the ssh_key content. Please see [Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets)
 
-This is an example of how you can deploy the function to the cloud.
-Make sure to authenticate `gcloud` and select the appropriate project first.
-
-[Google Deploy Docs](https://cloud.google.com/functions/docs/create-deploy-gcloud)
+A deployment command would look similar to this:
 
 ```shell
-cloud functions deploy my_agent \\
+gcloud functions deploy my_agent \\
     --entry-point my_agent \\
     --runtime python311 \\
     --trigger-http \\
@@ -98,5 +98,3 @@ cloud functions deploy my_agent \\
 ```
 
 Notice how we set secrets (the ssh key that the agent should use).
-Please see the google docs for more details.
-[Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets)
