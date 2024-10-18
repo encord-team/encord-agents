@@ -44,7 +44,7 @@ class Runner:
             raise Abort()
         return ph
 
-    def __init__(self, project_hash: str | None):
+    def __init__(self, project_hash: str | None = None):
         self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
