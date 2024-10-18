@@ -1,5 +1,5 @@
 <p align="center">
-<a href="https://docs.encord.com/docs/active-overview" target="_blank">Documentation</a> |
+<a href="https://agents-docs.encord.com/" target="_blank">Documentation</a> |
 <a href="https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing" target="_blank">Try it Now</a> |
 <a href="https://encord.com/blog/" target="_blank">Blog</a> |
 <a href="https://join.slack.com/t/encordactive/shared_invite/zt-1hc2vqur9-Fzj1EEAHoqu91sZ0CX0A7Q" target="_blank">Join our Community</a>
