@@ -1,5 +1,9 @@
 # Task Agents
 
+<a href="https://colab.research.google.com/drive/1nOVYEG-johzJK6R_mnkgjOiRJUuNIvOY?usp=sharing" target="_blank" style="text-decoration:none">
+  <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+</a>
+
 ## Example use-cases
 
 - _Pre-labeling_ of your data, e.g., with your own model or of-the-shelf models.

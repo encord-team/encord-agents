@@ -24,6 +24,7 @@ nav:
   - "Task Agents":
       - "Intro": task_agents/index.md
       - "Examples": task_agents/examples/index.md
+  - "Dependencies": dependencies.md
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
