@@ -26,7 +26,7 @@ def dep_client() -> EncordUserClient:
     @runner.stage("<my_stage_name>")
     def my_agent(
         client: Annotated[EncordUserClient, Depends(dep_client)]
-    ):
+    ) -> str:
         # Client will authenticated and ready to use.
         client.get_dataset("")
     ```
@@ -53,7 +53,7 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     def my_agent(
         lr: LabelRowV2,  # <- Automatically injected
         frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
-    ):
+    ) -> str:
         assert frame.ndim == 3, "Will work"
     ```
 
@@ -81,11 +81,11 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
     from encord_agents.tasks.depencencies import dep_video_iterator
     ...
 
-    @runner.stage("<stage-name>")
+    @runner.stage("<my_stage-name>")
     def my_agent(
         lr: LabelRowV2,  # <- Automatically injected
         video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)]
-    ):
+    ) -> str:
         for frame in video_frames:
             print(frame.frame, frame.content.shape)
     ```

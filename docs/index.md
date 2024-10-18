@@ -34,8 +34,6 @@ With just few lines of code, you can take automation to the next level.
 Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on data titles.
 
 ```python title="example_task_agent.py"
-from typing import Any
-
 from encord.objects import LabelRowV2
 from encord_agents.tasks import Runner
 
@@ -57,7 +55,7 @@ if __name__ == "__main__":
     runner.run()
 ```
 
-> 💡 For the full end-to-end example, please see [here](TODO).
+> 💡 For the full end-to-end example, please see [here](/).
 
 This repository provides utility functions and examples for building both [editor agents][editor_agents] and [task agents][task_agents].
 

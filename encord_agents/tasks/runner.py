@@ -2,11 +2,10 @@ import time
 import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Callable, Iterable, Optional, cast
+from typing import Callable, Iterable, Optional, cast
 from uuid import UUID
 
 import rich
-from encord.exceptions import InvalidArgumentsError
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.workflow import WorkflowStageType
@@ -21,13 +20,21 @@ from encord_agents.core.utils import get_user_client
 
 
 class RunnerAgent:
-    def __init__(self, name: str, callable: Callable[..., str]):
+    def __init__(self, name: str, callable: Callable[..., str | UUID]):
         self.name = name
         self.callable = callable
         self.dependant: Dependant = get_dependant(func=callable)
 
 
 class Runner:
+    """
+    Runs agents against Workflow projects.  
+
+    When called, it will iteratively run agent stages till they are empty.
+    By default, runner will exit after finishing the tasks identified at the point of trigger.
+    To automatically re-run, you can use the `refresh_every` keyword.
+    """
+
     @staticmethod
     def verify_project_hash(ph: str) -> str:
         try:
@@ -37,8 +44,8 @@ class Runner:
             raise Abort()
         return ph
 
-    def __init__(self, project_hash: str):
-        self.project_hash = self.verify_project_hash(project_hash)
+    def __init__(self, project_hash: str | None):
+        self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
 
@@ -50,7 +57,7 @@ class Runner:
 
         self.agents: list[RunnerAgent] = []
 
-    def _add_stage_agent(self, name: str, func: Callable[..., Any]):
+    def _add_stage_agent(self, name: str, func: Callable[..., str | UUID]):
         self.agents.append(RunnerAgent(name=name, callable=func))
 
     def stage(self, stage: str) -> Callable[[DecoratedCallable], DecoratedCallable]:
@@ -89,15 +96,21 @@ class Runner:
                             dependencies = solve_dependencies(
                                 context=context, dependant=runner_agent.dependant, stack=stack
                             )
-                            next_stage = runner_agent.callable(**dependencies.values)
-                            try:
-                                task.proceed(pathway_name=next_stage, bundle=bundle)
-                                if pbar is not None:
-                                    pbar.update(1)
-                                break
-                            except InvalidArgumentsError as e:
-                                print(e)
-                                traceback.print_exc()
+                            next_stage: UUID | str = runner_agent.callable(**dependencies.values)
+
+                            if isinstance(next_stage, UUID):
+                                task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
+                            else:
+                                try:
+                                    _next_stage = UUID(next_stage)
+                                    task.proceed(pathway_uuid=str(_next_stage), bundle=bundle)
+                                except ValueError:
+                                    task.proceed(pathway_name=next_stage, bundle=bundle)
+
+                            if pbar is not None:
+                                pbar.update(1)
+                            break
+
                         except Exception:
                             print(f"[attempt {attempt}/{num_retries}] Agent failed with error: ")
                             traceback.print_exc()
@@ -125,6 +138,7 @@ class Runner:
                 If `None`, they the runner will exit once task queue is empty.
             num_retries: If an agent fails on a task, how many times should the runner retry it?
             task_batch_size: Number of tasks for which labels are loaded into memory at once.
+            project_hash: the project hash if not defined at runner instantiation.
         Returns:
             None
         """
@@ -217,8 +231,8 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
 
     def run(self):
         """
-        Execute the runner. 
-        
+        Execute the runner.
+
         This function is intended to be called from the "main file".
         It is an entry point to be able to run the agent(s) via your shell
         with command line arguments.
@@ -229,7 +243,7 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
         runner = Runner(project_hash="<your_project_hash>")
 
         @runner.stage(name="...")
-        def your_func():
+        def your_func() -> str:
             ...
 
         if __name__ == "__main__":
@@ -246,6 +260,7 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
 
         """
         from typer import Typer
+
         app = Typer(add_completion=False, rich_markup_mode="rich")
         app.command()(self.__call__)
         app()

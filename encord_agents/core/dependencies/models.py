@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, TypeVar
+from uuid import UUID
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
@@ -7,7 +8,7 @@ from encord.workflow.stages.agent import AgentTask
 
 from encord_agents.core.data_model import FrameData
 
-DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., Any])
+DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., str | UUID])
 
 
 class Depends:

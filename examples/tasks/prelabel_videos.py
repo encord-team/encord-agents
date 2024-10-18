@@ -19,7 +19,7 @@ from numpy.typing import NDArray
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import Frame
-from encord_agents.tasks import Runner, Depends
+from encord_agents.tasks import Depends, Runner
 from encord_agents.tasks.dependencies import dep_video_iterator
 
 runner = Runner(project_hash="a918b378-1041-489b-b228-ab684c3fb026")
@@ -54,7 +54,9 @@ model = fake_predict
 
 
 @runner.stage(stage="pre-label")
-def run_something(lr: LabelRowV2, project: Project, frames: Annotated[Iterable[Frame], Depends(dep_video_iterator)]) -> str:
+def run_something(
+    lr: LabelRowV2, project: Project, frames: Annotated[Iterable[Frame], Depends(dep_video_iterator)]
+) -> str:
     ontology = project.ontology_structure
 
     for frame in frames:

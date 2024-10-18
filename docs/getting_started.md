@@ -55,23 +55,17 @@ from encord_agents.tasks import Runner
 runner = Runner(project_hash="<your_project_hash>")
 
 @runner.stage(name="pre-label")
-def my_agent_logic(lr: LabelRowV2) -> str | None:
-    location = "New York" if "NY" in lr.data_title else "San Francisco"
-
-    priority = 0.
-    if location == "New York":
-        priority = 1.
-    else if location == "San Francisco":
-        priority = 0.5
-
-    label_row.set_priority(priority=priority)
+def my_agent_logic(lr: LabelRowV2) -> str:
+    # ...
+    return "annotate"
 
 if __name__ == "__main__":
     runner.run()
 ```
 
 Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class] instance.
-That label row is associated with a task which is currently sitting in the `"prioritize"` agent stage.
+That label row is associated with a task that is currently sitting in the `"pre-label"` agent stage.
+Also, the agent is returning the name (
 
 Now, it's our job to define what's supposed to happen with it.
 In this example, we'll keep it simple and assign a priority based on the file name.
@@ -81,8 +75,9 @@ Update the `my_agent_logic` to look like this:
 
 ```python
 @runner.stage(name="prioritize")
-def my_agent_logic(lr: LabelRowV2) -> str | None:
+def my_agent_logic(lr: LabelRowV2) -> str:
     lr.set_priority(priority=float("london" in lr.data_title))
+    return "annotate"
 ```
 
 > **Too simple?**  

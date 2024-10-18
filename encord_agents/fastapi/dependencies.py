@@ -13,7 +13,12 @@ import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
-from fastapi import Depends
+
+try:
+    from fastapi import Depends
+except ModuleNotFoundError:
+    print('To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"')
+    exit()
 
 from encord_agents.core.data_model import Frame, FrameData
 from encord_agents.core.utils import (
