@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "cord-docs"
+  },
+  "targets": {
+    "cord-docs": {
+      "hosting": {
+        "prod": [
+          "agents-docs"
+        ]
+      }
+    }
+  }
+}

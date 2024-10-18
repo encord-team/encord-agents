@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "target": "prod",
+    "public": "site",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "!/@(js|css)/**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
