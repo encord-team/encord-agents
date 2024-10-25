@@ -7,3 +7,5 @@
 # Prioritizing with GPT-4o mini
 
 # Evaluating Training projects
+
+# Transferring labels upon completion
