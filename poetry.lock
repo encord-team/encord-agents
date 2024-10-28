@@ -706,6 +706,21 @@ markupsafe = ">=2.0.1"
 mkdocs = ">=1.1"
 
 [[package]]
+name = "mkdocs-codeinclude-plugin"
+version = "0.2.1"
+description = "A plugin to include code snippets into mkdocs pages"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mkdocs-codeinclude-plugin-0.2.1.tar.gz", hash = "sha256:305387f67a885f0e36ec1cf977324fe1fe50d31301147194b63631d0864601b1"},
+    {file = "mkdocs_codeinclude_plugin-0.2.1-py3-none-any.whl", hash = "sha256:172a917c9b257fa62850b669336151f85d3cd40312b2b52520cbcceab557ea6c"},
+]
+
+[package.dependencies]
+mkdocs = ">=1.2"
+pygments = ">=2.9.0"
+
+[[package]]
 name = "mkdocs-get-deps"
 version = "0.2.0"
 description = "MkDocs extension that lists all dependencies according to a mkdocs.yml file"
@@ -1751,4 +1766,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ae7f626ebc8fa83e29708b43fa7af4f89b3e02543cec7021b8a425db00b8f3d5"
+content-hash = "33279d559c29687054e0efd5edcf283358da7074199749c2bed9fa6a5f58caf4"

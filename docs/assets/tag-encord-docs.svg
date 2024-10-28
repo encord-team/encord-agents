@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="117" height="20">
+    <linearGradient id="b" x2="0" y2="100%">
+        <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+        <stop offset="1" stop-opacity=".1"/>
+    </linearGradient>
+    <clipPath id="a">
+        <rect width="117" height="20" rx="3" fill="#fff"/>
+    </clipPath>
+    <g clip-path="url(#a)">
+        <path fill="#555" d="M0 0h30v20H0z"/>
+        <path fill="#5e44ff" d="M30 0h87v20H30z"/>
+        <path fill="url(#b)" d="M0 0h117v20H0z"/>
+    </g>
+    <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
+
+<svg x="4px" y="4px" width="22px" height="12px"  id="Layer_1" data-name="Layer 1" viewBox="0 0 99 112">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#radial-gradient);
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        stroke-width: 0px;
+      }
+
+      .cls-2 {
+        fill: url(#radial-gradient-2);
+      }
+
+      .cls-3 {
+        fill: url(#radial-gradient-3);
+      }
+    </style>
+    <radialGradient id="radial-gradient" cx="-911.18" cy="601.54" fx="-911.18" fy="601.54" r="1" gradientTransform="translate(-229962.05 56512.44) rotate(132.29) scale(215.87 -219.7)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".99" stop-color="#ffffff"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-2" cx="-911.18" cy="601.54" fx="-911.18" fy="601.54" r="1" gradientTransform="translate(-229962.05 56512.44) rotate(132.29) scale(215.87 -219.7)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".99" stop-color="#ffffff"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient-3" cx="-911.18" cy="601.54" fx="-911.18" fy="601.54" r="1" gradientTransform="translate(-229962.05 56512.44) rotate(132.29) scale(215.87 -219.7)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".99" stop-color="#ffffff"/>
+    </radialGradient>
+  </defs>
+  <path class="cls-1" d="m98.57,44.2c0,4.29-2.84,8.2-7.51,11.14l-.03.02-1.68.97-3.02,1.75c-4.71-1.91-10.47-3.03-16.68-3.03-7.4,0-14.15,1.59-19.27,4.22l-38.15,22.09c-7.4-3-12.24-7.94-12.24-13.54,0-4.29,2.84-8.2,7.5-11.14h0l4.73-2.74c4.72,1.91,10.47,3.03,16.68,3.03,7.37,0,14.09-1.58,19.2-4.18l38.2-22.13c7.41,3,12.24,7.95,12.24,13.54h0Z"/>
+  <path class="cls-2" d="m98.57,71.62c0,4.29-2.84,8.2-7.51,11.14l-.03.02-1.68.97-41.23,23.88c-5.11,2.6-11.83,4.18-19.2,4.18-15.98,0-28.92-7.42-28.92-16.57,0-4.29,2.84-8.2,7.5-11.14h0l4.73-2.74c4.72,1.91,10.47,3.03,16.68,3.03,7.37,0,14.09-1.58,19.2-4.18l38.2-22.13c7.4,3.01,12.24,7.95,12.24,13.54h0Z"/>
+  <path class="cls-3" d="m98.57,16.77c0,4.29-2.84,8.2-7.51,11.14l-.03.02-1.68.97-3.02,1.75c-4.71-1.91-10.47-3.03-16.68-3.03-7.4,0-14.15,1.59-19.27,4.22L12.24,53.92c-7.4-3-12.24-7.94-12.24-13.54,0-4.29,2.84-8.2,7.5-11.14h0L50.39,4.41C55.5,1.79,62.25.19,69.65.19c15.97,0,28.92,7.42,28.92,16.57Z"/>
+</svg>
+        <text x="245" y="140" transform="scale(.1)" textLength="30">
+    </text>
+    <text x="725" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="680">
+        Encord Docs
+    </text>
+    <text x="725" y="140" transform="scale(.1)" textLength="680">
+        Encord Docs
+    </text>
+</g>
+</svg>

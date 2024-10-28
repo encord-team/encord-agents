@@ -1,16 +1,21 @@
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Generator, Iterator
+from typing import Generator, Iterator, Callable, overload
 
 import cv2
+from encord.workflow.common import WorkflowTask
+from encord.workflow.workflow import WorkflowStage
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
+from encord.project import Project
 
 from encord_agents.core.data_model import Frame
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
+from . import Depends
 
 
 def dep_client() -> EncordUserClient:
@@ -105,3 +110,88 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
 
     with download_asset(lr, None) as asset:
         yield iter_video(asset)
+
+
+@dataclass(frozen=True)
+class Twin:
+    """
+    Dataclass to hold "label twin" information.
+    """
+    label_row: LabelRowV2
+    task: WorkflowTask | None
+
+
+def dep_twin_label_row(twin_project_hash: str, init_labels: bool = True, include_task: bool = False) -> Callable[[LabelRowV2], Twin | None]:
+    """
+    Dependency to link assets between two Projects. When your `Runner` in running on 
+    `<project_hash_a>`, you can use this to get a `Twin` of labels and the underlying 
+    task in the "twin project" with `<project_hash_b>`.
+    
+    This is useful in situations like:
+        
+    * When you want to transfer labels from a source project" to a sink project.
+    * If you want to compare labels to labels from other projects upon label submission.
+    * If you want to extend an existing project with labels from another project on the same underlying data.
+
+    **Example:**
+
+    ```python
+    from encord.workflow.common import WorkflowTask
+    from encord.objects.ontology_labels_impl import LabelRowV2
+    from encord_agents.tasks.dependencies import Twin, dep_twin_label_row
+    ...
+    runner = Runner(project_hash="<project_hash_a>")
+
+    @runner.stage("<my_stage_name_in_project_a>")
+    def my_agent(
+        project_a_label_row: LabelRowV2,
+        twin: Annotated[
+            Twin, Depends(dep_twin_label_row(twin_project_hash="<project_hash_b>"))
+        ],
+    ) -> str | None:
+        label_row_from_project_b: LabelRowV2 = twin.label_row
+        task_from_project_b: WorkflowTask = instance.get_answer(attribute=checklist_attribute)
+    ```
+
+    Args:
+        twin_project_hash: The project has of the twin project (attached to the same datasets) 
+            from which you want to load the additional data.
+        init_labels: If true, the label row will be initialized before calling the agent.
+        include_task: If true, the `task` field of the `Twin` will be populated. If population 
+            failes, e.g., for non-workflow projects, the task will also be None.
+
+    Returns:
+        The twin.
+    """
+    client = get_user_client()
+    twin_project = client.get_project(twin_project_hash)
+
+    label_rows: dict[str, LabelRowV2] = {lr.data_hash: lr for lr in twin_project.list_label_rows_v2()}
+    def get_twin_label_row(lr_original: LabelRowV2) -> Twin | None:
+        lr_twin = label_rows.get(lr_original.data_hash)
+        if lr_twin is None:
+            return None
+
+        if init_labels:
+            lr_twin.initialise_labels()
+
+        graph_node = lr_twin.workflow_graph_node
+        task: WorkflowTask | None = None
+
+        if include_task and graph_node is not None:
+            try:
+                stage: WorkflowStage = twin_project.workflow.get_stage(uuid=graph_node.uuid)
+                for task in stage.get_tasks(data_hash=lr_original.data_hash):
+                    pass
+            except Exception:
+                # TODO: print proper warning.
+                pass
+
+        return Twin(label_row=lr_twin, task=task)
+    return get_twin_label_row
+
+
+
+
+
+    

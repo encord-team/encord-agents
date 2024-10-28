@@ -11,6 +11,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
 from encord.workflow.stages.agent import AgentTask
+from encord.workflow.workflow import WorkflowStage
 from tqdm.auto import tqdm
 from typer import Abort
 
@@ -18,10 +19,11 @@ from encord_agents.core.dependencies.models import Context, DecoratedCallable, D
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
 
+TaskAgentReturn = str | UUID | None
 
 class RunnerAgent:
-    def __init__(self, name: str, callable: Callable[..., str | UUID]):
-        self.name = name
+    def __init__(self, identity: str | UUID, callable: Callable[..., TaskAgentReturn]):
+        self.name = identity
         self.callable = callable
         self.dependant: Dependant = get_dependant(func=callable)
 
@@ -49,28 +51,38 @@ class Runner:
         self.client = get_user_client()
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
 
-        self.valid_stage_names: set[str] | None = None
+        self.valid_stages: set[WorkflowStage] | None = None
         if self.project is not None:
-            self.valid_stage_names = {
-                s.title for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT
+            self.valid_stages = {
+                s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT
             }
 
         self.agents: list[RunnerAgent] = []
 
-    def _add_stage_agent(self, name: str, func: Callable[..., str | UUID]):
-        self.agents.append(RunnerAgent(name=name, callable=func))
+    def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn]):
+        self.agents.append(RunnerAgent(identity=identity, callable=func))
 
-    def stage(self, stage: str) -> Callable[[DecoratedCallable], DecoratedCallable]:
+    def stage(self, stage: str | UUID) -> Callable[[DecoratedCallable], DecoratedCallable]:
         if stage in [a.name for a in self.agents]:
             self.abort_with_message(
                 f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
             )
 
-        if self.valid_stage_names is not None and stage not in self.valid_stage_names:
-            agent_stage_names = ",".join([f"[magenta]`{k}`[/magenta]" for k in self.valid_stage_names])
-            self.abort_with_message(
-                rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
-            )
+
+        if self.valid_stages is not None:
+            selected_stage: WorkflowStage | None = None
+            for v_stage in self.valid_stages:
+                attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
+                if attr == stage:
+                    selected_stage = v_stage
+
+            if selected_stage is None:
+                agent_stage_names = ",".join([f"[magenta]`{k}`[/magenta]" for k in self.valid_stages])
+                self.abort_with_message(
+                    rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
+                )
+            else:
+                stage = selected_stage.uuid
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
             self._add_stage_agent(stage, func)
@@ -90,15 +102,16 @@ class Runner:
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
+                    context = Context(project=project, task=task, label_row=label_row)
+                    dependencies = solve_dependencies(
+                        context=context, dependant=runner_agent.dependant, stack=stack
+                    )
                     for attempt in range(1, num_retries + 1):
                         try:
-                            context = Context(project=project, task=task, label_row=label_row)
-                            dependencies = solve_dependencies(
-                                context=context, dependant=runner_agent.dependant, stack=stack
-                            )
-                            next_stage: UUID | str = runner_agent.callable(**dependencies.values)
-
-                            if isinstance(next_stage, UUID):
+                            next_stage = runner_agent.callable(**dependencies.values)
+                            if next_stage is None:
+                                pass
+                            elif isinstance(next_stage, UUID):
                                 task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
                             else:
                                 try:
@@ -159,7 +172,10 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
             exit()  ## shouldn't be necessary but pleases pyright
 
         # Verify stages
-        agent_stages = {s.title: s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT}
+        agent_stages: dict[str | UUID, WorkflowStage] = {
+            **{s.title: s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT},
+            **{s.uuid: s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT},
+        }
         for runner_agent in self.agents:
             fn_name = getattr(callable, "__name__", "agent function")
             agent_stage_names = ",".join([f"[magenta]`{k}`[/magenta]" for k in agent_stages.keys()])
@@ -197,6 +213,8 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
                 tasks = list(stage.get_tasks())
                 pbar = tqdm(desc="Executing tasks", total=len(tasks))
                 for task in tasks:
+                    if not isinstance(task, AgentTask):
+                        continue
                     batch.append(task)
                     if len(batch) == task_batch_size:
                         label_rows = {

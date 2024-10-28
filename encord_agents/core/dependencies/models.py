@@ -8,7 +8,7 @@ from encord.workflow.stages.agent import AgentTask
 
 from encord_agents.core.data_model import FrameData
 
-DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., str | UUID])
+DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., str | UUID | None])
 
 
 class Depends:

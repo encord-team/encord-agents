@@ -115,7 +115,7 @@ def analyze_param(
 
         if isinstance(agent_annotation, Depends):
             depends = agent_annotation
-    elif annotation is LabelRowV2 or annotation is AgentTask:
+    elif annotation is LabelRowV2 or annotation is AgentTask or annotation is FrameData:
         return ParamDetails(type_annotation=annotation, depends=None)
 
     # Get Depends from default value
@@ -172,7 +172,6 @@ def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTas
         elif param_field.type_annotation is Project:
             values[param_field.name] = context.project
         else:
-            __import__("ipdb").set_trace()
             raise ValueError(
                 f"Agent function is specifying a field `{param_field.name} ({param_field.type_annotation})` which is not supported. Consider wrapping it in a `Depends` to define how this value should be obtained."
             )
