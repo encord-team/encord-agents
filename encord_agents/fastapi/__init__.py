@@ -1,4 +1,4 @@
-from .dependencies import dep_single_frame, dep_client, dep_label_row
+from .dependencies import dep_client, dep_label_row, dep_single_frame
 from .utils import verify_auth
 
 __ALL__ = [

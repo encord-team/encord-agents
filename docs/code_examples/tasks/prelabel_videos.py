@@ -15,12 +15,11 @@ import numpy as np
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
-from numpy.typing import NDArray
-from typing_extensions import Annotated
-
 from encord_agents.core.data_model import Frame
 from encord_agents.tasks import Depends, Runner
 from encord_agents.tasks.dependencies import dep_video_iterator
+from numpy.typing import NDArray
+from typing_extensions import Annotated
 
 runner = Runner(project_hash="a918b378-1041-489b-b228-ab684c3fb026")
 
@@ -55,7 +54,9 @@ model = fake_predict
 
 @runner.stage(stage="pre-label")
 def run_something(
-    lr: LabelRowV2, project: Project, frames: Annotated[Iterable[Frame], Depends(dep_video_iterator)]
+    lr: LabelRowV2,
+    project: Project,
+    frames: Annotated[Iterable[Frame], Depends(dep_video_iterator)],
 ) -> str:
     ontology = project.ontology_structure
 
@@ -63,7 +64,9 @@ def run_something(
         outputs = model(frame.content)
         for output in outputs:
             ins = ontology.objects[output.label].create_instance()
-            ins.set_for_frames(frames=frame.frame, coordinates=output.coords, confidence=output.conf)
+            ins.set_for_frames(
+                frames=frame.frame, coordinates=output.coords, confidence=output.conf
+            )
 
             lr.add_object_instance(ins)
 

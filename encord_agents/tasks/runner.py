@@ -21,6 +21,7 @@ from encord_agents.core.utils import get_user_client
 
 TaskAgentReturn = str | UUID | None
 
+
 class RunnerAgent:
     def __init__(self, identity: str | UUID, callable: Callable[..., TaskAgentReturn]):
         self.name = identity
@@ -30,7 +31,7 @@ class RunnerAgent:
 
 class Runner:
     """
-    Runs agents against Workflow projects.  
+    Runs agents against Workflow projects.
 
     When called, it will iteratively run agent stages till they are empty.
     By default, runner will exit after finishing the tasks identified at the point of trigger.
@@ -53,9 +54,7 @@ class Runner:
 
         self.valid_stages: set[WorkflowStage] | None = None
         if self.project is not None:
-            self.valid_stages = {
-                s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT
-            }
+            self.valid_stages = {s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT}
 
         self.agents: list[RunnerAgent] = []
 
@@ -67,7 +66,6 @@ class Runner:
             self.abort_with_message(
                 f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
             )
-
 
         if self.valid_stages is not None:
             selected_stage: WorkflowStage | None = None
@@ -103,9 +101,7 @@ class Runner:
             for task, label_row in tasks:
                 with ExitStack() as stack:
                     context = Context(project=project, task=task, label_row=label_row)
-                    dependencies = solve_dependencies(
-                        context=context, dependant=runner_agent.dependant, stack=stack
-                    )
+                    dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
                     for attempt in range(1, num_retries + 1):
                         try:
                             next_stage = runner_agent.callable(**dependencies.values)

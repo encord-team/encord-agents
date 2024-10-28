@@ -1,21 +1,18 @@
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Generator, Iterator, Callable, overload
+from typing import Callable, Generator, Iterator
 
 import cv2
-from encord.workflow.common import WorkflowTask
-from encord.workflow.workflow import WorkflowStage
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
+from encord.workflow.common import WorkflowTask
+from encord.workflow.workflow import WorkflowStage
 from numpy.typing import NDArray
-from encord.project import Project
 
 from encord_agents.core.data_model import Frame
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
-from . import Depends
 
 
 def dep_client() -> EncordUserClient:
@@ -117,18 +114,21 @@ class Twin:
     """
     Dataclass to hold "label twin" information.
     """
+
     label_row: LabelRowV2
     task: WorkflowTask | None
 
 
-def dep_twin_label_row(twin_project_hash: str, init_labels: bool = True, include_task: bool = False) -> Callable[[LabelRowV2], Twin | None]:
+def dep_twin_label_row(
+    twin_project_hash: str, init_labels: bool = True, include_task: bool = False
+) -> Callable[[LabelRowV2], Twin | None]:
     """
-    Dependency to link assets between two Projects. When your `Runner` in running on 
-    `<project_hash_a>`, you can use this to get a `Twin` of labels and the underlying 
+    Dependency to link assets between two Projects. When your `Runner` in running on
+    `<project_hash_a>`, you can use this to get a `Twin` of labels and the underlying
     task in the "twin project" with `<project_hash_b>`.
-    
+
     This is useful in situations like:
-        
+
     * When you want to transfer labels from a source project" to a sink project.
     * If you want to compare labels to labels from other projects upon label submission.
     * If you want to extend an existing project with labels from another project on the same underlying data.
@@ -154,10 +154,10 @@ def dep_twin_label_row(twin_project_hash: str, init_labels: bool = True, include
     ```
 
     Args:
-        twin_project_hash: The project has of the twin project (attached to the same datasets) 
+        twin_project_hash: The project has of the twin project (attached to the same datasets)
             from which you want to load the additional data.
         init_labels: If true, the label row will be initialized before calling the agent.
-        include_task: If true, the `task` field of the `Twin` will be populated. If population 
+        include_task: If true, the `task` field of the `Twin` will be populated. If population
             failes, e.g., for non-workflow projects, the task will also be None.
 
     Returns:
@@ -167,6 +167,7 @@ def dep_twin_label_row(twin_project_hash: str, init_labels: bool = True, include
     twin_project = client.get_project(twin_project_hash)
 
     label_rows: dict[str, LabelRowV2] = {lr.data_hash: lr for lr in twin_project.list_label_rows_v2()}
+
     def get_twin_label_row(lr_original: LabelRowV2) -> Twin | None:
         lr_twin = label_rows.get(lr_original.data_hash)
         if lr_twin is None:
@@ -188,10 +189,5 @@ def dep_twin_label_row(twin_project_hash: str, init_labels: bool = True, include
                 pass
 
         return Twin(label_row=lr_twin, task=task)
+
     return get_twin_label_row
-
-
-
-
-
-    
