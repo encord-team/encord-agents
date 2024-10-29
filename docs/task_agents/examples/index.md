@@ -24,6 +24,7 @@ The code will
 - Set the priority as a number between zero and one.
 - Pass the task to the annotation stage by returning the appropriate pathway uuid.
 
+**To run the agent, follow these steps:**
 To make this example run in practice, you need to
 
 1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
@@ -101,6 +102,50 @@ Make sure that both projects are pointing to the same dataset(s).
 
 Now you should see tasks that have been approved by review starting to move to the Complete state and labels starting to show up
 
+## Pre-label video with _fake_ predictions
+
+Suppose yuou have a _fake_ model like this one, which predicts labels, bounding boxes and, confidenceds.
+
+<!--codeinclude-->
+
+[Fake model predictions](../../code_examples/tasks/prelabel_videos.py) lines:28-51
+
+<!--/codeinclude-->
+
+And you have an ontology looking like this:
+
+<figure style="text-align: center">
+  <img src="../../assets/examples/tasks_agents/prelabel_video_ontology.png" width="100%"/>
+  Project ontology.
+</figure>
+
+If you then set up a workflow like this one with a pre-labeling agent node before the annotation stage,
+you will be able to pre-label the tasks with the model predictions.
+
+<figure style="text-align: center">
+  <img src="../../assets/examples/tasks_agents/prelabel_video_workflow.png" width="100%"/>
+  Project workflow.
+</figure>
+
+Then you can make a pre-labeling agent that looks like this:
+
+<!--codeinclude-->
+
+[prelabel_video.py](../../code_examples/tasks/prelabel_videos.py) lines:10-78
+
+<!--/codeinclude-->
+
+Notice how we use the [`dep_video_iterator` dependency](../../reference/task_agents.md#encord_agents.tasks.dependencies.dep_video_iterator) to automatically load in an iterator of frames in the form or RGB np arrays from the video.
+
+**To run the agent, follow these steps:**
+
+1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
+1. Ensure that your project has a stage names "pre-label" with a pathway names "annotate" and an ontology similar to the above.
+1. Replace `<project_hash>` with your own project hash.
+1. Run the file: `python prelabel_video.py`
+
+Once you start annotating upon agent completion, you should see frames pre-populated with bounding boxes.
+
 ## Examples that we're working on
 
 - Pre-labeling with YoloWorld
@@ -108,6 +153,5 @@ Now you should see tasks that have been approved by review starting to move to t
 - Routing with Gemini
 - Prioritizing with GPT-4o mini
 - Evaluating Training projects
-- Transferring labels upon completion
 - HF Image segmentation API
 - HF LLM API to classify frames

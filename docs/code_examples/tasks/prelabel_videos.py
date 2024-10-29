@@ -21,7 +21,7 @@ from encord_agents.tasks.dependencies import dep_video_iterator
 from numpy.typing import NDArray
 from typing_extensions import Annotated
 
-runner = Runner(project_hash="a918b378-1041-489b-b228-ab684c3fb026")
+runner = Runner(project_hash="<project_hash>")
 
 
 # === BEGIN FAKE MODEL === #
@@ -35,7 +35,7 @@ class ModelPrediction:
 def fake_predict(image: NDArray[np.uint8]) -> list[ModelPrediction]:
     return [
         ModelPrediction(
-            label=random.choice(range(10)),
+            label=random.choice(range(3)),
             coords=BoundingBoxCoordinates(
                 top_left_x=random.random() * 0.5,
                 top_left_y=random.random() * 0.5,

@@ -23,7 +23,7 @@ source venv/bin/activate
 Now, install `encord-agents`.
 
 ```shell
-python -m pip install "git+https://github.com/encord-team/encord-agents#egg=encord-agents[core]"
+python -m pip install git+https://github.com/encord-team/encord-agents
 ```
 
 `# TODO ensure it works`
