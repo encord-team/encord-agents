@@ -25,14 +25,16 @@
 Easily build agents for the Encord echo system.
 With just few lines of code, you can take automation to the next level.
 
-For a workflow with a prioritization agent node looking like this:
+For a [workflow][docs-workflow] with a prioritization agent node looking like this:
 
 ![](assets/examples/tasks_agents/prioritize_by_title_workflow.png)
 
 Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on data titles.
 
 <!--codeinclude-->
-[](code_examples/tasks/prioritize_by_data_title.py)
+
+[](code_examples/tasks/prioritize_by_data_title_specific.py)
+
 <!--/codeinclude-->
 
 > 💡 For the full end-to-end example, please see [here](/getting_started).
@@ -50,9 +52,9 @@ This repository provides utility functions and examples for building both [edito
 
 ![Decision tree for which agent to use](assets/decide-on-agent-type.png)
 
-If you plan to build an editor agent, please go to the [Editor agents section](/editor-agents/).
+If you plan to build an editor agent, please go to the [Editor agents section](editor_agents/).
 
-If you plan to build a task agent, please go to the [Task agents section](/task-agents/).
+If you plan to build a task agent, please go to the [Task agents section](task_agents/).
 
 [editor_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-editor-agents
 [task_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-task-agents
@@ -70,3 +72,4 @@ If you plan to build a task agent, please go to the [Task agents section](/task-
 [fastapi-deploy-docs]: https://fastapi.tiangolo.com/deployment/
 [colab-task-agent]: https://colab.research.google.com/drive/1nOVYEG-johzJK6R_mnkgjOiRJUuNIvOY?usp=sharing
 [colab-editor-agent]: https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing
+[docs-workflow]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects

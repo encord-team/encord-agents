@@ -18,7 +18,10 @@
       <img alt="Encord Notebooks" src="https://img.shields.io/badge/Encord_Notebooks-blue?logo=github&label=&labelColor=181717">
     </a>
     <a href="https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing" target="_blank" style="text-decoration:none">
-      <img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg">
+      <img alt="Try editor agent" src="docs/assets/tag-colab-editor-agent.svg">
+    </a>
+    <a href="https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing" target="_blank" style="text-decoration:none">
+      <img alt="Try task agent" src="docs/assets/tag-colab-task-agent.svg">
     </a>
     <a href="https://join.slack.com/t/encordactive/shared_invite/zt-1hc2vqur9-Fzj1EEAHoqu91sZ0CX0A7Q" target="_blank" style="text-decoration:none">
       <img alt="Join us on Slack" src="https://img.shields.io/badge/Join_Our_Community-4A154B?label=&logo=slack&logoColor=white">
@@ -48,24 +51,21 @@ Here are some use-cases:
 Here's how to build an Agent:
 
 ```python
-from encord.objects import LabelRowV2
+from uuid import UUID
+from encord.objects.ontology_labels_impl import LabelRowV2
 from encord_agents.tasks import Runner
 
 runner = Runner(project_hash="<your_project_hash>")
 
-@runner.stage(name="<my_stage_name>")
-def by_city(lr: LabelRowV2) -> str:
-    location = "New York" if "NY" in lr.data_title else "San Francisco"
 
-    priority = 0.
-    if location == "New York":
-        priority = 1.
-    else if location == "San Francisco":
-        priority = 0.5
+@runner.stage(UUID("<your_agent_stage_uuid>"))
+def by_file_name(lr: LabelRowV2) -> UUID | None:
+    # Assuming the data_title is of the format "%d.jpg"
+    # and in the range [0; 100]
+    priority = int(lr.data_title.split(".")[0]) / 100
+    lr.set_priority(priority=priority)
+    return UUID("<your_pathway_uuid>")
 
-    label_row.set_priority(priority=priority)
-
-    return "annotate"
 
 if __name__ == "__main__":
     runner.run()
@@ -97,6 +97,8 @@ def by_custom_data(
 if __name__ == "__main__":
     runner.run()
 ```
+
+Please visit our [📖 Documentation][docs-url] for a complete reference to how to use the agents library.
 
 [docs-url]: https://agents-docs.encord.com/
 [encord_sdk]: https://pypi.org/project/encord/
