@@ -25,29 +25,15 @@
 Easily build agents for the Encord echo system.
 With just few lines of code, you can take automation to the next level.
 
+For a workflow with a prioritization agent node looking like this:
+
+![](assets/examples/tasks_agents/prioritize_by_title_workflow.png)
+
 Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on data titles.
 
-```python title="example_task_agent.py"
-from encord.objects import LabelRowV2
-from encord_agents.tasks import Runner
-
-runner = Runner(project_hash="<your_project_hash>")
-
-@runner.stage(name="Agent 1")
-def by_city(lr: LabelRowV2) -> str:
-    location = "New York" if "NY" in lr.data_title else "San Francisco"
-
-    priority = 0.
-    if location == "New York":
-        priority = 1.
-    else if location == "San Francisco":
-        priority = 0.5
-
-    label_row.set_priority(priority=priority)
-
-if __name__ == "__main__":
-    runner.run()
-```
+<!--codeinclude-->
+[](code_examples/tasks/prioritize_by_data_title.py)
+<!--/codeinclude-->
 
 > 💡 For the full end-to-end example, please see [here](/getting_started).
 

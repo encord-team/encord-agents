@@ -707,18 +707,22 @@ mkdocs = ">=1.1"
 
 [[package]]
 name = "mkdocs-codeinclude-plugin"
-version = "0.2.1"
-description = "A plugin to include code snippets into mkdocs pages"
+version = "0.1.0"
+description = ""
 optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "mkdocs-codeinclude-plugin-0.2.1.tar.gz", hash = "sha256:305387f67a885f0e36ec1cf977324fe1fe50d31301147194b63631d0864601b1"},
-    {file = "mkdocs_codeinclude_plugin-0.2.1-py3-none-any.whl", hash = "sha256:172a917c9b257fa62850b669336151f85d3cd40312b2b52520cbcceab557ea6c"},
-]
+python-versions = "^3.10"
+files = []
+develop = false
 
 [package.dependencies]
 mkdocs = ">=1.2"
 pygments = ">=2.9.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/frederik-encord/mkdocs-codeinclude-plugin.git"
+reference = "HEAD"
+resolved_reference = "b31de2579aaa7726b17b5fc28dbcdf8432ed4f93"
 
 [[package]]
 name = "mkdocs-get-deps"
@@ -1766,4 +1770,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "33279d559c29687054e0efd5edcf283358da7074199749c2bed9fa6a5f58caf4"
+content-hash = "a23da4c3be54b513c0313ea298d486d95bc1a5d96e68905d6d13e27d8ac31a2e"

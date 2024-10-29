@@ -1,3 +1,37 @@
+## Prioritizing tasks based on file names
+
+This example shows how to have an agent node early in the workflow which gives every task a priority before sending it on to the annotation stage.
+
+For a project with a workflow similar to this:
+
+<figure style="text-align: center">
+  <img src="../../assets/examples/tasks_agents/twin_classification_transfer_source_workflow.png" width="100%"/>
+  Project workflow
+</figure>
+
+Create a new file called `agent.py` with the following content:
+
+<!--codeinclude-->
+
+[agent.py](../../code_examples/tasks/prioritize_by_data_title.py)
+
+<!--/codeinclude-->
+
+The code will
+
+- Instantiate a runner.
+- Define a stage implementation that looks for the data title of a given task and parses the stem of the data title as an int.
+- Set the priority as a number between zero and one.
+- Pass the task to the annotation stage by returning the appropriate pathway uuid.
+
+To make this example run in practice, you need to
+
+1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
+1. Create a workflow similar to the above
+1. Copy the code to an `agent.py` file
+1. Adjust these ids `<your_project_hash>`, `<your_agent_stage_uuid>`, and `<your_pathway_uuid>` to correspond to those ids of your workflow.
+1. Execute the file `python agent.py`
+
 ## Transferring labels to a twin project
 
 This example shows how to take checklist labels annotated in "Project A" and translate them into yes/no radio labels in "Project B".
@@ -18,10 +52,12 @@ For every label row from Project A that the agent is called with, it will automa
 
 > **Disclaimer:** Project A and Project B must be attached to the same datasets.
 
-The code that defined such an agent can look similar to this:
+The code that defines such an agent might look similar to this:
 
 <!--codeinclude-->
-[](../../code_examples/tasks/twin_project.py)
+
+[twin_project.py](../../code_examples/tasks/twin_project.py)
+
 <!--/codeinclude-->
 
 For this code to work, the project workflows could look like this:
@@ -75,7 +111,3 @@ Now you should see tasks that have been approved by review starting to move to t
 - Transferring labels upon completion
 - HF Image segmentation API
 - HF LLM API to classify frames
-
-```
-
-```
