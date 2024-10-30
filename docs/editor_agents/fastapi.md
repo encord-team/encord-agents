@@ -1,9 +1,9 @@
 !!! warning
-⚠️ Before we begin, please make sure that you have [authentication](/authentication) covered.
+    ⚠️ Before we begin, please make sure that you have [authentication](/authentication) covered.
 
 !!! info
-This example shows the general structure of how to build a FastAPI application with `encord-agents`.
-For concrete implementations of agents with specific abilities, please see the [examples section](../examples/).
+    This example shows the general structure of how to build a FastAPI application with `encord-agents`.
+    For concrete implementations of agents with specific abilities, please see the [examples section](../examples/).
 
 ## Create a project
 
@@ -59,7 +59,7 @@ def my_agent(
 Fill in the function `my_agent` with what you want to happen when your agent is triggered.
 
 !!! tip
-💡 Notice that you can inject multiple different [dependencies](/reference/editor_agents/#encord_agents.fastapi.dependencies) into the function if you want.
+    💡 Notice that you can inject multiple different [dependencies](/reference/editor_agents/#encord_agents.fastapi.dependencies) into the function if you want.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 
@@ -73,14 +73,14 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
 ```
 
 !!! info
-Effectively, this means starting an API that lives at `localhost:8080/my_agent` and expects a POST request with `JSON` data of the following format:
-`json
+    Effectively, this means starting an API that lives at `localhost:8080/my_agent` and expects a POST request with `JSON` data of the following format:
+    ```json
     {
         "project_hash": "<project_hash>",
         "data_hash": "<data_hash>",
         "frame": <frame_number>
     }
-    `
+    ```
 
 To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor) in your browser on a frame for which you want to test your agent. Copy the URL.
 

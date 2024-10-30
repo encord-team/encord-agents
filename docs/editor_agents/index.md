@@ -1,5 +1,5 @@
 !!! info
-Editor Agents are API endpoints triggered on individual tasks within the Label Editor. They differ from [Task Agents][task-agents], which are Workflow components that activate on all tasks passing through the Agent stage.
+    Editor Agents are API endpoints triggered on individual tasks within the Label Editor. They differ from [Task Agents][task-agents], which are Workflow components that activate on all tasks passing through the Agent stage.
 
 <div>
   <div style="display: flex; justify-content: space-between;">
@@ -60,7 +60,7 @@ We help with two different ways of building such Custom APIs:
 2. Using [FastAPI][fastapi] which is a flexible (self-hosted) python library for building custom APIs.
 
 !!! tip
-Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection] from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it
+    Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection] from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
 
 Google run functions are good for more light-weight operations like acting as proxies to other model inference APIs or tweaking labels.
 FastAPI apps are better suited for actually hosting your own models.

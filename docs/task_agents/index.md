@@ -1,5 +1,3 @@
-# Task Agents
-
 <div>
   <div style="display: flex; justify-content: space-between;">
     <div style="flex: 1; padding: 10px; text-align: center">
@@ -20,11 +18,16 @@
   <img width="100%" src="/assets/task-agent-banner.png" />
 </div>
 
-## Example use-cases
+Task Agents are Workflow components in which a custom operation on all tasks in the Agent stage can be triggered. This allows you to set up pre-labeling, like using foundation models such as GPT-4o, automated quality assurance, or any other custom action you need for your workflow.
 
-- _Pre-labeling_ of your data, e.g., with your own model or of-the-shelf models.
-- _Custom routing_ of data in the project workflow.
-- _Dynamic prioritization_ of your tasks.
+Here are some common use-cases:
+
+- _Pre-labeling_ of your data, e.g., with your own model or off-the-shelf models.
+- _Custom routing_ of data in the project workflow based on, e.g., metadata, annotation time, or label counts.
+- _Dynamic prioritization_ of your tasks. This let's you "rearrange" tasks before sending them to review for example.
 - _Custom "label assertions"_ that validate, e.g., number of labels or other constraings, before sending them for review.
+- _Custom consensus computations_ by reading in labels from other projects.
 
-Think of these agents as agents that will _automatically_ trigger as soon as a task reaches the associated agent state in the project workflow.
+Think of these agents as agents that can _automatically_ trigger when a task reaches the associated agent state in the project workflow.
+
+Learning to build task agents are best done via [example](./examples/).
