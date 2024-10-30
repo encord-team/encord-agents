@@ -26,8 +26,6 @@ Now, install `encord-agents`.
 python -m pip install git+https://github.com/encord-team/encord-agents
 ```
 
-`# TODO ensure it works`
-
 ### 2. Encord workflow project
 
 If you don't already have a [workflow project][docs-workflow-project] which includes an [agent stage][docs-workflow-agent], please [create one][docs-create-project].

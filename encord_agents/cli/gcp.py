@@ -27,7 +27,7 @@ app = Typer(
 # TODO update encord-agents dependency
 _DEPENDENCIES = """
 functions-framework
--e git+ssh://git@github.com/encord-team/encord_agents.git@63f142b4e117af19102d61e631a08966aea943ec#egg=encord_agents[gcp-functions]
+git+https://github.com/encord-team/encord_agents
 """
 
 _TEMPLATE_CONTENT_W_ASSET = """
