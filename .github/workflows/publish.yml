@@ -5,7 +5,7 @@ on:
     types: [published]
 
 concurrency:
-  group: encord-active-${{ github.ref }}-publish
+  group: encord-agents-${{ github.ref }}-publish
   cancel-in-progress: true
 
 jobs:
