@@ -1,0 +1,43 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: encord-active-${{ github.ref }}-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build and publish Encord Agents
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.AUTOMATION_BOT_ACCESS_TOKEN }}
+          ref: main
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+      - name: Poetry Version Bump
+        run: "poetry version ${{ github.ref_name }}"
+
+      - name: Module Version Bump
+        run: 'sed -i "s/__version__ = \".*\"/__version__ = \"${{ github.ref_name }}\"/g" src/encord_agents/__init__.py'
+
+      - name: Version Bump commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Version bump to ${{ github.ref_name }}"
+          push_options: --force
+
+      - name: Build
+        run: poetry build
+
+      - name: Publish
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish
