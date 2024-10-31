@@ -6,7 +6,7 @@
 </p>
 
 <h1 align="center">
-  <a href="https://encord.com"><img src="docs/assets/landing-banner.png" alt="Encord logo"/></a>
+    <a href="https://encord.com"><img src="https://raw.githubusercontent.com/encord-team/encord-agents/main/docs/assets/landing-banner.png" alt="Encord logo"/></a>
 </h1>
 
 <div style="display: flex; justify-content: space-between;">
@@ -18,10 +18,10 @@
       <img alt="Encord Notebooks" src="https://img.shields.io/badge/Encord_Notebooks-blue?logo=github&label=&labelColor=181717">
     </a>
     <a href="https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing" target="_blank" style="text-decoration:none">
-      <img alt="Try editor agent" src="docs/assets/tag-colab-editor-agent.svg">
+            <img alt="Try editor agent" src="https://raw.githubusercontent.com/encord-team/encord-agents/main/docs/assets/tag-colab-editor-agent.svg">
     </a>
     <a href="https://colab.research.google.com/drive/1wvKAQ61JPebGnAT4nLXsfJRbx7dvtFdX?usp=sharing" target="_blank" style="text-decoration:none">
-      <img alt="Try task agent" src="docs/assets/tag-colab-task-agent.svg">
+            <img alt="Try task agent" src="https://raw.githubusercontent.com/encord-team/encord-agents/main/docs/assets/tag-colab-task-agent.svg">
     </a>
     <a href="https://join.slack.com/t/encordactive/shared_invite/zt-1hc2vqur9-Fzj1EEAHoqu91sZ0CX0A7Q" target="_blank" style="text-decoration:none">
       <img alt="Join us on Slack" src="https://img.shields.io/badge/Join_Our_Community-4A154B?label=&logo=slack&logoColor=white">
@@ -46,7 +46,7 @@ With just few lines of code, you can take automation to the next level.
 
 Here are some use-cases:
 
-![Decision tree for which agent to use](docs/assets/decide-on-agent-type.png)
+![Decision tree for which agent to use](https://raw.githubusercontent.com/encord-team/encord-agents/main/docs/assets/decide-on-agent-type.png)
 
 Here's how to build an Agent:
 
