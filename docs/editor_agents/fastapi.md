@@ -24,7 +24,7 @@ source venv/bin/activate
 Install the dependencies.
 
 ```shell
-python -m pip install "fastapi[standard]" git+https://github.com/encord-team/encord-agents
+python -m pip install "fastapi[standard]" encord-agents
 ```
 
 ## Develop your agent

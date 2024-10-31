@@ -23,7 +23,7 @@ source venv/bin/activate
 Now, install `encord-agents`.
 
 ```shell
-python -m pip install git+https://github.com/encord-team/encord-agents
+python -m pip install encord-agents
 ```
 
 ### 2. Encord workflow project

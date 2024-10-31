@@ -1,7 +1,7 @@
 If you just want to install `encord-agents` in your current environment, you can run:
 
 ```shell
-python -m pip install git+https://github.com/encord-team/encord-agents
+python -m pip install encord-agents
 ```
 
 > ℹ️ This project requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv) to manage your python versions.
@@ -39,7 +39,7 @@ Now you should see the environment before the cursor in your terminal.
 Now install `encord-agents` as above:
 
 ```shell
-python -m pip install git+https://github.com/encord-team/encord-agents
+python -m pip install encord-agents
 ```
 
 ### Poetry
@@ -47,7 +47,7 @@ python -m pip install git+https://github.com/encord-team/encord-agents
 If you already have a poetry project, you can also add `encord-agents` to that project:
 
 ```shell
-poetry add git+https://github.com/encord-team/encord-agents
+poetry add encord-agents
 ```
 
 ### Conda
@@ -73,7 +73,7 @@ Now you should see the environment before the cursor in your terminal.
 Then, install `encord-agents` within the environment:
 
 ```shell
-python -m pip install git+https://github.com/encord-team/encord-agents
+python -m pip install encord-agents
 ```
 
 ## Dependencies

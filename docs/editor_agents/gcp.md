@@ -27,7 +27,7 @@ Make a requirements file:
 
 ```requirements title="requirements.txt"
 functions-framework
-git+https://github.com/encord-team/encord-agents
+encord-agents
 ```
 
 Install the dependencies.
