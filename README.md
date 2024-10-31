@@ -30,6 +30,14 @@
       <img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/encord_team?label=%40encord_team&amp;style=social">
     </a>
   </div>
+  <div style="flex: 1; padding: 10px;">
+    <img alt="Python versions" src="https://img.shields.io/pypi/pyversions/encord-agents">
+    <a href="https://pypi.org/project/encord-agents/" target="_blank" style="text-decoration:none">
+      <img alt="PyPi project" src="https://img.shields.io/pypi/v/encord-agents">
+    </a>
+    <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-Welcome-blue">
+    <img alt="Licence" src="https://img.shields.io/github/license/encord-team/encord-agents">
+  </div>
 </div>
 
 Easily build agents for the Encord echo system.
