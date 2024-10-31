@@ -4,7 +4,7 @@ If you just want to install `encord-agents` in your current environment, you can
 python -m pip install encord-agents
 ```
 
-> ℹ️ This project requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv) to manage your python versions.
+> ℹ️ This project requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
 
 ---
 
@@ -80,4 +80,4 @@ python -m pip install encord-agents
 
 The dependencies of `encord-agents` are choosen to be lite.
 The only heavy dependencies that are somewhat heavy are `opencv-python` and `numpy`.
-To see the full list of dependencies, you can have a look [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml).
+To see the full list of dependencies, you can have a look [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.

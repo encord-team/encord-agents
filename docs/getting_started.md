@@ -1,4 +1,4 @@
-> ℹ️ This example requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv) to manage your python versions.
+> ℹ️ This example requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
 
 Here's the steps to follow to run your first [task agent](task_agents/index.md).
 The example agent will modify the priority of each task before passing it along.
@@ -28,7 +28,7 @@ python -m pip install encord-agents
 
 ### 2. Encord workflow project
 
-If you don't already have a [workflow project][docs-workflow-project] which includes an [agent stage][docs-workflow-agent], please [create one][docs-create-project].
+If you don't already have a [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } which includes an [agent stage][docs-workflow-agent]{ target="\_blank", rel="noopener noreferrer" }, please [create one][docs-create-project]{ target="\_blank", rel="noopener noreferrer" }.
 
 In this example, we use a project workflow that looks like this:
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     runner.run()
 ```
 
-Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class] instance.
+Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class]{ target="\_blank", rel="noopener noreferrer" } instance.
 That label row is associated with a task that is currently sitting in the `"pre-label"` agent stage.
 Also, the agent is returning the name of the pathway that the task is supposed to follow upon agent completion.
 

@@ -81,7 +81,7 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
     }
     ```
 
-To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor) in your browser on a frame for which you want to test your agent. Copy the URL.
+To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor){ target="\_blank", rel="noopener noreferrer" } in your browser on a frame for which you want to test your agent. Copy the URL.
 
 Open a new terminal in the `my_project` directory.
 Then, run
@@ -111,10 +111,10 @@ gcloud functions deploy my_agent \
 
 Notice how we set secrets (the ssh key that the agent should use).
 
-Here are the official [Google run function deploy docs](https://cloud.google.com/functions/docs/create-deploy-gcloud).
+Here are the official [Google run function deploy docs](https://cloud.google.com/functions/docs/create-deploy-gcloud){ target="\_blank", rel="noopener noreferrer" }.
 There are a couple of things that you need to pay attention to:
 
 - You must make sure to authenticate `gcloud` and select the appropriate project first
-- You should configure a secret with the ssh_key content. Please see [Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets)
+- You should configure a secret with the ssh_key content. Please see [Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets){ target="\_blank", rel="noopener noreferrer" }
 
 

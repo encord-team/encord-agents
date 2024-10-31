@@ -27,7 +27,7 @@ Some common use-cases are:
 
 - _Validate the current state of the annotations_ within a frame, video, or image group. You might, for example, want to give the labelers an option to annotate the current state of the labels before submitting.
 - Do _custom conversions or modifications_ of labels before they are submitted. For example, you could be simplifying polygons with an RDP algorithm.
-- Employ custom prompting models like [DINOv][dinov] or [T-Rex2][trex2] to speed up annotations.
+- Employ custom prompting models like [DINOv][dinov]{ target="\_blank", rel="noopener noreferrer" } or [T-Rex2][trex2]{ target="\_blank", rel="noopener noreferrer" } to speed up annotations.
 - _Trigger notifications_ internally related to the given task.
 
 Think of these agents as agents that your annotators can trigger at will _while they are labeling_.
@@ -56,11 +56,11 @@ That is, you will be responsible for programatically defining what to do, when y
 
 We help with two different ways of building such Custom APIs:
 
-1. Using [`Google run functions`][gcp-functions] which is Google's way of building cloud functions.
-2. Using [FastAPI][fastapi] which is a flexible (self-hosted) python library for building custom APIs.
+1. Using [`Google run functions`][gcp-functions]{ target="\_blank", rel="noopener noreferrer" } which is Google's way of building cloud functions.
+2. Using [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" } which is a flexible (self-hosted) python library for building custom APIs.
 
 !!! tip
-    Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection] from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
+    Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" }. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection]{ target="\_blank", rel="noopener noreferrer" } from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
 
 Google run functions are good for more light-weight operations like acting as proxies to other model inference APIs or tweaking labels.
 FastAPI apps are better suited for actually hosting your own models.

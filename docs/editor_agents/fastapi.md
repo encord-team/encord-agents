@@ -43,8 +43,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*", "https://app.encord.com"],
+    CORSMiddleware,
+    allow_origins=["*", "https://app.encord.com"],
 )
 
 @app.post("/my_agent")
@@ -82,7 +82,7 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
     }
     ```
 
-To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor) in your browser on a frame for which you want to test your agent. Copy the URL.
+To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor){ target="\_blank", rel="noopener noreferrer" } in your browser on a frame for which you want to test your agent. Copy the URL.
 
 Open a new terminal in the `my_project` directory.
 Then, run
