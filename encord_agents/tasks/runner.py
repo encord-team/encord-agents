@@ -52,9 +52,9 @@ class Runner:
         self.client = get_user_client()
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
 
-        self.valid_stages: set[WorkflowStage] | None = None
+        self.valid_stages: list[WorkflowStage] | None = None
         if self.project is not None:
-            self.valid_stages = {s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT}
+            self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
 
         self.agents: list[RunnerAgent] = []
 
@@ -256,7 +256,7 @@ or when called: [blue]`runner(project_hash="<project_hash>")`[/blue]
         ```python title="example.py"
         runner = Runner(project_hash="<your_project_hash>")
 
-        @runner.stage(name="...")
+        @runner.stage(stage="...")
         def your_func() -> str:
             ...
 

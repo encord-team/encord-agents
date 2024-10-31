@@ -1,9 +1,9 @@
 !!! warning
-    ⚠️ Before we begin, please make sure that you have [authentication](/authentication) covered.
+    ⚠️ Before we begin, please make sure that you have [authentication](../authentication.md) covered.
 
 !!! info
     This example shows the general structure of how to build a FastAPI application with `encord-agents`.
-    For concrete implementations of agents with specific abilities, please see the [examples section](../examples/).
+    For concrete implementations of agents with specific abilities, please see the [examples section](examples/index.md).
 
 ## Create a project
 
@@ -24,7 +24,7 @@ source venv/bin/activate
 Install the dependencies.
 
 ```shell
-python -m pip install "fastapi[standard] git+https://github.com/encord-team/encord-agents"
+python -m pip install "fastapi[standard]" git+https://github.com/encord-team/encord-agents
 ```
 
 ## Develop your agent
@@ -59,9 +59,9 @@ def my_agent(
 Fill in the function `my_agent` with what you want to happen when your agent is triggered.
 
 !!! tip
-    💡 Notice that you can inject multiple different [dependencies](/reference/editor_agents/#encord_agents.fastapi.dependencies) into the function if you want.
+    💡 Notice that you can inject multiple different [dependencies](../reference/editor_agents.md#encord_agents.fastapi.dependencies) into the function if you want.
 
-You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
+You can find multiple examples of what can be done with editor agents [here](../editor_agents/examples/index.md).
 
 ## Test the agent
 

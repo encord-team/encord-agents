@@ -85,7 +85,7 @@ def my_custom_dependency(label_row: LabelRowV2) -> dict:
     # e.g., look up additional data in own db
     return db.query("whatever")
 
-@runner.stage(name="<my_stage_name>")
+@runner.stage(stage="<my_stage_name>")
 def by_custom_data(
     custom_data: Annotated[dict, Depends(my_custom_dependency)]
 ) -> str:

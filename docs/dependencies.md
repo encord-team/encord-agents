@@ -18,7 +18,7 @@ def my_agent(frame: Annotated[np.ndarray, Depends(dep_single_frame)]):
 ```
 
 The `{module}` depends on which type of agent you're building.
-Please see the [references section](/reference/editor_agents/#encord_agents.gcp.dependencies) for more details on available agents.
+Please see the [references section](reference/editor_agents.md#encord_agents.gcp.dependencies) for more details on available agents.
 
 ## Custom dependencies
 
@@ -32,7 +32,7 @@ def my_custom_dependency(label_row: LabelRowV2) -> dict:
     # e.g., look up additional data in own db
     return db.query("whatever")
 
-@runner.stage(name="<my_stage_name>")
+@runner.stage(stage="<my_stage_name>")
 def by_custom_data(
     custom_data: Annotated[dict, Depends(my_custom_dependency)]
 ) -> str:

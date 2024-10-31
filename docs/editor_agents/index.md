@@ -34,7 +34,7 @@ Think of these agents as agents that your annotators can trigger at will _while 
 
 ## The general concepts
 
-Editor agentes work in the following way:
+Editor agents work in the following way:
 
 ```mermaid
 sequenceDiagram
@@ -68,7 +68,7 @@ FastAPI apps are better suited for actually hosting your own models.
 In the next section, you will find a GCP example.
 If you need to build a FastAPI application, feel free to [skip it](./fastapi.md).
 
-[task-agents]: ../task_agents/
+[task-agents]: ../task_agents/index.md
 [dinov]: https://github.com/UX-Decoder/DINOv/tree/main
 [trex2]: https://github.com/IDEA-Research/T-Rex/tree/trex2
 [gcp-functions]: https://cloud.google.com/functions/docs

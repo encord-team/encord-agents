@@ -1,8 +1,8 @@
 > ℹ️ This example requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv) to manage your python versions.
 
-Here's the steps to follow to run your first [task agent](../task_agents/).
+Here's the steps to follow to run your first [task agent](task_agents/index.md).
 The example agent will modify the priority of each task before passing it along.
-We also provide multiple [task agent examples](../task_agents/examples/) and [editor agent examples](../editor_agents/examples/).
+We also provide multiple [task agent examples](task_agents/examples/index.md) and [editor agent examples](editor_agents/examples/index.md).
 
 ### 1. Setup
 
@@ -32,10 +32,10 @@ If you don't already have a [workflow project][docs-workflow-project] which incl
 
 In this example, we use a project workflow that looks like this:
 
-![Project Workflow](/assets/project-workflow.png)
+![Project Workflow](assets/project-workflow.png)
 
-Notice the purple node in the workflow; It's an agent node **with name: `prioritize`**.
-Furthermore, is has just one pathway called "annotate".
+Notice the purple node in the workflow; It's an agent node **with name: `pre-label`**.
+Furthermore, is has just one pathway called "annotate."
 
 Copy the `Project ID` in the top left of the project page.
 
@@ -52,7 +52,7 @@ from encord_agents.tasks import Runner
 
 runner = Runner(project_hash="<your_project_hash>")
 
-@runner.stage(name="pre-label")
+@runner.stage(stage="pre-label")
 def my_agent_logic(lr: LabelRowV2) -> str:
     # ...
     return "annotate"
@@ -63,23 +63,23 @@ if __name__ == "__main__":
 
 Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class] instance.
 That label row is associated with a task that is currently sitting in the `"pre-label"` agent stage.
-Also, the agent is returning the name (
+Also, the agent is returning the name of the pathway that the task is supposed to follow upon agent completion.
 
-Now, it's our job to define what's supposed to happen with it.
+Now, it's our job to define what's supposed to happen with this piece of data.
 In this example, we'll keep it simple and assign a priority based on the file name.
 If the file name contains `"london"` we'll give it high priority otherwise a low priority.
 
 Update the `my_agent_logic` to look like this:
 
 ```python
-@runner.stage(name="prioritize")
+@runner.stage(stage="pre-label")
 def my_agent_logic(lr: LabelRowV2) -> str:
     lr.set_priority(priority=float("london" in lr.data_title))
     return "annotate"
 ```
 
 > **Too simple?**  
-> If the example is too simple, please see the [task examples](../task_agents/examples)
+> If the example is too simple, please see the [task examples](task_agents/examples/index.md)
 > to find something more useful to your use-case.
 
 ### 4. Running the agent

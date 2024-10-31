@@ -32,6 +32,9 @@ git+https://github.com/encord-team/encord-agents
 
 Install the dependencies.
 
+!!! warning
+    Make sure you sourced the environment above. Otherwise, the dependencies will be installed globally.    
+
 ```shell
 python -m pip install -r requirements.txt
 ```
@@ -96,13 +99,13 @@ To go from development to production, you need to deploy your agent on the Googl
 This is an example of how you could deploy the agent to the cloud.
 
 ```shell
-gcloud functions deploy my_agent \\
-    --entry-point my_agent \\
-    --runtime python311 \\
-    --trigger-http \\
-    --allow-unauthenticated \\
-    --gen2 \\
-    --region europe-west2 \\
+gcloud functions deploy my_agent \
+    --entry-point my_agent \
+    --runtime python311 \
+    --trigger-http \
+    --allow-unauthenticated \
+    --gen2 \
+    --region europe-west2 \
     --set-secrets="ENCORD_SSH_KEY=SERVICE_ACCOUNT_KEY:latest"
 ```
 

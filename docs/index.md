@@ -37,7 +37,7 @@ Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annota
 
 <!--/codeinclude-->
 
-> 💡 For the full end-to-end example, please see [here](/getting_started).
+> 💡 For the full end-to-end example, please see [here](getting_started.md).
 
 This repository provides utility functions and examples for building both [editor agents][editor_agents] and [task agents][task_agents].
 
@@ -54,8 +54,8 @@ This repository provides utility functions and examples for building both [edito
 
 Upon [installation](./installation.md) and [authentication](./authentication.md), you should continue your reading as follows:
 
-- If you plan to build an editor agent, please go to the [Editor agents section](editor_agents/).
-- If you plan to build a task agent, please go to the [Task agents section](task_agents/).
+- If you plan to build an editor agent, please go to the [Editor agents section](editor_agents/index.md).
+- If you plan to build a task agent, please go to the [Task agents section](task_agents/index.md).
 
 [editor_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-editor-agents
 [task_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-task-agents
