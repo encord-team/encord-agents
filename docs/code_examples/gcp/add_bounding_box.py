@@ -11,7 +11,7 @@ ENCORD_SSH_KEY_FILE=/path/to/private_key functions-framework \
 Successively, you can test it locally by pasting an editor url into the following command:
 
 ```shell
-encord-agents test add_bounding_box <editor_url>
+encord-agents test add_bounding_box '<editor_url>'
 ```
 """
 

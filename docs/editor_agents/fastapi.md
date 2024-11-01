@@ -89,8 +89,11 @@ Then, run
 
 ```shell
 source venv/bin/activate
-encord-agents test local my_agent <the_pasted_url>
+encord-agents test local my_agent '<the_pasted_url>'
 ```
+
+!!! warning
+    Notice the single quotes around `<the_pasted_url>`. They are important and should be there because you might copy a url with, e.g., an `&` character that have a [special meaning](https://www.howtogeek.com/439199/15-special-characters-you-need-to-know-for-bash/#amp-background-process){ target="_blank", rel="noopener noreferrer" } if it is not within a string (or escaped).
 
 Refresh the label editor in your browser to see the effect that you applied to the `label_row: LabelRowV2` happening.
 
