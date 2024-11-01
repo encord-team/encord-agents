@@ -7,7 +7,7 @@ Note that central settings will be read via environment variables.
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     To setup a key with Encord, please see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
+    @field_validator("ssh_key_file")
+    @classmethod
+    def check_path_expand_and_exists(cls, path: Path | None):
+        if path is None:
+            return path
+
+        path = path.expanduser()
+        assert path.is_file(), f"Provided ssh key file (ENCORD_SSH_KEY_FILE: '{path}') does not exist"
+        return path
 
     @model_validator(mode="after")
     def check_key(self):
