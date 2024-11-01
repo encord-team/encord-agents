@@ -1,4 +1,5 @@
 import sys
+
 from typer import Typer
 
 app = Typer(
@@ -11,19 +12,19 @@ app = Typer(
 
 @app.command(name="system-info")
 def print_system_info():
-        """
-            [bold]Prints[/bold] the information of the system for the purpose of bug reporting.
-            """
-        import platform
-        print("System Information:")
-        uname = platform.uname()
-        print(f"\tSystem: {uname.system}")
-        print(f"\tRelease: {uname.release}")
-        print(f"\tMachine: {uname.machine}")
-        print(f"\tProcessor: {uname.processor}")
-        print(f"\tPython: {sys.version}")
+    """
+    [bold]Prints[/bold] the information of the system for the purpose of bug reporting.
+    """
+    import platform
 
-        import encord_agents
-        print(f"encord-agents version: {encord_agents.__version__}")
+    print("System Information:")
+    uname = platform.uname()
+    print(f"\tSystem: {uname.system}")
+    print(f"\tRelease: {uname.release}")
+    print(f"\tMachine: {uname.machine}")
+    print(f"\tProcessor: {uname.processor}")
+    print(f"\tPython: {sys.version}")
 
+    import encord_agents
 
+    print(f"encord-agents version: {encord_agents.__version__}")

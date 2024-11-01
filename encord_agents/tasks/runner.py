@@ -36,6 +36,29 @@ class Runner:
     When called, it will iteratively run agent stages till they are empty.
     By default, runner will exit after finishing the tasks identified at the point of trigger.
     To automatically re-run, you can use the `refresh_every` keyword.
+
+    **Example:**
+
+    ```python title="example_agent.py"
+    from uuid import UUID
+    from encord.tasks import Runner
+    runner = Runner()
+
+    @runner.stage("<workflow_node_name>")
+    # or
+    @runner.stage("<workflow_node_uuid>")
+    def my_agent(task: AgentTask) -> str | UUID | None
+        ...
+        return "pathway name"  # or pathway uuid
+
+
+    runner(project_hash="<project_hash>")  # (see __call__ for more arguments)
+    # or
+    if __name__ == "__main__":
+        # for CLI usage: `python example_agent.py --project-hash "<project_hash>"`
+        runner.run()
+    ```
+
     """
 
     @staticmethod
@@ -62,6 +85,84 @@ class Runner:
         self.agents.append(RunnerAgent(identity=identity, callable=func))
 
     def stage(self, stage: str | UUID) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        r"""
+        Decorator to associate a function with an agent stage.
+
+        A function decorated with a stage is added to the list of stages
+        that will be handled by the runner.
+        The runner will call the function for every task which is in that
+        stage.
+
+
+        **Example:**
+
+        ```python
+        runner = Runner()
+
+        @runner.stage("<stage_name_or_uuid>")
+        def my_func() -> str | None:
+            ...
+            return "<pathway_name or pathway_uuid>"
+        ```
+
+        The function declaration can be any function that takes parameters
+        that are type annotated with the following types:
+
+        * [Project][docs-project]{ target="\_blank", rel="noopener noreferrer" }: the `encord.project.Project`
+            that the runner is operating on.
+        * [LabelRowV2][docs-label-row]{ target="\_blank", rel="noopener noreferrer" }: the `encord.objects.LabelRowV2`
+            that the task is associated with.
+        * [AgentTask][docs-project]{ target="\_blank", rel="noopener noreferrer" }: the `encord.workflow.stages.agent.AgentTask`
+            that the task is associated with.
+        * Any other type: which is annotated with a [dependency](/dependencies.md)
+
+        All those parameters will be automatically injected when the agent is called.
+
+        **Example:**
+
+        ```python
+        from typing import Iterator
+        from typing_extensions import Annotated
+
+        from encord.project import Project
+        from encord_agents.tasks import Depends
+        from encord_agents.tasks.dependencies import dep_video_iterator
+        from encord.workflow.stages.agent import AgentTask
+
+        runner = Runner()
+
+        def random_value() -> float:
+            import random
+            return random.random()
+
+        @runner.stage("<stage_name_or_uuid>")
+        def my_func(
+            project: Project,
+            lr: LabelRowV2,
+            task: AgentTask,
+            video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)],
+            custom: Annotated[float, Depends(random_value)]
+        ) -> str | None:
+            ...
+            return "<pathway_name or pathway_uuid>"
+        ```
+
+        [docs-project]:    https://docs.encord.com/sdk-documentation/sdk-references/project
+        [docs-label-row]:  https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2
+        [docs-agent-task]: https://docs.encord.com/sdk-documentation/sdk-references/AgentTask
+
+        Args:
+            stage: The name or uuid of the stage that the function should be
+                associated with.
+
+        Returns:
+            The decorated function.
+        """
+        try:
+            stage = UUID(str(stage))
+        except ValueError:
+            pass
+
         if stage in [a.name for a in self.agents]:
             self.abort_with_message(
                 f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
