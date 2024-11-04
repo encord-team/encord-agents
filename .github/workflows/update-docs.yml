@@ -34,4 +34,4 @@ jobs:
           npm install -g firebase-tools
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/gcp_key.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_key.json
-          firebasedeploy -P default  --only hosting:${{ env.HOSTING }}
+          firebase deploy -P default  --only hosting:${{ env.HOSTING }}
