@@ -1,3 +1,4 @@
+import io
 import os
 import time
 import traceback
@@ -6,9 +7,6 @@ from datetime import datetime, timedelta
 from typing import Callable, Iterable, Optional, cast
 from uuid import UUID
 
-import io
-from rich.console import Console
-from rich.text import Text
 import rich
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -17,7 +15,9 @@ from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
+from rich.console import Console
 from rich.panel import Panel
+from rich.text import Text
 from tqdm.auto import tqdm
 from typer import Abort
 
@@ -201,9 +201,7 @@ class Runner:
                         selected_stage = v_stage
 
                 if selected_stage is None:
-                    agent_stage_names = os.linesep + ",".join(
-                        [f"[magenta]`{k.title} ({k.uuid})`[/magenta]{os.linesep}" for k in self.valid_stages]
-                    )
+                    agent_stage_names = self.get_stage_names(self.valid_stages)
                     raise PrintableError(
                         rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
                     )
@@ -269,10 +267,10 @@ class Runner:
                             traceback.print_exc()
 
     @staticmethod
-    def abort_with_message(error: str, title: str | None = None):
-        panel = Panel(error, title="", width=80)
-        rich.print(panel)
-        raise Abort()
+    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", "):
+        return join_str.join(
+            [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
+        )
 
     def __call__(
         self,
@@ -325,15 +323,11 @@ class Runner:
         try:
             for runner_agent in self.agents:
                 fn_name = getattr(runner_agent.callable, "__name__", "agent function")
-                SEPARATOR = f"{os.linesep}\t"
-                agent_stage_names = (
-                    SEPARATOR
-                    + SEPARATOR.join([f"[magenta]'{k.title}' (uuid: {k.uuid})`[/magenta]" for k in valid_stages])
-                    + os.linesep
-                )
+                separator = f"{os.linesep}\t"
+                agent_stage_names = separator + self.get_stage_names(valid_stages, join_str=separator) + os.linesep
                 if runner_agent.name not in agent_stages:
                     suggestion: str
-                    if len(valid_stages) == 2:
+                    if len(valid_stages) == 1:
                         suggestion = f'Did you mean to wrap [blue]`{fn_name}`[/blue] with{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].title}")[/magenta]{os.linesep}or{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].uuid}")[/magenta]'
                     else:
                         suggestion = f"""
@@ -426,7 +420,9 @@ def {fn_name}(...):
                         self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
-                self.abort_with_message(str(err))
+                panel = Panel(err.args[0], width=None)
+                rich.print(panel)
+                raise Abort()
             else:
                 if isinstance(err, PrintableError):
                     from rich.text import Text
