@@ -43,6 +43,10 @@
 Easily build agents for the Encord echo system.
 With just few lines of code, you can take automation to the next level.
 
+```shell
+python -m pip install encord-agents
+```
+
 **Key features:**
 
 1. ⚡**Easy**: Multiple template agents to be adapted and hosted via GCP, own infra, or cloud.
