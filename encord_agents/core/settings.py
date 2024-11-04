@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     To setup a key with Encord, please see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
+
     @field_validator("ssh_key_file")
     @classmethod
     def check_path_expand_and_exists(cls, path: Path | None):
