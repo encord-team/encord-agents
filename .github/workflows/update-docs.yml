@@ -1,0 +1,37 @@
+name: Encord Agents Update Docs
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  HOSTING: prod
+  GCP_PROJECT: cord-docs
+
+concurrency:
+  group: agent-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-checks:
+    name: Build and Publish Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+      - name: Build Docs
+        run: |
+          poetry run mkdocs build
+      
+      - name: Deploy Docs
+        run: |
+          npm install -g firebase-tools
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/gcp_key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_key.json
+          firebasedeploy -P default  --only hosting:${{ env.HOSTING }}
