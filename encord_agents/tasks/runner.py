@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from typing import Callable, Iterable, Optional, cast
 from uuid import UUID
 
+import io
+from rich.console import Console
+from rich.text import Text
 import rich
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -180,37 +183,52 @@ class Runner:
             The decorated function.
         """
         try:
-            stage = UUID(str(stage))
-        except ValueError:
-            pass
+            try:
+                stage = UUID(str(stage))
+            except ValueError:
+                pass
 
-        if stage in [a.name for a in self.agents]:
-            raise PrintableError(
-                f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
+            if stage in [a.name for a in self.agents]:
+                raise PrintableError(
+                    f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
+                )
+
+            if self.valid_stages is not None:
+                selected_stage: WorkflowStage | None = None
+                for v_stage in self.valid_stages:
+                    attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
+                    if attr == stage:
+                        selected_stage = v_stage
+
+                if selected_stage is None:
+                    agent_stage_names = os.linesep + ",".join(
+                        [f"[magenta]`{k.title} ({k.uuid})`[/magenta]{os.linesep}" for k in self.valid_stages]
+                    )
+                    raise PrintableError(
+                        rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
+                    )
+                else:
+                    stage = selected_stage.uuid
+
+            def decorator(func: DecoratedCallable) -> DecoratedCallable:
+                self._add_stage_agent(stage, func)
+                return func
+
+            return decorator
+        except PrintableError as err:
+            output = io.StringIO()
+            console = Console(
+                force_terminal=True,
+                color_system="auto",
+                file=output,
+                force_interactive=False,
+                width=1000,
             )
 
-        if self.valid_stages is not None:
-            selected_stage: WorkflowStage | None = None
-            for v_stage in self.valid_stages:
-                attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
-                if attr == stage:
-                    selected_stage = v_stage
-
-            if selected_stage is None:
-                agent_stage_names = os.linesep + ",".join(
-                    [f"[magenta]`{k.title} ({k.uuid})`[/magenta]{os.linesep}" for k in self.valid_stages]
-                )
-                raise PrintableError(
-                    rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
-                )
-            else:
-                stage = selected_stage.uuid
-
-        def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self._add_stage_agent(stage, func)
-            return func
-
-        return decorator
+            text_obj = Text.from_markup(err.args[0])
+            console.print(text_obj, end="")
+            err.args = (output.getvalue(),)
+            raise
 
     def _execute_tasks(
         self,
