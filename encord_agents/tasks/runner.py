@@ -97,7 +97,7 @@ class Runner:
     def validate_project(project: Project | None):
         if project is None:
             return
-        PROJECT_MUSTS = "Task agents only work for workflowprojects that have agent nodes in the workflow."
+        PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
         assert (
             project.project_type == ProjectType.WORKFLOW
         ), f"Provided project is not a workflow project. {PROJECT_MUSTS}"
