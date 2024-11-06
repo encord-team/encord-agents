@@ -50,13 +50,13 @@ class Runner:
 
     ```python title="example_agent.py"
     from uuid import UUID
-    from encord.tasks import Runner
+    from encord_agents.tasks import Runner
     runner = Runner()
 
     @runner.stage("<workflow_node_name>")
     # or
     @runner.stage("<workflow_node_uuid>")
-    def my_agent(task: AgentTask) -> str | UUID | None
+    def my_agent(task: AgentTask) -> str | UUID | None:
         ...
         return "pathway name"  # or pathway uuid
 
