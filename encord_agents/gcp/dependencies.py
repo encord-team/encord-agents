@@ -21,7 +21,7 @@ def dep_client() -> EncordUserClient:
     ```python
     from encord.user_client import EncordUserClient
     from encord_agents.gcp import editor_agent
-    from encord_agents.gcp.depencencies import dep_client
+    from encord_agents.gcp.dependencies import dep_client
     ...
     @editor_agent()
     def (
@@ -47,7 +47,7 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     ```python
     from encord_agents import FrameData
     from encord_agents.gcp import editor_agent
-    from encord_agents.gcp.depencencies import dep_single_frame
+    from encord_agents.gcp.dependencies import dep_single_frame
     ...
 
     @editor_agent()
@@ -80,7 +80,7 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
     ```python
     from encord_agents import FrameData
     from encord_agents.gcp import editor_agent
-    from encord_agents.gcp.depencencies import dep_video_iterator
+    from encord_agents.gcp.dependencies import dep_video_iterator
     ...
 
     @editor_agent()
