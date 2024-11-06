@@ -173,7 +173,9 @@ def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTas
             values[param_field.name] = context.project
         else:
             raise ValueError(
-                f"Agent function is specifying a field `{param_field.name} ({param_field.type_annotation})` which is not supported. Consider wrapping it in a `Depends` to define how this value should be obtained."
+                f"Agent function is specifying a field `{param_field.name}` with type `{param_field.type_annotation}` "
+                "which is not supported. Consider wrapping it in a `encord_agents.core.dependencies.Depends` to define "
+                "how this value should be obtained. More info here: `https://agents-docs.encord.com/dependencies`"
             )
     return values
 
