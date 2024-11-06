@@ -80,11 +80,10 @@ Which would mean that the agents would be defined with the following decorator t
 make the workflow stage association explicit.
 
 ```python
-from uuid import UUID
-@runner.stage(stage=UUID("60d9f14f-755e-40fd-..."))  # <- last bit omitted
+@runner.stage(stage="60d9f14f-755e-40fd-...")  # <- last bit omitted
 ```
 
-> Notice the match between the uuid in the "label transfer" agent stage of the workflow in Project A and the UUID in the decorator.
+> Notice the match between the uuid in the "label transfer" agent stage of the workflow in Project A and the uuid in the decorator.
 
 **To prepare your projects:**
 

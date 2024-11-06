@@ -14,11 +14,9 @@ checklist_classification = (
 )
 checklist_attribute = checklist_classification.attributes[0]
 
+
 # 3. Define the agent
-from uuid import UUID
-
-
-@runner.stage(stage=UUID("<transfer_agent_stage_uuid>"))
+@runner.stage(stage="<transfer_agent_stage_uuid>")
 def copy_labels(
     manually_annotated_lr: LabelRowV2,
     twin: Annotated[
