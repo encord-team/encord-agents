@@ -242,7 +242,7 @@ class Runner:
                 with ExitStack() as stack:
                     context = Context(project=project, task=task, label_row=label_row)
                     dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
-                    for attempt in range(1, num_retries + 1):
+                    for attempt in range(num_retries + 1):
                         try:
                             next_stage = runner_agent.callable(**dependencies.values)
                             if next_stage is None:
@@ -263,7 +263,7 @@ class Runner:
                         except KeyboardInterrupt:
                             raise
                         except Exception:
-                            print(f"[attempt {attempt}/{num_retries}] Agent failed with error: ")
+                            print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
                             traceback.print_exc()
 
     @staticmethod
