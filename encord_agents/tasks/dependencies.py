@@ -218,12 +218,22 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     **Example:**
 
     ```python
-    @runner.stage(stage="Agent 1")
-    def tillykke2(lr: LabelRowV2, lookup: Annotated[DataLookup, Depends(dep_data_lookup)]) -> str:
-        data_row = lookup.get_data_row(lr.data_hash)  # Data row from the underlying dataset
+    from encord.orm.dataset import DataRow
+    from encord.stotage import StorageItem
 
-        storage_item = lookup.get_storage_item(lr.data_hash)  # Storage item from Encord Index
-        client_metadata = storage_item.client_metadata        # Current metadata
+    @runner.stage(stage="Agent 1")
+    def my_agent(
+        lr: LabelRowV2, 
+        lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
+    ) -> str:
+        # Data row from the underlying dataset
+        data_row: DataRow = lookup.get_data_row(lr.data_hash)  
+
+        # Storage item from Encord Index
+        storage_item: StorageItem = lookup.get_storage_item(lr.data_hash)  
+
+        # Current metadata
+        client_metadata = storage_item.client_metadata        
 
         # Update metadata
         storage_item.update(
