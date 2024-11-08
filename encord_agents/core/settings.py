@@ -32,9 +32,9 @@ class Settings(BaseSettings):
 
     @field_validator("ssh_key_file")
     @classmethod
-    def check_path_expand_and_exists(cls, path: Path | None):
+    def check_path_expand_and_exists(cls, path: Path | None) -> Path | None:
         if path is None:
-            return path
+            return None
 
         path = path.expanduser()
         assert path.is_file(), f"Provided ssh key file (ENCORD_SSH_KEY_FILE: '{path}') does not exist"
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
 
     @field_validator("ssh_key_content")
     @classmethod
-    def check_is_not_path(cls, ssh_key_content: str | None):
+    def check_is_not_path(cls, ssh_key_content: str | None) -> str | None:
         if ssh_key_content is None:
             return None
         if os.path.exists(ssh_key_content):
