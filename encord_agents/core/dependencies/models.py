@@ -38,7 +38,7 @@ class Dependant:
 @dataclass
 class Context:
     project: Project
-    label_row: LabelRowV2
+    label_row: LabelRowV2 | None
     task: AgentTask | None = None
     frame_data: FrameData | None = None
 
