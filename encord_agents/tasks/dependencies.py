@@ -6,12 +6,16 @@ import numpy as np
 from encord.constants.enums import DataType
 from encord.exceptions import AuthorisationError, AuthenticationError
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.project import Project
 from encord.user_client import EncordUserClient
 from encord.workflow.common import WorkflowTask
 from encord.workflow.workflow import WorkflowStage
 from numpy.typing import NDArray
+from typing_extensions import Annotated
 
 from encord_agents.core.data_model import Frame
+from encord_agents.core.dependencies.models import Depends
+from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
 from encord_agents.exceptions import PrintableError, format_printable_error
@@ -200,3 +204,43 @@ def dep_twin_label_row(
         return Twin(label_row=lr_twin, task=task)
 
     return get_twin_label_row
+
+
+def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)]) -> DataLookup:
+    """
+    Get a lookup to easily retrieve data rows and storage items associated with the given task.
+    This can, e.g., be useful for
+
+    * Updating client metadata
+    * Downloading data from signed urls
+    * Matching data to other projects
+
+    **Example:**
+
+    ```python
+    @runner.stage(stage="Agent 1")
+    def tillykke2(lr: LabelRowV2, lookup: Annotated[DataLookup, Depends(dep_data_lookup)]) -> str:
+        data_row = lookup.get_data_row(lr.data_hash)  # Data row from the underlying dataset
+
+        storage_item = lookup.get_storage_item(lr.data_hash)  # Storage item from Encord Index
+        client_metadata = storage_item.client_metadata        # Current metadata
+
+        # Update metadata
+        storage_item.update(
+            client_metadata={
+                "new": "entry",
+                **(client_metadata or {})
+            }
+        )  # metadata. Make sure not to update in place!
+        ...
+    ```
+
+
+    Args:
+        lookup: The object that you can use to lookup data rows and storage items. Automatically injected.
+
+    Returns:
+        The (shared) lookup object.
+
+    """
+    return lookup
