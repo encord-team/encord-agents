@@ -4,6 +4,7 @@ Settings used throughout the module.
 Note that central settings will be read via environment variables.
 """
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -38,6 +39,16 @@ class Settings(BaseSettings):
         path = path.expanduser()
         assert path.is_file(), f"Provided ssh key file (ENCORD_SSH_KEY_FILE: '{path}') does not exist"
         return path
+
+    @field_validator("ssh_key_content")
+    @classmethod
+    def check_is_not_path(cls, ssh_key_content: str | None):
+        if ssh_key_content is None:
+            return None
+        if os.path.exists(ssh_key_content):
+            path = Path(ssh_key_content)
+            return path.read_text()
+        return ssh_key_content
 
     @model_validator(mode="after")
     def check_key(self):
