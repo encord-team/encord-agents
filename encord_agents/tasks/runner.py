@@ -15,20 +15,16 @@ from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
-from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 from tqdm.auto import tqdm
 from typer import Abort
 
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
+from encord_agents.exceptions import PrintableError, format_printable_error
 
 TaskAgentReturn = str | UUID | None
-
-
-class PrintableError(ValueError): ...
 
 
 class RunnerAgent:
@@ -108,6 +104,7 @@ class Runner:
     def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn]):
         self.agents.append(RunnerAgent(identity=identity, callable=func))
 
+    @format_printable_error
     def stage(self, stage: str | UUID) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
@@ -183,50 +180,35 @@ class Runner:
             The decorated function.
         """
         try:
-            try:
-                stage = UUID(str(stage))
-            except ValueError:
-                pass
+            stage = UUID(str(stage))
+        except ValueError:
+            pass
 
-            if stage in [a.name for a in self.agents]:
-                raise PrintableError(
-                    f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
-                )
-
-            if self.valid_stages is not None:
-                selected_stage: WorkflowStage | None = None
-                for v_stage in self.valid_stages:
-                    attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
-                    if attr == stage:
-                        selected_stage = v_stage
-
-                if selected_stage is None:
-                    agent_stage_names = self.get_stage_names(self.valid_stages)
-                    raise PrintableError(
-                        rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
-                    )
-                else:
-                    stage = selected_stage.uuid
-
-            def decorator(func: DecoratedCallable) -> DecoratedCallable:
-                self._add_stage_agent(stage, func)
-                return func
-
-            return decorator
-        except PrintableError as err:
-            output = io.StringIO()
-            console = Console(
-                force_terminal=True,
-                color_system="auto",
-                file=output,
-                force_interactive=False,
-                width=1000,
+        if stage in [a.name for a in self.agents]:
+            raise PrintableError(
+                f"Stage name [blue]`{stage}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
             )
 
-            text_obj = Text.from_markup(err.args[0])
-            console.print(text_obj, end="")
-            err.args = (output.getvalue(),)
-            raise
+        if self.valid_stages is not None:
+            selected_stage: WorkflowStage | None = None
+            for v_stage in self.valid_stages:
+                attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
+                if attr == stage:
+                    selected_stage = v_stage
+
+            if selected_stage is None:
+                agent_stage_names = self.get_stage_names(self.valid_stages)
+                raise PrintableError(
+                    rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
+                )
+            else:
+                stage = selected_stage.uuid
+
+        def decorator(func: DecoratedCallable) -> DecoratedCallable:
+            self._add_stage_agent(stage, func)
+            return func
+
+        return decorator
 
     def _execute_tasks(
         self,
@@ -377,6 +359,9 @@ def {fn_name}(...):
 
                 next_execution = datetime.now() + delta if delta else False
                 for runner_agent in self.agents:
+                    needs_lr = any((p.type_annotation is LabelRowV2 for p in runner_agent.dependant.field_params))
+                    needs_client_metadata = any((p.type_annotation is LabelRowV2 for p in runner_agent.dependant.field_params))
+
                     stage = agent_stages[runner_agent.name]
 
                     batch: list[AgentTask] = []

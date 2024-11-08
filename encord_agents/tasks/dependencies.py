@@ -4,6 +4,7 @@ from typing import Callable, Generator, Iterator
 import cv2
 import numpy as np
 from encord.constants.enums import DataType
+from encord.exceptions import AuthorisationError, AuthenticationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 from encord.workflow.common import WorkflowTask
@@ -13,6 +14,7 @@ from numpy.typing import NDArray
 from encord_agents.core.data_model import Frame
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
+from encord_agents.exceptions import PrintableError, format_printable_error
 
 
 def dep_client() -> EncordUserClient:
@@ -119,6 +121,7 @@ class Twin:
     task: WorkflowTask | None
 
 
+@format_printable_error
 def dep_twin_label_row(
     twin_project_hash: str, init_labels: bool = True, include_task: bool = False
 ) -> Callable[[LabelRowV2], Twin | None]:
@@ -162,9 +165,15 @@ def dep_twin_label_row(
 
     Returns:
         The twin.
+
+    Raises:
+        `encord.AuthorizationError` if you do not have access to the project.
     """
     client = get_user_client()
-    twin_project = client.get_project(twin_project_hash)
+    try:
+        twin_project = client.get_project(twin_project_hash)
+    except (AuthorisationError, AuthenticationError):
+        raise PrintableError(f"You do not seem to have access to the project with project hash `[blue]{twin_project_hash}[/blue]`")
 
     label_rows: dict[str, LabelRowV2] = {lr.data_hash: lr for lr in twin_project.list_label_rows_v2()}
 
