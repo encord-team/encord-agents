@@ -170,7 +170,9 @@ def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTas
             values[param_field.name] = context.task
         elif param_field.type_annotation is LabelRowV2:
             if context.label_row is None:
-                raise ValueError("Failed to parse dependency tree correctly. Context should have had a label row. Please contact support@encord.com with as much detail as you can (stacktrace, dependency, function declaration)")
+                raise ValueError(
+                    "Failed to parse dependency tree correctly. Context should have had a label row. Please contact support@encord.com with as much detail as you can (stacktrace, dependency, function declaration)"
+                )
             values[param_field.name] = context.label_row
         elif param_field.type_annotation is Project:
             values[param_field.name] = context.project

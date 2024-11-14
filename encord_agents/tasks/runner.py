@@ -28,7 +28,9 @@ TaskAgentReturn = str | UUID | None
 
 
 class RunnerAgent:
-    def __init__(self, identity: str | UUID, callable: Callable[..., TaskAgentReturn], printable_name: str | None = None):
+    def __init__(
+        self, identity: str | UUID, callable: Callable[..., TaskAgentReturn], printable_name: str | None = None
+    ):
         self.identity = identity
         self.printable_name = printable_name or identity
         self.callable = callable
@@ -384,7 +386,8 @@ def {fn_name}(...):
                                 batch_lrs = [label_rows.get(t.data_hash) for t in batch]
                                 with project.create_bundle() as lr_bundle:
                                     for lr in batch_lrs:
-                                        if lr: lr.initialise_labels(bundle=lr_bundle)
+                                        if lr:
+                                            lr.initialise_labels(bundle=lr_bundle)
 
                             self._execute_tasks(
                                 zip(batch, batch_lrs),
@@ -406,7 +409,8 @@ def {fn_name}(...):
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
                             with project.create_bundle() as lr_bundle:
                                 for lr in batch_lrs:
-                                    if lr: lr.initialise_labels(bundle=lr_bundle)
+                                    if lr:
+                                        lr.initialise_labels(bundle=lr_bundle)
                         self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
