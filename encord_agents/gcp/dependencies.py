@@ -4,10 +4,14 @@ import cv2
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
+from typing_extensions import Annotated
 
-from encord_agents.core.data_model import Frame
+from encord_agents.core.data_model import Frame, FrameData
+from encord_agents.core.dependencies.models import Depends
+from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
 
@@ -107,3 +111,82 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
 
     with download_asset(lr, None) as asset:
         yield iter_video(asset)
+
+
+def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)]) -> DataLookup:
+    """
+    Get a lookup to easily retrieve data rows and storage items associated with the given task.
+
+    !!! info
+        If you're just looking to get the associated storage item to a task, consider using `dep_storage_item` instead.
+
+
+    The lookup can, e.g., be useful for
+
+    * Updating client metadata
+    * Downloading data from signed urls
+    * Matching data to other projects
+
+    **Example:**
+
+    ```python
+    from typing_extensions import Annotated
+    from encord.storage import StorageItem
+    from encord_agents import FrameData
+    from encord_agents.gcp import editor_agent, Depends
+    from encord_agents.gcp.dependencies import DataLookup, dep_data_lookup
+
+    @editor_agent()
+    def my_agent(
+        frame_data: FrameData,
+        lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
+    ):
+        print("data hash", lookup.get_data_row(frame_data.data_hash))
+        print("storage item", lookup.get_storage_item(frame_data.data_hash))
+        ...
+
+
+    ```
+
+
+    Args:
+        lookup: The object that you can use to lookup data rows and storage items. Automatically injected.
+
+    Returns:
+        The (shared) lookup object.
+
+    """
+    return lookup
+
+
+def dep_storage_item(
+    lookup: Annotated[DataLookup, Depends(dep_data_lookup)],
+    frame_data: FrameData,
+) -> StorageItem:
+    r"""
+    Get the storage item associated with the underlying agent task.
+
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
+    is useful for multiple things like
+
+    * Updating client metadata
+    * Reading file properties like storage location, fps, duration, DICOM tags, etc.
+
+    **Example**
+
+    ```python
+    from typing_extensions import Annotated
+    from encord.storage import StorageItem
+    from encord_agents.gcp import editor_agent, Depends
+    from encord_agents.gcp.dependencies import dep_storage_item
+
+
+    @editor_agent()
+    def my_agent(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]):
+        print("uuid", storage_item.uuid)
+        print("client_metadata", storage_item.client_metadata)
+        ...
+    ```
+
+    """
+    return lookup.get_storage_item(frame_data.data_hash)

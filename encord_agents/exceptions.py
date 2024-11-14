@@ -1,8 +1,10 @@
-from functools import wraps
-from typing import Callable, ParamSpec, TypeVar, Any
 import io
+from functools import wraps
+from typing import Any, Callable, ParamSpec, TypeVar
+
 from rich.console import Console
 from rich.text import Text
+
 
 class PrintableError(ValueError): ...
 
@@ -30,4 +32,5 @@ def format_printable_error(fn: Callable[Params, RetType]) -> Callable[Params, Re
             console.print(text_obj, end="")
             err.args = (output.getvalue(),)
             raise
+
     return wrapper

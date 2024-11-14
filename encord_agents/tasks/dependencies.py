@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from typing import Callable, Generator, Iterator
 
 import cv2
-from encord.storage import StorageItem
-from encord.workflow.stages.agent import AgentTask
 import numpy as np
 from encord.constants.enums import DataType
-from encord.exceptions import AuthorisationError, AuthenticationError
+from encord.exceptions import AuthenticationError, AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
+from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from encord.workflow.common import WorkflowTask
+from encord.workflow.stages.agent import AgentTask
 from encord.workflow.workflow import WorkflowStage
 from numpy.typing import NDArray
 from typing_extensions import Annotated
@@ -179,7 +179,9 @@ def dep_twin_label_row(
     try:
         twin_project = client.get_project(twin_project_hash)
     except (AuthorisationError, AuthenticationError):
-        raise PrintableError(f"You do not seem to have access to the project with project hash `[blue]{twin_project_hash}[/blue]`")
+        raise PrintableError(
+            f"You do not seem to have access to the project with project hash `[blue]{twin_project_hash}[/blue]`"
+        )
 
     label_rows: dict[str, LabelRowV2] = {lr.data_hash: lr for lr in twin_project.list_label_rows_v2()}
 
@@ -231,17 +233,17 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
 
     @runner.stage(stage="Agent 1")
     def my_agent(
-        task: AgentTask, 
+        task: AgentTask,
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ) -> str:
         # Data row from the underlying dataset
-        data_row: DataRow = lookup.get_data_row(task.data_hash)  
+        data_row: DataRow = lookup.get_data_row(task.data_hash)
 
         # Storage item from Encord Index
-        storage_item: StorageItem = lookup.get_storage_item(task.data_hash)  
+        storage_item: StorageItem = lookup.get_storage_item(task.data_hash)
 
         # Current metadata
-        client_metadata = storage_item.client_metadata        
+        client_metadata = storage_item.client_metadata
 
         # Update metadata
         storage_item.update(
@@ -263,15 +265,13 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     """
     return lookup
 
-def dep_storage_item(
-    lookup: Annotated[DataLookup, Depends(dep_data_lookup)],
-    task: AgentTask
-) -> StorageItem:
-    """
+
+def dep_storage_item(lookup: Annotated[DataLookup, Depends(dep_data_lookup)], task: AgentTask) -> StorageItem:
+    r"""
     Get the storage item associated with the underlying agent task.
 
-    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" } 
-    is useful for multiple things like 
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
+    is useful for multiple things like
 
     * Updating client metadata
     * Reading file properties like storage location, fps, duration, DICOM tags, etc.
@@ -283,7 +283,7 @@ def dep_storage_item(
     from encord_agents.tasks.dependencies import dep_storage_item
 
     @runner.stage(stage="<my_stage_name>")
-    def tillykke(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> str:
+    def my_agent(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> str:
         print(storage_item.name)
         print(storage_item.client_metadata)
         ...
@@ -291,4 +291,3 @@ def dep_storage_item(
 
     """
     return lookup.get_storage_item(task.data_hash)
-
