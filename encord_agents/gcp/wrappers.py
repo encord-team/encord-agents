@@ -3,6 +3,7 @@ from contextlib import ExitStack
 from functools import wraps
 from typing import Any, Callable
 
+from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
@@ -38,8 +39,11 @@ def editor_agent() -> Callable[[AgentFunction], Callable[[Request], Response]]:
 
             client = get_user_client()
             project = client.get_project(str(frame_data.project_hash))
-            label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
-            label_row.initialise_labels(include_signed_url=True)
+
+            label_row: LabelRowV2 | None = None
+            if dependant.needs_label_row:
+                label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
+                label_row.initialise_labels(include_signed_url=True)
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data)
             with ExitStack() as stack:
