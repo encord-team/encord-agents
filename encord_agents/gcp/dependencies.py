@@ -1,3 +1,32 @@
+"""
+Dependencies for injection in GCP Cloud run functions.
+
+This module contains dependencies that you can inject within your cloud functions.
+Dependencies that depend on others don't need to be used together. They'll
+work just fine alone.
+
+Note that you can also use the following _typed_ parameters. If the type annotations 
+are not present, the injection mechanism cannot resolve the them:
+
+```python
+from encord.project import Project
+from encord.objects.ontology_labels_impl import LabelRowV2
+from encord_agents import FrameData
+...
+@app.post("/my-agent-route")
+def my_agent(
+    frame_data: FrameData,
+    project: Project,
+    label_row: LabelRowV2,
+):
+    ...
+```  
+
+- [`FrameData`](../../reference/core/#encord_agents.core.data_model.FrameData) is automatically injected via the api request body.  
+- [`Project`](https://docs.encord.com/sdk-documentation/sdk-references/project){ target="_blank", rel="noopener noreferrer" } is automatically loaded based on the frame data.  
+- [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2) is automatically loaded based on the frame data.  
+"""
+
 from typing import Generator, Iterator
 
 import cv2
@@ -56,7 +85,6 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
 
     @editor_agent()
     def my_agent(
-        lr: LabelRowV2,  # <- Automatically injected
         frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
     ):
         assert frame.ndim == 3, "Will work"
@@ -89,7 +117,6 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
 
     @editor_agent()
     def my_agent(
-        lr: LabelRowV2,  # <- Automatically injected
         video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)]
     ):
         for frame in video_frames:
