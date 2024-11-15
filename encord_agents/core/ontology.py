@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Any, ClassVar, Generic, TypeVar, Union, cast, overload, Literal
+from typing import Any, ClassVar, Generic, Literal, TypeVar, Union, cast, overload
 
 from encord.objects.attributes import (
     Attribute,
@@ -72,7 +72,10 @@ def create_text_field(attr: TextAttribute) -> TypeFieldDefinition:
     TextModel = create_model(
         f"{safe_str_camel(attr.title)}TextModel",
         __base__=GenericFieldModel,
-        feature_node_hash=(Literal[attr.feature_node_hash], Field(description="UUID for discrimination. Must be included in json as is.")),  # type: ignore
+        feature_node_hash=(
+            Literal[attr.feature_node_hash],
+            Field(description="UUID for discrimination. Must be included in json as is."),
+        ),  # type: ignore
         **{"value": (str, text_field)},  # type: ignore
     )
 
@@ -93,7 +96,10 @@ def create_checkbox_field(
     ChecklistModel = create_model(
         f"{safe_str_camel(attr.title)}ChecklistModel",
         __base__=GenericFieldModel,
-        feature_node_hash=(Literal[attr.feature_node_hash], Field(description="UUID for discrimination. Must be included in json as is.")),  # type: ignore
+        feature_node_hash=(
+            Literal[attr.feature_node_hash],
+            Field(description="UUID for discrimination. Must be included in json as is."),
+        ),  # type: ignore
         **{
             safe_key(o.value): (
                 bool,
@@ -122,7 +128,6 @@ def create_radio_field(
 ) -> TypeFieldDefinition:
     options = [o for o in attr.options]  # shallow copy here.
     is_flat = all([len(o.attributes) == 0 for o in options])
-    is_all_nested = all([len(o.attributes) > 0 for o in options])
 
     options_union: Any = None
     option_lookup: dict[Any, NestableOption] = {}
@@ -140,44 +145,47 @@ def create_radio_field(
         for option in options:
             if option.attributes:
                 fields = dict([construct_fields(attr) for attr in option.attributes])
+
                 def set_nested_answer(self, ins):
                     for attr_key, attr_val in vars(self).items():
                         if attr_key == "feature_node_hash":
                             continue
                         attr_val.set_answer(ins)
             else:
-                fields = {"title": (Literal[safe_str(option.label)], Field("Constant value - should be included as-is."))}  # type:ignore
+                fields = {
+                    "title": (Literal[safe_str(option.label)], Field("Constant value - should be included as-is."))
+                }  # type:ignore
+
                 def set_nested_answer(self, ins):
                     pass
 
             NestedModel = create_model(
                 f"{safe_str_camel(option.value)}NestedRadioModel",
                 __base__=GenericRadioModel,
-                feature_node_hash=(Literal[option.feature_node_hash], Field(description="UUID for discrimination. Must be included in json as is.")),  # type: ignore
+                feature_node_hash=(
+                    Literal[option.feature_node_hash],
+                    Field(description="UUID for discrimination. Must be included in json as is."),
+                ),  # type: ignore
                 **fields,  # type: ignore
             )
 
             NestedModel.set_answer = set_nested_answer
-            options_union = (
-                Union[options_union, NestedModel]
-                if options_union is not None
-                else NestedModel
-            )
+            options_union = Union[options_union, NestedModel] if options_union is not None else NestedModel
             option_lookup[NestedModel] = option
 
     field_options: dict[str, Any] = {} if is_flat else {"discriminator": "feature_node_hash"}
     RadioModel = create_model(
         f"{safe_str_camel(attr.title)}RadioModel",
         __base__=GenericRadioModel,
-        feature_node_hash=(Literal[attr.feature_node_hash], Field(description="UUID for discrimination. Must be included in json as is.")),  # type: ignore
+        feature_node_hash=(
+            Literal[attr.feature_node_hash],
+            Field(description="UUID for discrimination. Must be included in json as is."),
+        ),  # type: ignore
         is_flat=is_flat,
         **{
             "choice": (
                 options_union,
-                Field(
-                    description="Choose exactly one answer from the given options.",
-                    **field_options
-                ),
+                Field(description="Choose exactly one answer from the given options.", **field_options),
             )
         },  # type: ignore
     )
@@ -217,11 +225,10 @@ def create_objects_model(
     objects: list[Object],
 ) -> BaseModel:
     is_flat = all([len(o.attributes) == 0 for o in objects])
-    is_all_nested = all([len(o.attributes) > 0 for o in objects])
 
     objects_union: Any = None
     object_lookup: dict[Any, Object] = {}
-    if not is_all_nested:
+    if is_flat:
         legal_objects = [o for o in objects if not o.attributes]
         FlatOptionModel = Enum(  # < becomes radio model
             "ObjectEnumOptions",
@@ -231,33 +238,38 @@ def create_objects_model(
         object_lookup.update(
             {FlatOptionModel.__members__[safe_key(o.title)]: o for o in legal_objects}  # type: ignore
         )  # type: ignore
-
-    if not is_flat:
+    else:
         for object in objects:
-            if not object.attributes:
-                # skip objects covered by flat enum
-                continue
+            if object.attributes:
+                fields = dict([construct_fields(attr) for attr in object.attributes])
+
+                def set_nested_answer(self, ins):
+                    for attr_key, attr_val in vars(self).items():
+                        if attr_key == "feature_node_hash":
+                            continue
+                        attr_val.set_answer(ins)
+
+            else:
+                fields = {
+                    "title": (Literal[safe_str(object.title)], Field("Constant value - should be included as-is."))
+                }  # type:ignore
+
+                def set_nested_answer(self, ins):
+                    pass
 
             fields = dict([construct_fields(attr) for attr in object.attributes])
             NestedModel = create_model(
                 f"{safe_str_camel(object.title)}NestedModel",
                 __base__=GenericRadioModel,
-                feature_node_hash=(Literal[object.feature_node_hash], Field(description="UUID for discrimination. Must be included in json as is.")),  # type: ignore
+                feature_node_hash=(
+                    Literal[object.feature_node_hash],
+                    Field(description="UUID for discrimination. Must be included in json as is."),
+                ),  # type: ignore
                 **fields,  # type: ignore
             )
 
-            def set_nested_answer(self, ins: ObjectInstance):
-                for attr_key, attr_val in vars(self).items():
-                    if attr_key == "feature_node_hash":
-                        continue
-                    attr_val.set_answer(ins)
-
             NestedModel.set_answer = set_nested_answer
-            objects_union = (
-                Union[objects_union, NestedModel]
-                if objects_union is not None
-                else NestedModel
-            )
+            objects_union = Union[objects_union, NestedModel] if objects_union is not None else NestedModel
             object_lookup[NestedModel] = object
 
     field_options: dict[str, Any] = {} if is_flat else {"discriminator": "feature_node_hash"}
@@ -267,10 +279,7 @@ def create_objects_model(
         **{
             "choice": (
                 objects_union,
-                Field(
-                    description="Choose exactly one answer from the given options.",
-                    **field_options
-                ),
+                Field(description="Choose exactly one answer from the given options.", **field_options),
             )
         },  # type: ignore
     )
@@ -285,6 +294,7 @@ def create_objects_model(
 
 OntologyType = TypeVar("OntologyType", bound=Classification | Object)
 
+
 class OntologyDataModel(Generic[OntologyType]):
     """
     Class to create a pydantic model equivalent to an arbitrary classification ontology.
@@ -292,7 +302,7 @@ class OntologyDataModel(Generic[OntologyType]):
     The model can be used to form a json schema based on the ontology. This is useful if
     you are, e.g., trying to get a structured respone from an LLM.
 
-    **Example:**  
+    **Example:**
 
     ```python
     TODO
@@ -300,16 +310,19 @@ class OntologyDataModel(Generic[OntologyType]):
 
     For a concrete example, please see [](TODO)
 
-    Attributes: 
-        ontology: 
-        DataModel: 
+    Attributes:
+        ontology:
+        DataModel:
     """
+
     def __init__(self, root_obj: list[OntologyType] | OntologyType):
         _root_obj: list[OntologyType]
         if isinstance(root_obj, list):
             assert len(root_obj) != 0, "No ontology objects given to transform into a pydantic model"
             first, *rest = root_obj
-            assert all((isinstance(r, type(first)) for r in rest)), "You cannot mix classifications and objects in the same model"
+            assert all(
+                (isinstance(r, type(first)) for r in rest)
+            ), "You cannot mix classifications and objects in the same model"
             _root_obj = root_obj
         else:
             _root_obj = [root_obj]
@@ -331,15 +344,8 @@ class OntologyDataModel(Generic[OntologyType]):
 
         else:
             # Classifications can be build into one
-            classification_fields = dict(
-                [
-                    construct_fields(attr)
-                    for clf in _root_obj
-                    for attr in clf.attributes
-                ]
-            )
+            classification_fields = dict([construct_fields(attr) for clf in _root_obj for attr in clf.attributes])
             self.DataModel: BaseModel = create_model("ClassificationModel", **classification_fields)  # type: ignore
-
 
     @property
     def model_json_schema(self) -> dict[str, Any]:
@@ -349,50 +355,50 @@ class OntologyDataModel(Generic[OntologyType]):
     def model_json_schema_str(self) -> str:
         return json.dumps(self.model_json_schema)
 
-    @overload 
-    def __call__(self: "OntologyDataModel[Classification]", answer: str) -> list[ClassificationInstance]:
-        ...
+    @overload
+    def __call__(self: "OntologyDataModel[Classification]", answer: str) -> list[ClassificationInstance]: ...
 
-    @overload 
-    def __call__(self: "OntologyDataModel[Object]", answer: str) -> ObjectInstance:
-        ...
+    @overload
+    def __call__(self: "OntologyDataModel[Object]", answer: str) -> ObjectInstance: ...
 
-    def __call__(self: "OntologyDataModel[Classification] | OntologyDataModel[Object]", answer: str) -> list[ClassificationInstance] | ObjectInstance:
+    def __call__(
+        self: "OntologyDataModel[Classification] | OntologyDataModel[Object]", answer: str
+    ) -> list[ClassificationInstance] | ObjectInstance:
         """
         Validate a json response in accordance to the pydantic model.
 
-        This function allows you to convert from a json object (e.g., coming from an llm) 
+        This function allows you to convert from a json object (e.g., coming from an llm)
         back to the encord "instance format".
 
         Args:
             answer_str: The json object as a raw string.
 
         Returns: a list of classification / object instances that you will then
-            have to add to a label row. 
+            have to add to a label row.
 
         """
         return self.validate_json(answer)
 
-    @overload 
-    def validate_json(self: "OntologyDataModel[Classification]", answer_str: str) -> list[ClassificationInstance]:
-        ...
+    @overload
+    def validate_json(self: "OntologyDataModel[Classification]", answer_str: str) -> list[ClassificationInstance]: ...
 
-    @overload 
-    def validate_json(self: "OntologyDataModel[Object]", answer_str: str) -> ObjectInstance:
-        ...
+    @overload
+    def validate_json(self: "OntologyDataModel[Object]", answer_str: str) -> ObjectInstance: ...
 
-    def validate_json(self: "OntologyDataModel[Classification] | OntologyDataModel[Object]", answer_str: str) -> list[ClassificationInstance] | ObjectInstance:
+    def validate_json(
+        self: "OntologyDataModel[Classification] | OntologyDataModel[Object]", answer_str: str
+    ) -> list[ClassificationInstance] | ObjectInstance:
         """
         Validate a json response in accordance to the pydantic model.
 
-        This function allows you to convert from a json object (e.g., coming from an llm) 
+        This function allows you to convert from a json object (e.g., coming from an llm)
         back to the encord "instance format".
 
         Args:
             answer_str: The json object as a raw string.
 
         Returns: a list of classification / object instances that you will then
-            have to add to a label row. 
+            have to add to a label row.
 
         """
         answer = self.DataModel.model_validate_json(answer_str)
@@ -417,4 +423,3 @@ class OntologyDataModel(Generic[OntologyType]):
                 answers.append(ins)
 
             return answers
-
