@@ -247,3 +247,43 @@ def test_only_some_nested_objects():
     nested_answer = answer.get_answer(answer.ontology_item.attributes[0])
     assert nested_answer
     assert nested_answer.label == "6 to 10"  # type: ignore
+
+
+def test_just_one_nested_object():
+    gen = iter(uids)
+    struct = OntologyStructure()
+
+    def add_object(obj_name):
+        ont_obj = struct.add_object(obj_name, Shape.POLYGON, feature_node_hash=next(gen))
+        if obj_name == "blueberry":
+            return ont_obj
+
+        attr = ont_obj.add_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
+        attr.add_option("0 to 5", feature_node_hash=next(gen))
+        attr.add_option("6 to 10", feature_node_hash=next(gen))
+        attr.add_option("10 to 15", feature_node_hash=next(gen))
+        return ont_obj
+
+    ont_obj =  add_object("my_single_object")
+    model = OntologyDataModel(ont_obj)
+    print(model.model_json_schema_str)
+
+    answer = """{
+  "choice": {
+    "feature_node_hash": "aaaaaaaa",
+    "count": {
+      "feature_node_hash": "aaaabbbb",
+      "choice": "10 to 15"
+    }
+  }
+}
+"""
+
+    answer = model.validate_json(answer)
+    assert isinstance(answer, ObjectInstance)
+    assert answer.object_name == "my_single_object"
+    assert len(answer.ontology_item.attributes) == 1
+    attr = answer.ontology_item.attributes[0]
+    nested_answer = answer.get_answer(attr)
+    assert nested_answer.label == "10 to 15"  # type: ignore
+
