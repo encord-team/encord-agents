@@ -22,11 +22,11 @@ def my_agent(
 from typing import Annotated, Generator, Iterator
 
 import cv2
-from encord.project import Project
-from encord.storage import StorageItem
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.project import Project
+from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
 from encord_agents.core.dependencies.shares import DataLookup
@@ -75,7 +75,7 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
 
     **Example:**
 
-        
+
     ```python
     from encord_agents.fastapi.depencencies import dep_label_row
     ...
@@ -105,7 +105,7 @@ def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_da
     The downloaded asset will be named `lr.data_hash.{suffix}`.
     When the function has finished, the downloaded file will be removed from the file system.
 
-    **Example:**  
+    **Example:**
 
     ```python
     from encord_agents import FrameData
@@ -137,7 +137,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
-    **Example:**  
+    **Example:**
 
     ```python
     from encord_agents import FrameData
@@ -170,12 +170,11 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
 
 
 def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depends(dep_client)]):
-    
-    """
-    Dependency to provide an instantiated 
+    r"""
+    Dependency to provide an instantiated
     [Project](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2){ target="\_blank", rel="noopener noreferrer" }.
 
-    **Example:**  
+    **Example:**
 
     ```python
     from encord.project import Project
@@ -191,13 +190,14 @@ def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depen
 
 
     Args:
-        frame_data: 
-        client: 
+        frame_data:
+        client:
 
     Returns:
-        
+
     """
-    return client.get_project(project_hash = frame_data.project_hash)
+    return client.get_project(project_hash=frame_data.project_hash)
+
 
 def _lookup_adapter(project: Annotated[Project, Depends(dep_project)]) -> DataLookup:
     return DataLookup.sharable(project)
@@ -275,4 +275,3 @@ def dep_storage_item(
 
     """
     return lookup.get_storage_item(frame_data.data_hash)
-

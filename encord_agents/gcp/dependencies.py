@@ -5,7 +5,7 @@ This module contains dependencies that you can inject within your cloud function
 Dependencies that depend on others don't need to be used together. They'll
 work just fine alone.
 
-Note that you can also use the following _typed_ parameters. If the type annotations 
+Note that you can also use the following _typed_ parameters. If the type annotations
 are not present, the injection mechanism cannot resolve the them:
 
 ```python
@@ -20,11 +20,11 @@ def my_agent(
     label_row: LabelRowV2,
 ):
     ...
-```  
+```
 
-- [`FrameData`](../../reference/core/#encord_agents.core.data_model.FrameData) is automatically injected via the api request body.  
-- [`Project`](https://docs.encord.com/sdk-documentation/sdk-references/project){ target="_blank", rel="noopener noreferrer" } is automatically loaded based on the frame data.  
-- [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2) is automatically loaded based on the frame data.  
+- [`FrameData`](../../reference/core/#encord_agents.core.data_model.FrameData) is automatically injected via the api request body.
+- [`Project`](https://docs.encord.com/sdk-documentation/sdk-references/project){ target="_blank", rel="noopener noreferrer" } is automatically loaded based on the frame data.
+- [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2) is automatically loaded based on the frame data.
 """
 
 from typing import Generator, Iterator
