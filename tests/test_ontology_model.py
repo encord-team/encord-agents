@@ -264,9 +264,8 @@ def test_just_one_nested_object():
         attr.add_option("10 to 15", feature_node_hash=next(gen))
         return ont_obj
 
-    ont_obj =  add_object("my_single_object")
+    ont_obj = add_object("my_single_object")
     model = OntologyDataModel(ont_obj)
-    print(model.model_json_schema_str)
 
     answer = """{
   "choice": {
@@ -286,4 +285,3 @@ def test_just_one_nested_object():
     attr = answer.ontology_item.attributes[0]
     nested_answer = answer.get_answer(attr)
     assert nested_answer.label == "10 to 15"  # type: ignore
-

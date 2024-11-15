@@ -305,7 +305,32 @@ class OntologyDataModel(Generic[OntologyType]):
     **Example:**
 
     ```python
-    TODO
+    from pydantic import ValidationError
+
+    classifications = project.ontology_structure.classifications
+    objects = project.ontology_structure.classifications
+
+    data_model = OntologyDataModel([objects])
+    # or
+    data_model = OntologyDataModel([classifications])
+
+    # Get a json schema for the ontology
+    print(data_model.model_json_schema_str)
+
+    # Parse json following the schema into label instances
+    json_str = my_favourite_llm(
+        f"what is this? pls follow {schema}", img
+    )
+    try:
+        instances = data_model(json_str)
+    except ValidationError:
+        # invalid json
+        ...
+
+    for ins in instances:
+        label_row.add_classification_instance(ins)
+
+    label_row.save()
     ```
 
     For a concrete example, please see [](TODO)

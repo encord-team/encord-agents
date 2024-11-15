@@ -60,6 +60,7 @@ def get_dependant(
                 depends=param_details.depends,
             )
             dependant.dependencies.append(sub_dependant)
+            dependant.needs_label_row |= sub_dependant.needs_label_row
         else:
             dependant.field_params.append(_Field(name=param_name, type_annotation=param_details.type_annotation))
             dependant.needs_label_row |= param_details.type_annotation is LabelRowV2
