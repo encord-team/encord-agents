@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
+from encord.objects.ontology_object_instance import ObjectInstance
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,3 +40,7 @@ class Frame:
     """
     An [h,w,c] np.array with color channels RGB.
     """
+
+@dataclass(frozen=True)
+class InstanceCrop(Frame):
+    instance: ObjectInstance

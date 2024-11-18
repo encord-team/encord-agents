@@ -40,7 +40,7 @@ from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
 from typing_extensions import Annotated
 
-from encord_agents.core.data_model import Frame, FrameData
+from encord_agents.core.data_model import Frame, FrameData, InstanceCrop
 from encord_agents.core.dependencies.models import Depends
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_user_client
@@ -224,7 +224,7 @@ def dep_storage_item(
 
 def dep_object_crops(
     frame_data: FrameData, lr: LabelRowV2, frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
-) -> list[tuple[ObjectInstance, NDArray[np.uint8]]]:
+) -> list[InstanceCrop]:
     """
     Get a list of object instances and crops associated with each object.
 
@@ -235,14 +235,16 @@ def dep_object_crops(
         lr: The associated label row
         frame: The actual pixel values
 
-    Returns: Tuples of object instances and their respective image crops.
+    Returns: List of instance crops corresponding to each object instance.
 
     """
+    legal_shapes = {Shape.POLYGON, Shape.BOUNDING_BOX, Shape.ROTATABLE_BOUNDING_BOX, Shape.BITMASK}
     return [
-        (
-            o,
-            crop_to_object(frame, o.get_annotation(frame=frame_data.frame).coordinates),  # type: ignore
+        InstanceCrop(
+            frame=frame_data.frame,
+            content=crop_to_object(frame, o.get_annotation(frame=frame_data.frame).coordinates),  # type: ignore
+            instance=o
         )
         for o in lr.get_object_instances(filter_frames=frame_data.frame)
-        if o.ontology_item.shape in {Shape.POLYGON, Shape.BOUNDING_BOX, Shape.ROTATABLE_BOUNDING_BOX, Shape.BITMASK}
+        if o.ontology_item.shape in legal_shapes
     ]
