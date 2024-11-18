@@ -38,7 +38,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord_agents import FrameData
 from encord_agents.fastapi import dep_label_row
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -49,7 +49,7 @@ app.add_middleware(
 
 @app.post("/my_agent")
 def my_agent(
-    frame_data: FrameData,
+    frame_data: Annotated[FrameData, Form()],
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
 ):
     # ... Do your edits to the labels
@@ -99,4 +99,6 @@ Refresh the label editor in your browser to see the effect that you applied to t
 
 ## Deployment
 
-TODO
+!!! Info
+    This section is under construction.
+Meanwhile, please refer to the [official FastAPI documentation](https://fastapi.tiangolo.com/deployment/){ target="\_blank", rel="noopener noreferrer" }.

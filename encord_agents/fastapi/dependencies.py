@@ -7,11 +7,13 @@ work just fine alone.
 
 Note that you can also use the function parameter:
 ```python
+from typing_extensions import Annotated
+from fastapi import Form
 from encord_agents import FrameData
 ...
 @app.post("/my-agent-route")
 def my_agent(
-    frame_data: FrameData,
+    frame_data: Annotated[FrameData, Form()],
 ):
     ...
 ```
@@ -32,7 +34,7 @@ from encord.user_client import EncordUserClient
 from encord_agents.core.dependencies.shares import DataLookup
 
 try:
-    from fastapi import Depends
+    from fastapi import Depends, Form
 except ModuleNotFoundError:
     print(
         'To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"'
@@ -69,7 +71,7 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
-def dep_label_row(frame_data: FrameData) -> LabelRowV2:
+def dep_label_row(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
     """
     Dependency to provide an initialized label row.
 
@@ -98,7 +100,7 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     return get_initialised_label_row(frame_data)
 
 
-def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData):
+def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Annotated[FrameData, Form()]):
     """
     Dependency to inject the underlying asset of the frame data.
 
@@ -108,13 +110,11 @@ def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_da
     **Example:**
 
     ```python
-    from encord_agents import FrameData
     from encord_agents.fastapi.depencencies import dep_single_frame
     ...
 
     @app.post("/my-route")
     def my_route(
-        frame_data: FrameData,  # <- Automatically injected
         frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
     ):
         assert arr.ndim == 3, "Will work"
@@ -140,7 +140,6 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
     **Example:**
 
     ```python
-    from encord_agents import FrameData
     from encord_agents.fastapi.depencencies import dep_video_iterator, Frame
     ...
 
@@ -169,7 +168,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
         yield iter_video(asset)
 
 
-def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depends(dep_client)]):
+def dep_project(frame_data: Annotated[FrameData, Form()], client: Annotated[EncordUserClient, Depends(dep_client)]):
     r"""
     Dependency to provide an instantiated
     [Project](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2){ target="\_blank", rel="noopener noreferrer" }.
@@ -220,13 +219,15 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
     **Example:**
 
     ```python
+    from fastapi import Form
+    from typing_extensions import Annotated
     from encord_agents import FrameData
     from encord_agents.fastapi.dependencies import dep_data_lookup, DataLookup
 
     ...
     @app.post("/my-agent")
     def my_agent(
-        frame_data: FrameData,
+        frame_data: Annotated[FrameData, Form()],
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ):
         # Client will authenticated and ready to use.
@@ -260,7 +261,6 @@ def dep_storage_item(
     **Example**
 
     ```python
-    from encord_agents import FrameData
     from encord.storage import StorageItem
     from encord_agents.fastapi.dependencies import dep_storage_item
 
