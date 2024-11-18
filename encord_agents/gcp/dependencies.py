@@ -221,7 +221,10 @@ def dep_storage_item(
     """
     return lookup.get_storage_item(frame_data.data_hash)
 
-def dep_object_crops(frame_data: FrameData, lr: LabelRowV2, frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]) -> list[tuple[ObjectInstance, NDArray[np.uint8]]]:
+
+def dep_object_crops(
+    frame_data: FrameData, lr: LabelRowV2, frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
+) -> list[tuple[ObjectInstance, NDArray[np.uint8]]]:
     """
     Get a list of object instances and crops associated with each object.
 

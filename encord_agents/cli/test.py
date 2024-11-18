@@ -2,6 +2,10 @@
 CLI utilities for testing agents.
 """
 
+import os
+
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.table import Table
 from typer import Argument, Option, Typer
 from typing_extensions import Annotated
 
@@ -66,13 +70,52 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         )
         raise typer.Abort()
 
-    response = requests.post(
-        f"http://localhost:{port}/{target}",
-        json=payload,
-        headers={"Content-type": "application/json"},
-    )
-    print(response.status_code)
-    try:
-        pprint(response.json())
-    except Exception:
-        print(response.content.decode("utf-8"))
+    if target and not target[0] == "/":
+        target = f"/{target}"
+
+    with requests.Session() as sess:
+        request = requests.Request(
+            "POST",
+            f"http://localhost:{port}{target}",
+            data=payload,
+            headers={"Content-type": "application/x-www-form-urlencoded"},
+        )
+        prepped = request.prepare()
+
+        with Progress(SpinnerColumn(), TextColumn("{task.description}"), TimeElapsedColumn()) as progress:
+            task = progress.add_task(f"Hitting agent endpoint `[blue]{prepped.url}[/blue]`")
+            response = sess.send(prepped)
+            progress.update(task, advance=1)
+            time_elapsed = progress.get_time()
+
+        table = Table()
+
+        table.add_column("Property", style="bold")
+        table.add_column("Value")
+
+        table.add_section()
+        table.add_row("[green]Request[/green]")
+        table.add_row("url", prepped.url)
+        table.add_row("data", prepped.body)  # type: ignore
+        table_headers = ", ".join([f"'{k}': '{v}'" for k, v in prepped.headers.items()])
+        table.add_row("headers", f"{{{table_headers}}}")
+
+        table.add_section()
+        table.add_row("[green]Response[/green]")
+        table.add_row("status code", str(response.status_code))
+        table.add_row("response", response.text)
+        table.add_row("elapsed time", f"{time_elapsed / 1000 / 1000:.4f}s")
+
+        table.add_section()
+        table.add_row("[green]Utilities[/green]")
+        editor_url = (
+            f"https://app.encord.com/label_editor/{payload['projectHash']}/{payload['dataHash']}/{payload['frame']}"
+        )
+        table.add_row("label editor", editor_url)
+
+        headers = ["'{0}: {1}'".format(k, v) for k, v in prepped.headers.items()]
+        headers = " -H ".join(headers)
+        curl_command = f"curl -X {prepped.method} \\{os.linesep}  -H {headers} \\{os.linesep}  -d '{prepped.body}' \\{os.linesep}  '{prepped.url}'"
+        table.add_row("curl", curl_command)
+
+        rich.print(table)
