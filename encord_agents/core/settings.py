@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     To setup a key with Encord, please see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
+    domain: Optional[str] = Field(validation_alias="ENCORD_DOMAIN", default=None)
 
     @field_validator("ssh_key_file")
     @classmethod
