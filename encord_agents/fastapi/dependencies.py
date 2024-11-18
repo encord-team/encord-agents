@@ -22,6 +22,8 @@ def my_agent(
 from typing import Annotated, Generator, Iterator
 
 import cv2
+from encord.project import Project
+from encord.storage import StorageItem
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -75,10 +77,10 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
 
     **Example:**
 
-
     ```python
     from encord_agents.fastapi.depencencies import dep_label_row
     ...
+
 
     @app.post("/my-route")
     def my_route(
@@ -105,7 +107,7 @@ def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_da
     The downloaded asset will be named `lr.data_hash.{suffix}`.
     When the function has finished, the downloaded file will be removed from the file system.
 
-    **Example:**
+    **Example:**  
 
     ```python
     from encord_agents import FrameData
@@ -137,7 +139,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
-    **Example:**
+    **Example:**  
 
     ```python
     from encord_agents import FrameData

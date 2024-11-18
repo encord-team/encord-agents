@@ -243,5 +243,3 @@ def dep_object_crops(frame_data: FrameData, lr: LabelRowV2, frame: Annotated[NDA
         for o in lr.get_object_instances(filter_frames=frame_data.frame)
         if o.ontology_item.shape in {Shape.POLYGON, Shape.BOUNDING_BOX, Shape.ROTATABLE_BOUNDING_BOX, Shape.BITMASK}
     ]
-
-
