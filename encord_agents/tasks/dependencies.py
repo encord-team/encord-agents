@@ -20,7 +20,7 @@ from encord_agents.core.dependencies.models import Depends
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_user_client
 from encord_agents.core.video import iter_video
-from encord_agents.exceptions import PrintableError, format_printable_error
+from encord_agents.exceptions import PrintableError
 
 
 def dep_client() -> EncordUserClient:
@@ -127,7 +127,6 @@ class Twin:
     task: WorkflowTask | None
 
 
-@format_printable_error
 def dep_twin_label_row(
     twin_project_hash: str, init_labels: bool = True, include_task: bool = False
 ) -> Callable[[LabelRowV2], Twin | None]:

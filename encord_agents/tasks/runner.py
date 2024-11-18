@@ -1,4 +1,3 @@
-import io
 import os
 import time
 import traceback
@@ -22,7 +21,7 @@ from typer import Abort
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
-from encord_agents.exceptions import PrintableError, format_printable_error
+from encord_agents.exceptions import PrintableError
 
 TaskAgentReturn = str | UUID | None
 
@@ -110,7 +109,6 @@ class Runner:
     def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn], printable_name: str | None):
         self.agents.append(RunnerAgent(identity=identity, callable=func, printable_name=printable_name))
 
-    @format_printable_error
     def stage(self, stage: str | UUID) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
