@@ -2,7 +2,7 @@ import mimetypes
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Generator, Any
+from typing import Any, Generator
 
 import cv2
 import requests
@@ -27,10 +27,7 @@ def get_user_client() -> EncordUserClient:
     """
     settings = Settings()  # type: ignore
     kwargs: dict[str, Any] = {"domain": settings.domain} if settings.domain else {}
-    return EncordUserClient.create_with_ssh_private_key(
-        ssh_private_key=settings.ssh_key,
-        **kwargs
-    )
+    return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
 
 def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:

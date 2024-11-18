@@ -3,6 +3,7 @@ from contextlib import ExitStack
 from functools import wraps
 from typing import Any, Callable
 
+import orjson
 from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
@@ -34,7 +35,7 @@ def editor_agent() -> Callable[[AgentFunction], Callable[[Request], Response]]:
 
         @wraps(func)
         def wrapper(request: Request) -> Response:
-            frame_data = FrameData.model_validate_json(request.data)
+            frame_data = FrameData.model_validate_json(orjson.dumps(request.form))
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()
