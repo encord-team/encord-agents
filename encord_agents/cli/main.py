@@ -11,12 +11,10 @@ Example usage:
 
 import typer
 
-from .gcp import app as gcp_app
 from .print import app as print_app
 from .test import app as test_app
 
 app = typer.Typer(rich_markup_mode="rich")
-app.add_typer(gcp_app, name="gcp")
 app.add_typer(test_app, name="test")
 app.add_typer(print_app, name="print")
 
