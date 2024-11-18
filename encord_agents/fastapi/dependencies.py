@@ -163,7 +163,6 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
     """
     if not lr.data_type == DataType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
-    # TODO test if this will work in api server
     with download_asset(lr, None) as asset:
         yield iter_video(asset)
 

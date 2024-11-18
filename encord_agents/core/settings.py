@@ -3,12 +3,15 @@ Settings used throughout the module.
 
 Note that central settings will be read via environment variables.
 """
+import os
 
 from pathlib import Path
 from typing import Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
+
+from encord_agents.exceptions import PrintableError, format_printable_error
 
 
 class Settings(BaseSettings):
@@ -41,10 +44,12 @@ class Settings(BaseSettings):
         return path
 
     @model_validator(mode="after")
+    @format_printable_error
     def check_key(self):
-        assert any(
+        if not any(
             map(bool, [self.ssh_key_content, self.ssh_key_file])
-        ), "Must specify either `ENCORD_SSH_KEY_FILE` or `ENCORD_SSH_KEY` env variables. "
+        ): 
+            raise PrintableError(f"Must specify either `[blue]ENCORD_SSH_KEY_FILE[/blue]` or `[blue]ENCORD_SSH_KEY[/blue]` env variables. If you don't have an ssh key, please refere to our docs:{os.linesep}[magenta]https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys#creating-keys-using-terminal-powershell[/magenta]")
         # TODO help people find their way through ssh keys
         return self
 
