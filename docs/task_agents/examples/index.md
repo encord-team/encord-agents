@@ -103,7 +103,7 @@ Now you should see tasks that have been approved by review starting to move to t
 
 ## Pre-label video with _fake_ predictions
 
-Suppose yuou have a _fake_ model like this one, which predicts labels, bounding boxes and, confidenceds.
+Suppose you have a _fake_ model like this one, which predicts labels, bounding boxes and, confidences.
 
 <!--codeinclude-->
 
@@ -111,15 +111,14 @@ Suppose yuou have a _fake_ model like this one, which predicts labels, bounding 
 
 <!--/codeinclude-->
 
-And you have an ontology looking like this:
+And you have an ontology that looks like this:
 
 <figure style="text-align: center">
   <img src="../../assets/examples/tasks_agents/prelabel_video_ontology.png" width="100%"/>
   Project ontology.
 </figure>
 
-If you then set up a workflow like this one with a pre-labeling agent node before the annotation stage,
-you will be able to pre-label the tasks with the model predictions.
+By setting up a workflow with a pre-labeling agent node before the annotation stage, you can automatically pre-label tasks using model predictions, streamlining the annotation process.
 
 <figure style="text-align: center">
   <img src="../../assets/examples/tasks_agents/prelabel_video_workflow.png" width="100%"/>
