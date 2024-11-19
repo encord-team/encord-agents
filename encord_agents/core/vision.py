@@ -1,3 +1,5 @@
+import base64
+
 import cv2
 import numpy as np
 from encord.objects.bitmask import BitmaskCoordinates
@@ -7,6 +9,13 @@ from numpy.typing import NDArray
 CroppableCoordinates = (
     BoundingBoxCoordinates | RotatableBoundingBoxCoordinates | BitmaskCoordinates | PolygonCoordinates
 )
+
+DATA_TYPES = {
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 
 
 def rbb_to_poly(
@@ -132,3 +141,8 @@ def crop_to_object(image: NDArray[np.uint8], coordinates: CroppableCoordinates) 
     elif isinstance(coordinates, BitmaskCoordinates):
         box = mask_to_bbox(coordinates)
     return crop_to_bbox(image, box)
+
+
+def b64_encode_image(img: NDArray[np.uint8], format=".jpg"):
+    _, encoded_image = cv2.imencode(format, img)
+    return base64.b64encode(encoded_image).decode("utf-8")

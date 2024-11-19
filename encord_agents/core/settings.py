@@ -3,8 +3,8 @@ Settings used throughout the module.
 
 Note that central settings will be read via environment variables.
 """
-import os
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -47,7 +47,6 @@ class Settings(BaseSettings):
 
         return content
 
-
     @field_validator("ssh_key_file")
     @classmethod
     def check_path_expand_and_exists(cls, path: Path | None):
@@ -65,14 +64,17 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def check_key(self):
-        if not any(
-            map(bool, [self.ssh_key_content, self.ssh_key_file])
-        ): 
-            raise PrintableError(f"Must specify either `[blue]ENCORD_SSH_KEY_FILE[/blue]` or `[blue]ENCORD_SSH_KEY[/blue]` env variables. If you don't have an ssh key, please refere to our docs:{os.linesep}[magenta]https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys#creating-keys-using-terminal-powershell[/magenta]")
+        if not any(map(bool, [self.ssh_key_content, self.ssh_key_file])):
+            raise PrintableError(
+                f"Must specify either `[blue]ENCORD_SSH_KEY_FILE[/blue]` or `[blue]ENCORD_SSH_KEY[/blue]` env variables. If you don't have an ssh key, please refere to our docs:{os.linesep}[magenta]https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys#creating-keys-using-terminal-powershell[/magenta]"
+            )
 
         if all(map(bool, [self.ssh_key_file, self.ssh_key_content])):
             import warnings
-            warnings.warn("You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` will take precedence.")
+
+            warnings.warn(
+                "You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` will take precedence."
+            )
 
         return self
 

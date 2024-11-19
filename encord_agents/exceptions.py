@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.text import Text
 
 
-class PrintableError(ValueError): 
+class PrintableError(ValueError):
     def __str__(self) -> str:
         output = io.StringIO()
         console = Console(
