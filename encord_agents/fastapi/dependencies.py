@@ -21,17 +21,21 @@ def my_agent(
 
 """
 
-from typing import Annotated, Generator, Iterator
+from typing import Annotated, Callable, Generator, Iterator
 
 import cv2
 import numpy as np
 from encord.constants.enums import DataType
+from encord.objects.common import Shape
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.objects.ontology_object import Object
 from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
+from numpy.typing import NDArray
 
 from encord_agents.core.dependencies.shares import DataLookup
+from encord_agents.core.vision import crop_to_object
 
 try:
     from fastapi import Depends, Form
@@ -41,7 +45,7 @@ except ModuleNotFoundError:
     )
     exit()
 
-from encord_agents.core.data_model import Frame, FrameData
+from encord_agents.core.data_model import Frame, FrameData, InstanceCrop
 from encord_agents.core.utils import (
     download_asset,
     get_initialised_label_row,
@@ -274,3 +278,61 @@ def dep_storage_item(
 
     """
     return lookup.get_storage_item(frame_data.data_hash)
+
+
+def dep_object_crops(
+    filter_ontology_objects: list[Object | str] | None = None,
+) -> Callable[[FrameData, LabelRowV2, NDArray[np.uint8]], list[InstanceCrop]]:
+    """
+    Create a dependency that provides crops of object instances.
+
+    Useful, e.g., to be able to run each crop against a model.
+
+    **Example:**
+
+    ```python
+    @app.post("/object_classification")
+    async def classify_objects(
+        crops: Annotated[
+            list[InstanceCrop],
+            Depends(dep_object_crops(filter_ontology_objects=[generic_ont_obj])),
+        ],
+    ):
+        for crop in crops:
+            crop.content  # <- this is raw numpy rgb values
+            crop.frame    # <- this is the frame number in video
+            crop.instance # <- this is the object instance from the label row
+            crop.b64_encoding()  # <- a base64 encoding of the image content
+        ...
+    ```
+
+    Args:
+        filter_ontology_objects: Optional list of ontology objects to filter by.
+            If provided, only instances of these object types will be included.
+            Strings are matched against `feature_node_hashes`.
+
+    Returns:
+        A FastAPI dependency function that yields a list of InstanceCrop.
+    """
+    legal_feature_hashes = {
+        o.feature_node_hash if isinstance(o, Object) else o for o in (filter_ontology_objects or [])
+    }
+
+    def _dep_object_crops(
+        frame_data: FrameData,
+        lr: Annotated[LabelRowV2, Depends(dep_label_row)],
+        frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
+    ) -> list[InstanceCrop]:
+        legal_shapes = {Shape.POLYGON, Shape.BOUNDING_BOX, Shape.ROTATABLE_BOUNDING_BOX, Shape.BITMASK}
+        return [
+            InstanceCrop(
+                frame=frame_data.frame,
+                content=crop_to_object(frame, o.get_annotation(frame=frame_data.frame).coordinates),  # type: ignore
+                instance=o,
+            )
+            for o in lr.get_object_instances(filter_frames=frame_data.frame)
+            if o.ontology_item.shape in legal_shapes
+            and (not legal_feature_hashes or o.feature_hash in legal_feature_hashes)
+        ]
+
+    return _dep_object_crops

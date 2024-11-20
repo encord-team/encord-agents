@@ -238,12 +238,16 @@ def dep_object_crops(
         for crop in crops:
             crop.content  # <- this is raw numpy rgb values
             crop.frame    # <- this is the frame number in video
-            crop.instance # <- this is the obejct instance from the label row
+            crop.instance # <- this is the object instance from the label row
+            crop.b64_encoding()  # <- a base64 encoding of the image content
         ...
     ```
 
     Args:
         filter_ontology_objects: Specify a list of ontology objects to include.
+            If provided, only instances of these object types will be included.
+            Strings are matched against `feature_node_hashes`.
+
 
     Returns: The dependency to be injected into the cloud function.
 
