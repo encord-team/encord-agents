@@ -1,15 +1,19 @@
-## Prioritizing tasks based on file names
+## Prioritizing Tasks Based on File Names
 
-This example shows how to have an agent node early in the workflow which gives every task a priority before sending it on to the annotation stage.
+This example demonstrates how to set up an agent node early in a Workflow to automatically assign a [priority](https://docs.encord.com/platform-documentation/Annotate/annotate-projects/annotate-manage-annotation-projects#task-priority) to each task before advancing it to the annotation stage.
 
-For a project with a workflow similar to this:
+### Example Workflow
+
+The following workflow illustrates how tasks are prioritized:
 
 <figure style="text-align: center">
   <img src="../../assets/examples/tasks_agents/twin_classification_transfer_source_workflow.png" width="100%"/>
-  Project workflow
+  <figcaption>Project Workflow</figcaption>
 </figure>
 
-Create a new file called `agent.py` with the following content:
+### STEP 1: Create the Agent file
+
+Start by creating a new file named `agent.py` and include the following code:
 
 <!--codeinclude-->
 
@@ -17,43 +21,65 @@ Create a new file called `agent.py` with the following content:
 
 <!--/codeinclude-->
 
-The code will
+- **Task Runner:** The code initializes a runner to process tasks.
+- **Priority Assignment:** It defines a stage implementation that:
+  - Extracts the data title of a task.
+  - Parses the stem of the data title as an integer.
+  - Assigns a priority as a number between `0` and `1`.
+- **Task Routing:** Passes the task to the annotation stage by returning the correct pathway `UUID`.
 
-- Instantiate a runner.
-- Define a stage implementation that looks for the data title of a given task and parses the stem of the data title as an int.
-- Set the priority as a number between zero and one.
-- Pass the task to the annotation stage by returning the appropriate pathway uuid.
+---
 
-**To run the agent, follow these steps:**
-To make this example run in practice, you need to
+### STEP 2: Running the Agent
 
-1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
-1. Create a workflow similar to the above
-1. Copy the code to an `agent.py` file
-1. Adjust these ids `<your_project_hash>`, `<your_agent_stage_uuid>`, and `<your_pathway_uuid>` to correspond to those ids of your workflow.
-1. Execute the file `python agent.py`
+Follow these steps to make the agent functional:
 
-## Transferring labels to a twin project
+1. **Authentication & Setup:**
+   - Export your private key as explained in the [authentication guide](../../authentication.md){target=\_blank}.
+   - Install the `encord_agents` package, as detailed in the [installation guide](../../installation.md){target=\_blank}.
+   
+2. **Workflow Creation:**
+   - Set up a workflow similar to the example shown above.
 
-This example shows how to take checklist labels annotated in "Project A" and translate them into yes/no radio labels in "Project B".
+3. **Code Setup:**
+   - Copy the code into an `agent.py` file.
 
-Assume you have an ontology like this one in Project A:
+4. **Adjust IDs:**
+   - Update `<your_project_hash>`, `<your_agent_stage_uuid>`, and `<your_pathway_uuid>` in the code with the corresponding IDs from your workflow.
 
-![](../../assets/examples/tasks_agents/twin_classification_transfer_source_ontology.png){width=600}
+5. **Run the Agent:**
+   - Execute the script by running the following command in your terminal:
+     ```bash
+     python agent.py
+     ``` 
 
-and you want to ensure that everytime a task in Project A is compelte, it gets translated to a "model friendly version" with radio classifications in Project B.
-A good way to do it is make an agent do the translation to the ontology of Project B:
+Your agent now assigns priorities to tasks based on their file names and routes them appropriately through the Workflow.
 
-![](../../assets/examples/tasks_agents/twin_classification_transfer_sink_ontology.png){width=600}
+## Transferring Labels to a Twin Project
 
-> Notice how there are now three classifications (with the exact same names!) with two options each.
+This example demonstrates how to transfer checklist labels from "Project A" and convert them into yes/no radio labels in "Project B."
 
-To build an agent that automatically translates between the two, the [`dep_twin_label_row` dependency](../../reference/task_agents.md#encord_agents.tasks.dependencies.dep_twin_label_row) is a good place to start.
-For every label row from Project A that the agent is called with, it will automatically get the corresponding label row (and potentially workflow task) from project B.
+### Assumptions
 
-> **Disclaimer:** Project A and Project B must be attached to the same datasets.
+- **Ontology in Project A:**  
+  The Ontology in Project A contains checklist classifications, as shown below:
 
-The code that defines such an agent might look similar to this:
+  ![](../../assets/examples/tasks_agents/twin_classification_transfer_source_ontology.png){width=600}
+
+- **Ontology in Project B:**  
+  Every completed task in Project A is translated into a "model-friendly version" with radio classifications in Project B:
+
+  ![](../../assets/examples/tasks_agents/twin_classification_transfer_sink_ontology.png){width=600}
+
+> Notice that Project B has three classifications with identical names to those in Project A, but with two radio options each.
+
+### STEP 1: Create the Agent file
+
+An agent can perform this translation using the [`dep_twin_label_row` dependency](../../reference/task_agents.md#encord_agents.tasks.dependencies.dep_twin_label_row). For every label row from Project A, the agent automatically fetches the corresponding label row (and optionally the Workflow task) from Project B.
+
+> **Note:** Both Project A and Project B must be linked to the same datasets.
+
+Create an agent file named `twin_project.py` using the following code as a template.
 
 <!--codeinclude-->
 
@@ -61,49 +87,64 @@ The code that defines such an agent might look similar to this:
 
 <!--/codeinclude-->
 
-For this code to work, the project workflows could look like this:
+### STEP 2: Set up Workflow
 
-<figure style="text-align: center">
-  <img src="../../assets/examples/tasks_agents/twin_classification_transfer_source_workflow.png" width="100%"/>
-  The workflow of Project A.
-</figure>
+The following are examples of Workflows to be used. Create and save a Workflow template for each workflow.
 
-<figure style="text-align: center">
-  <img src="../../assets/examples/tasks_agents/twin_classification_transfer_sink_workflow.png" width= "100%" />
-  The workflow of Project B.
-</figure>
+- **Project A Workflow:**
 
-With this setup, all the manual work happens in Project A and Project B just becomes a mirror
-with transformed labels.
+  <figure style="text-align: center">
+    <img src="../../assets/examples/tasks_agents/twin_classification_transfer_source_workflow.png" width="100%"/>
+    <figcaption>Project A Workflow</figcaption>
+  </figure>
 
-Which would mean that the agents would be defined with the following decorator to
-make the workflow stage association explicit.
+- **Project B Workflow:**
+
+  <figure style="text-align: center">
+    <img src="../../assets/examples/tasks_agents/twin_classification_transfer_sink_workflow.png" width= "100%"/>
+    <figcaption>Project B Workflow</figcaption>
+  </figure>
+
+With this configuration, all manual work happens in Project A, while Project B mirrors the transformed labels.
+
+### STEP 3: Link Agent to Workflow
+
+To link the agent to a workflow stage, use the following decorator:
 
 ```python
-@runner.stage(stage="60d9f14f-755e-40fd-...")  # <- last bit omitted
+@runner.stage(stage="60d9f14f-755e-40fd-...")  # <- truncated for example
 ```
 
-> Notice the match between the uuid in the "label transfer" agent stage of the workflow in Project A and the uuid in the decorator.
+> The stage `uuid` in the decorator must match the "label transfer" agent stage `uuid` in Project A's Workflow.
 
-**To prepare your projects:**
+### STEP 4: Prepare your Projects
 
-Create two projects, one with each of the (classification) ontologies and workflows displayed above.
-For this particular example, it is not important which checklists the ontologies have as long as their names match between the two ontologies.
-Make sure that both projects are pointing to the same dataset(s).
+1. **Set Up Projects:**
+   - Create two Projects with the Ontologies and workflows illustrated above.
+   - Ensure that the classification names match across both ontologies.
+   - Both projects must point to the same dataset(s).
 
-**To run the agent, follow these steps:**
+### STEP 5: Run the Agent
 
-1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
-2. Update the code to capture your own project hashes. (replace `<project_hash_a>` and `<project_hash_b>`.
-3. Update the `stage` argument to the decorator to reflect the uuid of your actual agent stage.
-4. Update the completion pathway uuids
-5. Run the file: `python twin_project.py`
+1. Export your private key, as explained in the [authentication guide](../../authentication.md){target=\_blank}.
+2. Install the `encord_agents` package, as detailed in the [installation guide](../../installation.md){target=\_blank}.
+3. Update the code to reflect:
+  - `<project_hash_a>` and `<project_hash_b>` for your Projects.
+  - The `stage` argument to match the agent stage `uuid` in Project A's workflow.
+  - Completion pathway `uuids` for your Workflows.
+4. Execute the agent file:
 
-Now you should see tasks that have been approved by review starting to move to the Complete state and labels starting to show up
+  ```bash
+  python twin_project.py
+  ```
+
+Once the agent is running, tasks approved in Project A’s review stage move to the "Complete" stage in Project B, with the labels automatically translated and displayed.
 
 ## Pre-label video with _fake_ predictions
 
-Suppose you have a _fake_ model like this one, which predicts labels, bounding boxes and, confidences.
+### Step 1: Define a _fake_ model for predictions
+
+Suppose you have a _fake_ model like this one, which predicts labels, bounding boxes, and confidences.
 
 <!--codeinclude-->
 
@@ -111,21 +152,27 @@ Suppose you have a _fake_ model like this one, which predicts labels, bounding b
 
 <!--/codeinclude-->
 
-And you have an ontology that looks like this:
+### Step 2: Set up your Ontology
+
+Create an Ontology that matches the expected output of your pre-labeling agent. For example:
 
 <figure style="text-align: center">
   <img src="../../assets/examples/tasks_agents/prelabel_video_ontology.png" width="100%"/>
   Project ontology.
 </figure>
 
-By setting up a workflow with a pre-labeling agent node before the annotation stage, you can automatically pre-label tasks using model predictions, streamlining the annotation process.
+### Step 3: Create a Workflow with a pre-labeling agent node
+
+Create a Workflow template that includes a pre-labeling agent node before the annotation stage to automatically pre-label tasks with model predictions.
 
 <figure style="text-align: center">
   <img src="../../assets/examples/tasks_agents/prelabel_video_workflow.png" width="100%"/>
   Project workflow.
 </figure>
 
-Then you can make a pre-labeling agent that looks like this:
+### Step 4: Create your pre-labeling agent
+
+Create a pre-labeling agent using the following code as a template:
 
 <!--codeinclude-->
 
@@ -133,18 +180,28 @@ Then you can make a pre-labeling agent that looks like this:
 
 <!--/codeinclude-->
 
-Notice how we use the [`dep_video_iterator` dependency](../../reference/task_agents.md#encord_agents.tasks.dependencies.dep_video_iterator) to automatically load in an iterator of frames in the form or RGB np arrays from the video.
+This code uses the [`dep_video_iterator` dependency](../../reference/task_agents.md#encord_agents.tasks.dependencies.dep_video_iterator) to automatically load an iterator of frames as RGB numpy arrays from the video.
 
-**To run the agent, follow these steps:**
+### Step 5: Run the agent
 
-1. Ensure that you've exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and that you've [installed](../../installation.md){target=\_blank} the `encord_agents` package.
-1. Ensure that your project has a stage names "pre-label" with a pathway names "annotate" and an ontology similar to the above.
-1. Replace `<project_hash>` with your own project hash.
-1. Run the file: `python prelabel_video.py`
+Follow these steps to execute the agent:
 
-Once you start annotating upon agent completion, you should see frames pre-populated with bounding boxes.
+1. Ensure that you have exported your private key, as described in the [authentication section](../../authentication.md){target=\_blank}, and installed the `encord_agents` package, as explained in the [installation guide](../../installation.md){target=\_blank}.
+2. Confirm that your Project includes a stage named **"pre-label"** with a pathway named **"annotate"**, and that its ontology resembles the example above.
+3. Replace `<project_hash>` in the script with your own Project hash.
+4. Execute the script using the following command:  
 
-## Examples that we're working on
+   ```bash
+   python prelabel_video.py
+   ```
+
+### Step 6: Verify pre-labeled annotations
+
+Once the agent completes, start annotating. You should see frames pre-populated with bounding boxes generated by the _fake_ model predictions.
+
+## Further examples available soon
+
+T following Agent examples will become available soon:
 
 - Pre-labeling with YoloWorld
 - Transcribing with Whisper
