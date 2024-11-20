@@ -984,9 +984,246 @@ If the test is successful, you should be able to refresh your browser and see th
 
 Once you're ready to deploy your agent, you can go to [the deployment documentation](../gcp.md#deployment) to learn more.
 
+
+## FastAPI Examples
+
+### Nested frame classification with Claude 3.5 Sonnet
+
+The goals of this example is to:
+
+1. Obtain an editor agent that can automatically fill in frame-level classifications.
+2. Show how you can use both the [`OntologyDataModel`](../../reference/core.md#encord_agents.core.ontology.OntologyDataModel) on classifications.
+3. Demonstrate how to build a FastAPI-based agent that can be self-hosted.
+
+**Setup**
+
+To get setup, you need to:
+
+- Create a virtual python environment
+- Install necessary dependencies
+- Get an [Anthropic API key](https://www.anthropic.com/api){ target="_blank", rel="noopener noreferrer" }
+- Setup Encord [authentication](../../authentication.md)
+
+First, create the virtual environment. Before you do the following actions, make sure you have authentication with Anthropic and Encord sorted (see links in list above).
+
+```shell
+python -m venv venv
+source venv/bin/activate
+python -m pip install "fastapi[standard]" encord-agents anthropic
+export ANTHROPIC_API_KEY="<your_api_key>"
+export ENCORD_SSH_KEY_FILE="/path/to/your/private/key"
+```
+
+**Project setup**
+
+We're using a project with the following ontology (same as in the GCP example):
+
+![Ontology](../../assets/examples/editor_agents/gcp/ontology_preview_llm_frame_classification.png){width=300}
+
+??? "See the ontology JSON"
+    [Same JSON as in GCP Frame Classification example]
+
+The goal is to be able to trigger an agent that takes a labeling task from Figure A to Figure B, below:
+
+<div style="display: flex; justify-content: space-between; gap: 1em;">
+    <figure style="text-align: center; flex: 1; margin: 1em 0;">
+      <img src="../../assets/examples/editor_agents/gcp/frame_classification_generic.png" width="100%"/>
+      <strong>Figure A:</strong> no classification labels.
+    </figure>
+    <figure style="text-align: center; flex: 1; margin: 1em 0;">
+      <img src="../../assets/examples/editor_agents/gcp/frame_classification_filled.png" width="100%"/>
+      <strong>Figure B:</strong> Multiple nested labels coming from an LLM.
+    </figure>
+</div>
+
+**The FastAPI agent**
+
+??? "The full code for `main.py`"
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/frame_classification.py) linenums:1
+    <!--/codeinclude-->
+
+Let's go through the code section by section.
+
+First, we import dependencies and setup the FastAPI app with CORS middleware:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:1-22
+<!--/codeinclude-->
+
+The CORS middleware is crucial as it allows the Encord platform to make requests to your API.
+
+Next, we setup the project and create a data model based on the ontology:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:24-28
+<!--/codeinclude-->
+
+We create the system prompt that will tell Claude how to structure its response:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:30-41
+<!--/codeinclude-->
+
+Finally, we define the endpoint that will handle the classification:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:44-71
+<!--/codeinclude-->
+
+The endpoint:
+
+1. Receives frame data via FastAPI's Form dependency
+2. Gets the label row and frame content via Encord Agents' dependencies
+3. Creates a Frame object with the content
+4. Queries Claude with the frame image
+5. Parses Claude's response into classification instances
+6. Adds the classifications to the label row and saves it
+
+**Testing the agent**
+
+**Step 1: run the FastAPI server**  
+With the agent laid down, we can run it and test it. 
+In your current terminal, run:
+
+```shell
+uvicorn main:app --reload --port 8080
+```
+
+This will run the FastAPI server in development mode with auto-reload enabled.
+
+**Step 2: open a frame in the editor**
+
+Open your project within [the Encord platform](https://app.encord.com/projects){ target="_blank", rel="noopener noreferrer" } in your browser and navigate to a frame you want to classify. Copy the URL from your browser.
+
+!!! hint
+    The url should have roughly this format: `"https://app.encord.com/label_editor/{project_hash}/{data_hash}/{frame}"`.
+
+**Step 3: trigger the agent**
+
+In another shell operating from the same working directory, source your virtual environment and test the agent:
+
+```shell
+source venv/bin/activate
+encord-agents test local frame_classification '<your_url>'
+```
+
+If the test is successful, you should be able to refresh your browser and see the classifications that Claude generated.
+
+### Nested object classification with Claude 3.5 Sonnet
+
+The goals of this example is to:
+
+1. Obtain an editor agent that can convert generic object annotations (class-less coordinates) into class specific annotations with nested attributes.
+2. Show how you can use both the [`OntologyDataModel`](../../reference/core.md#encord_agents.core.ontology.OntologyDataModel) and the [`dep_object_crops`](../../reference/editor_agents.md#encord_agents.fastapi.dependencies.dep_object_crops) dependency.
+3. Demonstrate a more complex FastAPI endpoint handling object classification.
+
+**Setup**
+
+The setup is identical to the frame classification example above. You'll need the same environment and dependencies.
+
+**Project setup**
+
+We're using a project with the following ontology (same as in the GCP example):
+
+![Ontology](../../assets/examples/editor_agents/gcp/ontology_preview_llm_classification.png){width=300}
+
+??? "See the ontology JSON"
+    [Same JSON as in GCP Object Classification example]
+
+The goal is to be able to trigger an agent that takes a labeling task from Figure A to Figure B, below:
+
+<div style="display: flex; justify-content: space-between; gap: 1em;">
+    <figure style="text-align: center; flex: 1; margin: 1em 0;">
+      <img src="../../assets/examples/editor_agents/gcp/object_classification_generic.png" width="100%"/>
+      <strong>Figure A:</strong> A generic label without any type annotations.
+    </figure>
+    <figure style="text-align: center; flex: 1; margin: 1em 0;">
+      <img src="../../assets/examples/editor_agents/gcp/object_classification_filled.png" width="100%"/>
+      <strong>Figure B:</strong> A nested label with all details filled for the predicted class.
+    </figure>
+</div>
+
+**The FastAPI agent**
+
+??? "The full code for `main.py`"
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/object_classification.py) linenums:1
+    <!--/codeinclude-->
+
+Let's walk through the key components.
+
+First, we setup the FastAPI app and CORS middleware:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/object_classification.py) lines:1-22
+<!--/codeinclude-->
+
+Then we setup the client, project, and extract the generic ontology object:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/object_classification.py) lines:24-30
+<!--/codeinclude-->
+
+We create the data model and system prompt for Claude:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/object_classification.py) lines:32-43
+<!--/codeinclude-->
+
+Finally, we define our object classification endpoint:
+
+<!--codeinclude-->
+[main.py](../../code_examples/fastapi/object_classification.py) lines:46-84
+<!--/codeinclude-->
+
+The endpoint:
+
+1. Receives frame data via FastAPI's Form dependency
+2. Gets the label row via `dep_label_row`
+3. Gets object crops filtered to only include "generic" objects via `dep_object_crops`
+4. For each crop:
+   - Queries Claude with the cropped image
+   - Parses the response into an object instance
+   - Replaces the generic object with the classified one
+5. Saves the changes to the label row
+
+**Testing the agent**
+
+**Step 1: run the FastAPI server**  
+With the agent laid down, we can run it and test it. 
+In your current terminal, run:
+
+```shell
+fastapi dev agent.py --port 8080
+```
+
+This will run the FastAPI server in development mode with auto-reload enabled.
+
+**Step 2: annotate some generic objects**
+
+Open your project within [the Encord platform](https://app.encord.com/projects){ target="_blank", rel="noopener noreferrer" } in your browser and try annotating an image with some generic objects. Once you've done that, copy the URL from your browser.
+
+!!! hint
+    The url should have roughly this format: `"https://app.encord.com/label_editor/{project_hash}/{data_hash}/{frame}"`.
+
+**Step 3: trigger the agent**
+
+In another shell operating from the same working directory, source your virtual environment and test the agent:
+
+```shell
+source venv/bin/activate
+encord-agents test local object_classification '<your_url>'
+```
+
+If the test is successful, you should be able to refresh your browser and see the generic objects replaced with properly classified objects including all their nested attributes.
+
+
 ## Agent examples in the making
 
 - Tightening Bounding Boxes with SAM
 - Extrapolating labels with DINOv
 - Triggering internal notification system
 - Label assertion
+
+
