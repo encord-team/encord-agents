@@ -28,7 +28,7 @@ json objects according to this schema:
 Please only respond with valid json.
 """
 
-# Prompts
+# Claude
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
