@@ -12,6 +12,7 @@ from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData
 from encord_agents.core.settings import Settings
+from encord_agents.gcp.wrappers import LabelRowMetadataIncludeArgs
 
 from .video import get_frame
 
@@ -30,7 +31,7 @@ def get_user_client() -> EncordUserClient:
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
 
-def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:
+def get_initialised_label_row(frame_data: FrameData, include_args: LabelRowMetadataIncludeArgs | None = None) -> LabelRowV2:
     """
     Get an initialised label row from the frame_data information.
 
@@ -46,7 +47,8 @@ def get_initialised_label_row(frame_data: FrameData) -> LabelRowV2:
     """
     user_client = get_user_client()
     project = user_client.get_project(str(frame_data.project_hash))
-    matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])
+    include_args = include_args or LabelRowMetadataIncludeArgs()
+    matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash], **include_args.model_dump())
     num_matches = len(matched_lrs)
     if num_matches > 1:
         raise Exception(f"Non unique match: matched {num_matches} label rows!")

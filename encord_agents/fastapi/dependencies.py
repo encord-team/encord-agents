@@ -75,6 +75,37 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
+def dep_label_row_with_include_args(include: LabelRowMetadataIncludeArgs | None = None) -> Callable[[FrameData], LabelRowV2]:
+    """
+    Dependency to provide an initialized label row.
+
+    **Example:**
+
+    ```python
+    from encord_agents.fastapi.depencencies import dep_label_row
+    ...
+
+
+    @app.post("/my-route")
+    def my_route(
+        lr: Annotated[LabelRowV2, Depends(dep_label_row_with_include_args(TODO))]
+    ):
+        assert lr.is_labelling_initialised  # will work
+    ```
+
+    Args:
+        frame_data: the frame data from the route. This parameter is automatically injected
+            if it's a part of your route (see example above)
+
+    Returns:
+        The initialized label row.
+
+    """
+    def wrapper(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
+        return get_initialised_label_row(frame_data, include)
+
+    return wrapper
+
 def dep_label_row(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
     """
     Dependency to provide an initialized label row.

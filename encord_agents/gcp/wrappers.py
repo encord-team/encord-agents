@@ -25,7 +25,22 @@ def generate_response() -> Response:
     return response
 
 
-def editor_agent() -> Callable[[AgentFunction], Callable[[Request], Response]]:
+from pydantic import BaseModel
+
+class LabelRowMetadataIncludeArgs(BaseModel):
+    """
+    Warning, including metadata via label rows is good for _reading_ metadata 
+    **not** for writing to the metadata.
+
+    If you need to write to metadata, use the `dep_storage_item` dependencies instead.
+    """
+    include_workflow_graph_node: bool = True
+    include_client_metadata: bool = False
+    include_images_data: bool = False
+    include_all_label_branches: bool = False
+
+
+def editor_agent(*, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None) -> Callable[[AgentFunction], Callable[[Request], Response]]:
     """
     Wrapper to make resources available for gcp editor agents.
 
@@ -46,7 +61,10 @@ def editor_agent() -> Callable[[AgentFunction], Callable[[Request], Response]]:
 
             label_row: LabelRowV2 | None = None
             if dependant.needs_label_row:
-                label_row = project.list_label_rows_v2(data_hashes=[str(frame_data.data_hash)])[0]
+                include_args = {}
+                if label_row_metadata_include_args is not None:
+                    include_args = label_row_metadata_include_args.model_dump()
+                label_row = project.list_label_rows_v2(data_hashes=[str(frame_data.data_hash)], **include_args)[0]
                 label_row.initialise_labels(include_signed_url=True)
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data)

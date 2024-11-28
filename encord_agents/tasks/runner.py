@@ -23,18 +23,20 @@ from encord_agents.core.dependencies.models import Context, DecoratedCallable, D
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
+from encord_agents.gcp.wrappers import LabelRowMetadataIncludeArgs
 
 TaskAgentReturn = str | UUID | None
 
 
 class RunnerAgent:
     def __init__(
-        self, identity: str | UUID, callable: Callable[..., TaskAgentReturn], printable_name: str | None = None
+        self, identity: str | UUID, callable: Callable[..., TaskAgentReturn], printable_name: str | None = None, include: LabelRowMetadataIncludeArgs | None = None
     ):
         self.identity = identity
         self.printable_name = printable_name or identity
         self.callable = callable
         self.dependant: Dependant = get_dependant(func=callable)
+        self.include = include
 
     def __repr__(self) -> str:
         return f'RunnerAgent("{self.printable_name}")'
@@ -118,10 +120,10 @@ class Runner:
             len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
         ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
 
-    def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn], printable_name: str | None):
-        self.agents.append(RunnerAgent(identity=identity, callable=func, printable_name=printable_name))
+    def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn], printable_name: str | None, include: LabelRowMetadataIncludeArgs | None):
+        self.agents.append(RunnerAgent(identity=identity, callable=func, printable_name=printable_name, include=include))
 
-    def stage(self, stage: str | UUID) -> Callable[[DecoratedCallable], DecoratedCallable]:
+    def stage(self, stage: str | UUID, include: LabelRowMetadataIncludeArgs | None = None) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
 
@@ -221,7 +223,7 @@ class Runner:
             )
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self._add_stage_agent(stage, func, printable_name)
+            self._add_stage_agent(stage, func, printable_name, include)
             return func
 
         return decorator
@@ -394,7 +396,10 @@ def {fn_name}(...):
                             if runner_agent.dependant.needs_label_row:
                                 label_rows = {
                                     UUID(lr.data_hash): lr
-                                    for lr in project.list_label_rows_v2(data_hashes=[t.data_hash for t in batch])
+                                    for lr in project.list_label_rows_v2(
+                                        data_hashes=[t.data_hash for t in batch],
+                                        **(runner_agent.include.model_dump() if runner_agent.include else {})
+                                    )
                                 }
                                 batch_lrs = [label_rows.get(t.data_hash) for t in batch]
                                 with project.create_bundle() as lr_bundle:
@@ -418,7 +423,10 @@ def {fn_name}(...):
                         if runner_agent.dependant.needs_label_row:
                             label_rows = {
                                 UUID(lr.data_hash): lr
-                                for lr in project.list_label_rows_v2(data_hashes=[t.data_hash for t in batch])
+                                for lr in project.list_label_rows_v2(
+                                    data_hashes=[t.data_hash for t in batch],
+                                    **(runner_agent.include.model_dump() if runner_agent.include else {})
+                                )
                             }
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
                             with project.create_bundle() as lr_bundle:
