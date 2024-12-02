@@ -26,6 +26,7 @@ nav:
       - "Examples": editor_agents/examples/index.md
   - "Task Agents":
       - "Intro": task_agents/index.md
+      - "Execution": task_agents/runner.md
       - "Examples": task_agents/examples/index.md
   - "Reference":
       - "Editor agents": reference/editor_agents.md

@@ -81,6 +81,17 @@ class Runner:
         return ph
 
     def __init__(self, project_hash: str | None = None):
+        """
+        Initialize the runner with an optional project hash.
+
+        The `project_hash` will allow stricter stage validation. 
+        If left unspecified, errors will first be raised during execution of the runner.
+
+        Args:
+            project_hash: The project hash that the runner applies to.
+                
+                Can be left unspecified to be able to reuse same runner on multiple projects.
+        """
         self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
 
@@ -267,13 +278,16 @@ class Runner:
         project_hash: Optional[str] = None,
     ):
         """
-        Run your task agent.
+        Run your task agent `runner(...)`.
 
-        The runner can continuously keep looking for new tasks in the project and execute the agent.
+        ???+ info "Self-updating/Polling runner"
+            The runner can continuously poll new tasks in the project and execute the defined stage agents.
+            To do so, please set the `refresh_every` parameter.
+            When set, the runner will re-fetch tasks with at least that amount of time in between polls. If you set the time to, e.g., 1 second, but it takes 60 seconds to empty the task queue, the runner will poll again upon completion of the current task queue.
 
         Args:
             refresh_every: Fetch task statuses from the Encord projecet every `refresh_every` seconds.
-                If `None`, they the runner will exit once task queue is empty.
+                If `None`, the runner will exit once task queue is empty.
             num_retries: If an agent fails on a task, how many times should the runner retry it?
             task_batch_size: Number of tasks for which labels are loaded into memory at once.
             project_hash: the project hash if not defined at runner instantiation.
