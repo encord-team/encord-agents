@@ -277,9 +277,9 @@ The Runner supports dependency injection similar to FastAPI. Dependencies are fu
 
 ### Built-in Dependencies
 
-The library provides many commonly useful dependencies. 
+#### Example
+The library provides many commonly dependencies. 
 Please see the [References section](../reference/task_agents.md#encord_agents.tasks.dependencies) for an explicit list.
-
 In the example below, we show how to obtain both label rows from "twin projects" and a frame iterator for videos -- just by specifying that it's something that the agent function depends on.
 
 ```python
@@ -303,20 +303,75 @@ def my_agent(
     pass
 ```
 
-In the example above, there are three objects that you can get without any extensive type annotations.
+#### Annotations
+There are three object types that you can get without any extensive type annotations.
 
-If you type __any__ parameter of the `my_agent` function with either of ```python [AgentTask, Project, LabelRowV2]```
+If you type __any__ parameter of your stage implementation, e.g., the `my_agent` function above, with either of `[AgentTask, Project, LabelRowV2]`, the function will be called with that type of object, matching the task at hand.
+
+That is, if you do:
+
+```python
+from encord.project import Project
+...
+
+@runner.stage("your_stage_name")
+def my_agent(project: Project):
+    ...
+```
+
+the `project` will be the [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } instance for the `project_hash` you specified when executing the runner.
+
+Similarly, the `task` and `label_row` (associated with the task) can be obtained as follows:
+
+```python
+from encord.objects import LabelRowV2
+from encord.workflow.stages.agent import AgentTask
+
+@runner.stage("your_stage_name")
+def my_agent(task: AgentTask, label_row: LabelRowV2):
+    ...
+```
+
+The remaining dependencies must be specified with a `encord_agents.tasks.dependencies.Depends` type annotation using one of the following two patterns.
+
+```python
+from typing_extensions import Annotated
+
+from encord.storage import StorageItem
+from encord_agents.tasks.dependencies import (
+    Depends, 
+    dep_storage_item,
+)
+
+
+@runner.stage("your_stage_name")
+def my_agent(
+    storage_item_1: Anntoated[StorageItem, Depends(dep_storage_item)],
+    storage_item_2: StorageItem = Depends(dep_storage_item)
+):
+    ...
+```
 
 ### Custom Dependencies
 
-You can create your own dependencies that can also use other dependencies:
+Dependencies can actually be any function that has a similar function declaration to the ones above. 
+That is, functions that have parameters typed with `AgentTask`, `Project`, `LabelRowV2`, or other dependencies annotated with `Depends`.
+
+You can create your own dependencies that can also use nested dependencies like this:
 
 ```python
-from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.objects import LabelRowV2
+from encord.storage import StorageItem
 
-def my_custom_dependency(lr: LabelRowV2) -> dict:
+def my_custom_dependency(
+    lr: LabelRowV2,
+    storage_item: StorageItem = Depends(dep_storage_item)
+) -> dict:
     """Custom dependencies can use LabelRowV2 and other dependencies"""
-    return {"metadata": lr.data_title}
+    return {
+        "data_title": lr.data_title,
+        "metadata": storage_item.client_metadata
+    }
 
 @runner.stage("my_stage")
 def my_agent(
@@ -325,3 +380,5 @@ def my_agent(
     # metadata is automatically injected
     return "next_stage"
 ```
+
+[docs-workflow-project]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects
