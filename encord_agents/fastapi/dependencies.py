@@ -96,9 +96,10 @@ def dep_label_row_with_include_args(
 
     @app.post("/my-route")
     def my_route(
-        lr: Annotated[LabelRowV2, Depends(dep_label_row_with_include_args(TODO))]
+        lr: Annotated[LabelRowV2, Depends(dep_label_row_with_include_args(include_args))]
     ):
         assert lr.is_labelling_initialised  # will work
+        assert lr.client_metadata           # will be available if set already
     ```
 
     Args:
