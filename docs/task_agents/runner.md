@@ -269,7 +269,21 @@ def execute(self, refresh_every = None):
             ...
 ```
 
+### Optional arguments
 
+When you wrap a function with the `@runner.stage(...)` wrapper, you can add include a [`label_row_metadata_include_args: LabelRowMetadataIncludeArgs`](../reference/core.md#encord_agents.core.data_model.LabelRowMetadataIncludeArgs) argument which will be passed on to the Encord Project's [`list_label_row_v2` method](https://docs.encord.com/sdk-documentation/sdk-references/project#list-label-rows-v2){ target="\_blank", rel="noopener noreferrer" }. This is useful to, e.g., be able to _read_ the client metadata associated to a task.
+Notice, if you need to update the metadata, you will have to use the `dep_storage_item` dependencies.
+
+Here is an example:
+
+```python
+args = LabelRowMetadataIncludeArgs(
+    include_client_metadata=True,
+)
+@runner.stage("<my_stage_name>", label_row_metadata_include_args=args)
+def my_agent(lr: LabelRowV2):
+    lr.client_metadata  # will now be populated
+```
 
 ## Dependencies
 
