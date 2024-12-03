@@ -4,6 +4,7 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from typing import Callable, Iterable, Optional, cast
+from typing_extensions import Annotated
 from uuid import UUID
 
 import rich
@@ -16,7 +17,7 @@ from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
 from rich.panel import Panel
 from tqdm.auto import tqdm
-from typer import Abort
+from typer import Abort, Option
 
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
@@ -225,15 +226,15 @@ class Runner:
 
         return decorator
 
+    @staticmethod
     def _execute_tasks(
-        self,
+        project: Project,
         tasks: Iterable[tuple[AgentTask, LabelRowV2 | None]],
         runner_agent: RunnerAgent,
         # num_threads: int,
         num_retries: int,
         pbar: tqdm | None = None,
     ) -> None:
-        project = cast(Project, self.project)
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
@@ -272,10 +273,10 @@ class Runner:
     def __call__(
         self,
         # num_threads: int = 1,
-        refresh_every: int | None = None,
-        num_retries: int = 3,
-        task_batch_size: int = 300,
-        project_hash: Optional[str] = None,
+        refresh_every: Annotated[Optional[int], Option(help="Fetch task statuses from the Encord Project every `refresh_every` seconds. If `None`, the runner will exit once task queue is empty.")] = None,
+        num_retries: Annotated[int, Option(help="If an agent fails on a task, how many times should the runner retry it?")] = 3,
+        task_batch_size: Annotated[int, Option(help="Number of tasks for which labels are loaded into memory at once.")] = 300,
+        project_hash: Annotated[Optional[str], Option(help="The project hash if not defined at runner instantiation.")] = None,
     ):
         """
         Run your task agent `runner(...)`.
@@ -286,11 +287,11 @@ class Runner:
             When set, the runner will re-fetch tasks with at least that amount of time in between polls. If you set the time to, e.g., 1 second, but it takes 60 seconds to empty the task queue, the runner will poll again upon completion of the current task queue.
 
         Args:
-            refresh_every: Fetch task statuses from the Encord projecet every `refresh_every` seconds.
+            refresh_every: Fetch task statuses from the Encord Project every `refresh_every` seconds.
                 If `None`, the runner will exit once task queue is empty.
             num_retries: If an agent fails on a task, how many times should the runner retry it?
             task_batch_size: Number of tasks for which labels are loaded into memory at once.
-            project_hash: the project hash if not defined at runner instantiation.
+            project_hash: The project hash if not defined at runner instantiation.
         Returns:
             None
         """
@@ -402,6 +403,7 @@ def {fn_name}(...):
                                             lr.initialise_labels(bundle=lr_bundle)
 
                             self._execute_tasks(
+                                project,
                                 zip(batch, batch_lrs),
                                 runner_agent,
                                 num_retries,
@@ -471,5 +473,8 @@ def {fn_name}(...):
 
         self.was_called_from_cli = True
         app = Typer(add_completion=False, rich_markup_mode="rich")
-        app.command()(self.__call__)
+        app.command(
+            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
+            short_help="Execute the runner as a CLI.",
+        )(self.__call__)
         app()
