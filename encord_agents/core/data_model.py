@@ -10,6 +10,20 @@ from pydantic import BaseModel, Field
 from encord_agents.core.vision import DATA_TYPES, b64_encode_image
 
 
+class LabelRowMetadataIncludeArgs(BaseModel):
+    """
+    Warning, including metadata via label rows is good for _reading_ metadata
+    **not** for writing to the metadata.
+
+    If you need to write to metadata, use the `dep_storage_item` dependencies instead.
+    """
+
+    include_workflow_graph_node: bool = True
+    include_client_metadata: bool = False
+    include_images_data: bool = False
+    include_all_label_branches: bool = False
+
+
 class FrameData(BaseModel):
     """
     Holds the data sent from the Encord Label Editor at the time of triggering the agent.

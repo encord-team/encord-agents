@@ -4,7 +4,6 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from typing import Callable, Iterable, Optional, cast
-from typing_extensions import Annotated
 from uuid import UUID
 
 import rich
@@ -18,25 +17,30 @@ from encord.workflow.workflow import WorkflowStage
 from rich.panel import Panel
 from tqdm.auto import tqdm
 from typer import Abort, Option
+from typing_extensions import Annotated
 
+from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
-from encord_agents.gcp.wrappers import LabelRowMetadataIncludeArgs
 
 TaskAgentReturn = str | UUID | None
 
 
 class RunnerAgent:
     def __init__(
-        self, identity: str | UUID, callable: Callable[..., TaskAgentReturn], printable_name: str | None = None, include: LabelRowMetadataIncludeArgs | None = None
+        self,
+        identity: str | UUID,
+        callable: Callable[..., TaskAgentReturn],
+        printable_name: str | None = None,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
     ):
         self.identity = identity
         self.printable_name = printable_name or identity
         self.callable = callable
         self.dependant: Dependant = get_dependant(func=callable)
-        self.include = include
+        self.label_row_metadata_include_args = label_row_metadata_include_args
 
     def __repr__(self) -> str:
         return f'RunnerAgent("{self.printable_name}")'
@@ -87,12 +91,12 @@ class Runner:
         """
         Initialize the runner with an optional project hash.
 
-        The `project_hash` will allow stricter stage validation. 
+        The `project_hash` will allow stricter stage validation.
         If left unspecified, errors will first be raised during execution of the runner.
 
         Args:
             project_hash: The project hash that the runner applies to.
-                
+
                 Can be left unspecified to be able to reuse same runner on multiple projects.
         """
         self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
@@ -120,10 +124,25 @@ class Runner:
             len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
         ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
 
-    def _add_stage_agent(self, identity: str | UUID, func: Callable[..., TaskAgentReturn], printable_name: str | None, include: LabelRowMetadataIncludeArgs | None):
-        self.agents.append(RunnerAgent(identity=identity, callable=func, printable_name=printable_name, include=include))
+    def _add_stage_agent(
+        self,
+        identity: str | UUID,
+        func: Callable[..., TaskAgentReturn],
+        printable_name: str | None,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
+    ):
+        self.agents.append(
+            RunnerAgent(
+                identity=identity,
+                callable=func,
+                printable_name=printable_name,
+                label_row_metadata_include_args=label_row_metadata_include_args,
+            )
+        )
 
-    def stage(self, stage: str | UUID, include: LabelRowMetadataIncludeArgs | None = None) -> Callable[[DecoratedCallable], DecoratedCallable]:
+    def stage(
+        self, stage: str | UUID, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
 
@@ -193,6 +212,8 @@ class Runner:
         Args:
             stage: The name or uuid of the stage that the function should be
                 associated with.
+            label_row_metadata_include_args: Arguments to be passed to
+                `project.list_label_rows_v2(...)`
 
         Returns:
             The decorated function.
@@ -223,7 +244,7 @@ class Runner:
             )
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self._add_stage_agent(stage, func, printable_name, include)
+            self._add_stage_agent(stage, func, printable_name, label_row_metadata_include_args)
             return func
 
         return decorator
@@ -275,10 +296,21 @@ class Runner:
     def __call__(
         self,
         # num_threads: int = 1,
-        refresh_every: Annotated[Optional[int], Option(help="Fetch task statuses from the Encord Project every `refresh_every` seconds. If `None`, the runner will exit once task queue is empty.")] = None,
-        num_retries: Annotated[int, Option(help="If an agent fails on a task, how many times should the runner retry it?")] = 3,
-        task_batch_size: Annotated[int, Option(help="Number of tasks for which labels are loaded into memory at once.")] = 300,
-        project_hash: Annotated[Optional[str], Option(help="The project hash if not defined at runner instantiation.")] = None,
+        refresh_every: Annotated[
+            Optional[int],
+            Option(
+                help="Fetch task statuses from the Encord Project every `refresh_every` seconds. If `None`, the runner will exit once task queue is empty."
+            ),
+        ] = None,
+        num_retries: Annotated[
+            int, Option(help="If an agent fails on a task, how many times should the runner retry it?")
+        ] = 3,
+        task_batch_size: Annotated[
+            int, Option(help="Number of tasks for which labels are loaded into memory at once.")
+        ] = 300,
+        project_hash: Annotated[
+            Optional[str], Option(help="The project hash if not defined at runner instantiation.")
+        ] = None,
     ):
         """
         Run your task agent `runner(...)`.
@@ -394,13 +426,16 @@ def {fn_name}(...):
                         if len(batch) == task_batch_size:
                             batch_lrs = [None] * len(batch)
                             if runner_agent.dependant.needs_label_row:
+                                include_args = (
+                                    runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
+                                )
                                 label_rows = {
                                     UUID(lr.data_hash): lr
                                     for lr in project.list_label_rows_v2(
-                                        data_hashes=[t.data_hash for t in batch],
-                                        **(runner_agent.include.model_dump() if runner_agent.include else {})
+                                        data_hashes=[t.data_hash for t in batch], **include_args.model_dump()
                                     )
                                 }
+                                print([lr.backing_item_uuid for lr in label_rows.values()])
                                 batch_lrs = [label_rows.get(t.data_hash) for t in batch]
                                 with project.create_bundle() as lr_bundle:
                                     for lr in batch_lrs:
@@ -425,15 +460,21 @@ def {fn_name}(...):
                                 UUID(lr.data_hash): lr
                                 for lr in project.list_label_rows_v2(
                                     data_hashes=[t.data_hash for t in batch],
-                                    **(runner_agent.include.model_dump() if runner_agent.include else {})
+                                    **(
+                                        runner_agent.label_row_metadata_include_args.model_dump()
+                                        if runner_agent.label_row_metadata_include_args
+                                        else {}
+                                    ),
                                 )
                             }
+                            print("I am here")
+                            print([lr.backing_item_uuid for lr in label_rows.values()])
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
                             with project.create_bundle() as lr_bundle:
                                 for lr in batch_lrs:
                                     if lr:
                                         lr.initialise_labels(bundle=lr_bundle)
-                        self._execute_tasks(zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
+                        self._execute_tasks(project, zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
                 panel = Panel(err.args[0], width=None)

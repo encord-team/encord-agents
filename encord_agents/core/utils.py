@@ -10,9 +10,8 @@ from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import FrameData
+from encord_agents.core.data_model import FrameData, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
-from encord_agents.gcp.wrappers import LabelRowMetadataIncludeArgs
 
 from .video import get_frame
 
@@ -31,7 +30,9 @@ def get_user_client() -> EncordUserClient:
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
 
-def get_initialised_label_row(frame_data: FrameData, include_args: LabelRowMetadataIncludeArgs | None = None) -> LabelRowV2:
+def get_initialised_label_row(
+    frame_data: FrameData, include_args: LabelRowMetadataIncludeArgs | None = None
+) -> LabelRowV2:
     """
     Get an initialised label row from the frame_data information.
 
