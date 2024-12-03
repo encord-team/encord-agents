@@ -6,8 +6,8 @@ It provides a simple interface for defining agent logic and handling task progre
 The Runner manages the execution of agent logic on tasks within specific workflow stages.
 It:
 
-- Connects directly to your Encord project via the encode [SDK](https://docs.encord.com/sdk-documentation/getting-started-sdk/installation-sdk){ target="\_blank", rel="noopener noreferrer" }.
-- Provide function decorators to associate the functions with workflow stages
+- Connects directly to your Encord project via the Encord [SDK](https://docs.encord.com/sdk-documentation/getting-started-sdk/installation-sdk){ target="\_blank", rel="noopener noreferrer" }.
+- Provides function decorators to associate the functions with workflow stages.
 - Manages retries and error handling
 - Handles task fetching and updates
 - Optimizes performance through batched updates and data loading
