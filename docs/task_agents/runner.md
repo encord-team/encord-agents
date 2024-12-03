@@ -346,7 +346,7 @@ from encord_agents.tasks.dependencies import (
 
 @runner.stage("your_stage_name")
 def my_agent(
-    storage_item_1: Anntoated[StorageItem, Depends(dep_storage_item)],
+    storage_item_1: Annotated[StorageItem, Depends(dep_storage_item)],
     storage_item_2: StorageItem = Depends(dep_storage_item)
 ):
     ...
