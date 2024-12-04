@@ -141,7 +141,7 @@ class Runner:
         )
 
     def stage(
-        self, stage: str | UUID, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None
+        self, stage: str | UUID, *, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
