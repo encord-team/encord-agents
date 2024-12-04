@@ -37,7 +37,7 @@ def rbb_to_poly(
             [(x + w) * img_width, (y + h) * img_height],
             [x * img_width, (y + h) * img_height],
         ],
-        dtype=np.float32
+        dtype=np.float32,
     )
     angle = rbb.theta  # [0; 360]
     center = tuple(bbox_not_rotated.mean(0).tolist())
@@ -110,6 +110,6 @@ def crop_to_object(image: NDArray[np.uint8], coordinates: CroppableCoordinates) 
     return crop_to_bbox(image, box)
 
 
-def b64_encode_image(img: NDArray[np.uint8], format: Base64Formats =".jpg") -> str:
+def b64_encode_image(img: NDArray[np.uint8], format: Base64Formats = ".jpg") -> str:
     _, encoded_image = cv2.imencode(format, img)
     return base64.b64encode(encoded_image).decode("utf-8")  # type: ignore

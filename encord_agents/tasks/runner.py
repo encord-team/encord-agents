@@ -278,7 +278,7 @@ class Runner:
                                     task.proceed(pathway_name=next_stage, bundle=bundle)
 
                             if pbar_update is not None:
-                                pbar_update(1.)
+                                pbar_update(1.0)
                             break
 
                         except KeyboardInterrupt:
@@ -474,7 +474,9 @@ def {fn_name}(...):
                                 for lr in batch_lrs:
                                     if lr:
                                         lr.initialise_labels(bundle=lr_bundle)
-                        self._execute_tasks(project, zip(batch, batch_lrs), runner_agent, num_retries, pbar_update=pbar.update)
+                        self._execute_tasks(
+                            project, zip(batch, batch_lrs), runner_agent, num_retries, pbar_update=pbar.update
+                        )
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
                 panel = Panel(err.args[0], width=None)

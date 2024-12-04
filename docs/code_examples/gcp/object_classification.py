@@ -2,11 +2,12 @@ import os
 
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
+from typing_extensions import Annotated
+
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
 from encord_agents.gcp import Depends, editor_agent
 from encord_agents.gcp.dependencies import FrameData, InstanceCrop, dep_object_crops
-from typing_extensions import Annotated
 
 # User client
 client = get_user_client()
@@ -62,9 +63,7 @@ def agent(
         try:
             instance = data_model(message.content[0].text)
 
-            coordinates = crop.instance.get_annotation(
-                frame=frame_data.frame
-            ).coordinates
+            coordinates = crop.instance.get_annotation(frame=frame_data.frame).coordinates
             instance.set_for_frames(
                 coordinates=coordinates,
                 frames=frame_data.frame,
