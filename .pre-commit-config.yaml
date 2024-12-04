@@ -28,4 +28,6 @@ repos:
         types_or: [python, pyi]
         language: system
         pass_filenames: false
+
 default_stages: [pre-push]
+default_install_hook_types: [pre-push]
