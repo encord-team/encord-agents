@@ -1,0 +1,39 @@
+name: Pull Request workflow
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PYTHON: 3.11.6
+
+concurrency:
+  group: active-private-${{ github.ref }}-pr
+  cancel-in-progress: true
+
+jobs:
+  # This will cache the virtual env for the following jobs
+  setup-venv:
+    runs-on: ubuntu-latest
+    name: Set up a cached VENV
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+  pre-commit:
+    needs: [setup-venv]
+    name: Linting and type checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+      - name: Run linting, type checking
+        uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: "--all-files --hook-stage=push"
+        timeout-minutes: 60
