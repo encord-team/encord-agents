@@ -1,9 +1,10 @@
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.options import Option
 from encord.workflow.stages.agent import AgentTask
+from typing_extensions import Annotated
+
 from encord_agents.tasks import Depends, Runner
 from encord_agents.tasks.dependencies import Twin, dep_twin_label_row
-from typing_extensions import Annotated
 
 # 1. Setup the runner
 runner = Runner(project_hash="<project_hash_a>")
@@ -19,9 +20,7 @@ checklist_attribute = checklist_classification.attributes[0]
 @runner.stage(stage="<transfer_agent_stage_uuid>")
 def copy_labels(
     manually_annotated_lr: LabelRowV2,
-    twin: Annotated[
-        Twin, Depends(dep_twin_label_row(twin_project_hash="<project_hash_b>"))
-    ],
+    twin: Annotated[Twin, Depends(dep_twin_label_row(twin_project_hash="<project_hash_b>"))],
 ) -> str | None:
     # 4. Reading the checkboxes that have been set
     instance = manually_annotated_lr.get_classification_instances()[0]

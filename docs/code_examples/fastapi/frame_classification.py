@@ -3,6 +3,11 @@ import os
 import numpy as np
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
+from fastapi import Depends, FastAPI, Form
+from fastapi.middleware.cors import CORSMiddleware
+from numpy.typing import NDArray
+from typing_extensions import Annotated
+
 from encord_agents.core.data_model import Frame
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
@@ -11,11 +16,6 @@ from encord_agents.fastapi.dependencies import (
     dep_label_row,
     dep_single_frame,
 )
-from numpy.typing import NDArray
-from typing_extensions import Annotated
-
-from fastapi import Depends, FastAPI, Form
-from fastapi.middleware.cors import CORSMiddleware
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -67,9 +67,7 @@ async def classify_frame(
     try:
         classifications = data_model(message.content[0].text)
         for clf in classifications:
-            clf.set_for_frames(
-                frame_data.frame, confidence=0.5, manual_annotation=False
-            )
+            clf.set_for_frames(frame_data.frame, confidence=0.5, manual_annotation=False)
             lr.add_classification_instance(clf)
     except Exception:
         import traceback
