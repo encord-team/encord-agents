@@ -22,7 +22,7 @@ app.add_typer(print_app, name="print")
 @app.callback(invoke_without_command=True)
 def version(
     version_: bool = typer.Option(False, "--version", "-v", "-V", help="Print the current version of Encord Agents"),
-):
+) -> None:
     if version_:
         import rich
 

@@ -14,7 +14,7 @@ app = Typer(
 
 
 @app.command(name="agent-nodes")
-def print_agent_nodes(project_hash: str):
+def print_agent_nodes(project_hash: str) -> None:
     """
     Prints agent nodes from project.
 
@@ -50,7 +50,7 @@ def print_agent_nodes(project_hash: str):
 
 
 @app.command(name="system-info")
-def print_system_info():
+def print_system_info() -> None:
     """
     [bold]Prints[/bold] the information of the system for the purpose of bug reporting.
     """

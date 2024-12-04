@@ -25,7 +25,7 @@ def get_user_client() -> EncordUserClient:
         An EncordUserClient authenticated with the credentials from the encord_agents.core.settings.Settings.
 
     """
-    settings = Settings()  # type: ignore
+    settings = Settings()
     kwargs: dict[str, Any] = {"domain": settings.domain} if settings.domain else {}
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
@@ -166,4 +166,5 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
     try:
         yield file_path
     finally:
-        [f.unlink(missing_ok=True) for f in files_to_unlink]
+        for to_unlink in files_to_unlink:
+            to_unlink.unlink(missing_ok=True)

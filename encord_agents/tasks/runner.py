@@ -113,7 +113,7 @@ class Runner:
         self.was_called_from_cli = False
 
     @staticmethod
-    def validate_project(project: Project | None):
+    def validate_project(project: Project | None) -> None:
         if project is None:
             return
         PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
@@ -130,7 +130,7 @@ class Runner:
         func: Callable[..., TaskAgentReturn],
         printable_name: str | None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
-    ):
+    ) -> None:
         self.agents.append(
             RunnerAgent(
                 identity=identity,
@@ -256,7 +256,7 @@ class Runner:
         runner_agent: RunnerAgent,
         # num_threads: int,
         num_retries: int,
-        pbar: tqdm | None = None,
+        pbar_update: Callable[[float | None], bool | None] | None = None,
     ) -> None:
         with Bundle() as bundle:
             for task, label_row in tasks:
@@ -277,8 +277,8 @@ class Runner:
                                 except ValueError:
                                     task.proceed(pathway_name=next_stage, bundle=bundle)
 
-                            if pbar is not None:
-                                pbar.update(1)
+                            if pbar_update is not None:
+                                pbar_update(1.)
                             break
 
                         except KeyboardInterrupt:
@@ -288,7 +288,7 @@ class Runner:
                             traceback.print_exc()
 
     @staticmethod
-    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", "):
+    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", ") -> str:
         return join_str.join(
             [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
         )
@@ -311,7 +311,7 @@ class Runner:
         project_hash: Annotated[
             Optional[str], Option(help="The project hash if not defined at runner instantiation.")
         ] = None,
-    ):
+    ) -> None:
         """
         Run your task agent `runner(...)`.
 
@@ -333,8 +333,11 @@ class Runner:
         if project_hash is not None:
             project_hash = self.verify_project_hash(project_hash)
             project = self.client.get_project(project_hash)
-        else:
+        elif self.project is not None:
             project = self.project
+        else:
+            # Should not happen. Validated above but mypy doesn't understand.
+            raise ValueError("Have no project to execute the runner on. Please specify it.")
 
         if project is None:
             import sys
@@ -435,7 +438,6 @@ def {fn_name}(...):
                                         data_hashes=[t.data_hash for t in batch], **include_args.model_dump()
                                     )
                                 }
-                                print([lr.backing_item_uuid for lr in label_rows.values()])
                                 batch_lrs = [label_rows.get(t.data_hash) for t in batch]
                                 with project.create_bundle() as lr_bundle:
                                     for lr in batch_lrs:
@@ -447,7 +449,7 @@ def {fn_name}(...):
                                 zip(batch, batch_lrs),
                                 runner_agent,
                                 num_retries,
-                                pbar=pbar,
+                                pbar_update=pbar.update,
                             )
 
                             batch = []
@@ -467,14 +469,12 @@ def {fn_name}(...):
                                     ),
                                 )
                             }
-                            print("I am here")
-                            print([lr.backing_item_uuid for lr in label_rows.values()])
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
                             with project.create_bundle() as lr_bundle:
                                 for lr in batch_lrs:
                                     if lr:
                                         lr.initialise_labels(bundle=lr_bundle)
-                        self._execute_tasks(project, zip(batch, batch_lrs), runner_agent, num_retries, pbar=pbar)
+                        self._execute_tasks(project, zip(batch, batch_lrs), runner_agent, num_retries, pbar_update=pbar.update)
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
                 panel = Panel(err.args[0], width=None)
@@ -488,7 +488,7 @@ def {fn_name}(...):
                     err.args = (plain_text,)
                 raise
 
-    def run(self):
+    def run(self) -> None:
         """
         Execute the runner.
 

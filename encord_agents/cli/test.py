@@ -28,7 +28,7 @@ def local(
     ],
     url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
     port: Annotated[int, Option(help="Local host port to hit")] = 8080,
-):
+) -> None:
     """Hit a localhost agents endpoint for testing an agent by copying the url from the Encord Label Editor over.
 
     Given
@@ -114,8 +114,8 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         table.add_row("label editor", editor_url)
 
         headers = ["'{0}: {1}'".format(k, v) for k, v in prepped.headers.items()]
-        headers = " -H ".join(headers)
-        curl_command = f"curl -X {prepped.method} \\{os.linesep}  -H {headers} \\{os.linesep}  -d '{prepped.body}' \\{os.linesep}  '{prepped.url}'"
+        str_headers = " -H ".join(headers)
+        curl_command = f"curl -X {prepped.method} \\{os.linesep}  -H {str_headers} \\{os.linesep}  -d '{prepped.body!r}' \\{os.linesep}  '{prepped.url}'"
         table.add_row("curl", curl_command)
 
         rich.print(table)

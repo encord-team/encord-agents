@@ -1,4 +1,5 @@
 import base64
+from typing import TypeAlias
 
 import cv2
 import numpy as np
@@ -6,7 +7,9 @@ from encord.objects.bitmask import BitmaskCoordinates
 from encord.objects.coordinates import BoundingBoxCoordinates, PolygonCoordinates, RotatableBoundingBoxCoordinates
 from numpy.typing import NDArray
 
-CroppableCoordinates = (
+from encord_agents.core.data_model import Base64Formats
+
+CroppableCoordinates: TypeAlias = (
     BoundingBoxCoordinates | RotatableBoundingBoxCoordinates | BitmaskCoordinates | PolygonCoordinates
 )
 
@@ -22,7 +25,7 @@ def rbb_to_poly(
     rbb: RotatableBoundingBoxCoordinates,
     img_width: int,
     img_height: int,
-) -> np.ndarray:
+) -> NDArray[np.float32]:
     x = rbb.top_left_x
     y = rbb.top_left_y
     w = rbb.width
@@ -33,7 +36,8 @@ def rbb_to_poly(
             [(x + w) * img_width, y * img_height],
             [(x + w) * img_width, (y + h) * img_height],
             [x * img_width, (y + h) * img_height],
-        ]
+        ],
+        dtype=np.float32
     )
     angle = rbb.theta  # [0; 360]
     center = tuple(bbox_not_rotated.mean(0).tolist())
@@ -47,48 +51,11 @@ def rbb_to_poly(
         mode="constant",
         constant_values=1,
     )
-    rotated_points: np.ndarray = points @ rotation_matrix.T
+    rotated_points = points @ rotation_matrix.T.astype(np.float32)
     return rotated_points
 
 
-def poly_to_rbb(
-    poly: np.ndarray,
-    img_width: int,
-    img_height: int,
-) -> RotatableBoundingBoxCoordinates:
-    v1 = poly[1] - poly[0]
-    v1 = v1 / np.linalg.norm(v1, ord=2)
-    angle = np.degrees(np.arccos(v1[0]))
-
-    if not any(
-        [poly[0, 0] > poly[3, 0], poly[0, 0] == poly[3, 0] and poly[0, 1] < poly[3, 1]]
-    ):  # Initial points were rotated more than 180 degrees => Rotate backwards
-        angle = 360 - angle
-
-    center = poly.mean(axis=0)
-    rotation_matrix = cv2.getRotationMatrix2D(center, angle, scale=1.0)
-    points = np.pad(
-        poly,
-        [
-            (0, 0),
-            (0, 1),
-        ],
-        mode="constant",
-        constant_values=1,
-    )
-    rotated_points = points @ rotation_matrix.T
-    x, y = rotated_points.min(0)
-    w, h = rotated_points.max(0) - rotated_points.min(0)
-    return RotatableBoundingBoxCoordinates(
-        top_left_x=float(x / img_width),
-        top_left_y=float(y / img_height),
-        width=float(w / img_width),
-        height=float(h / img_height),
-        theta=float(angle),
-    )
-
-
-def crop_to_bbox(image: NDArray, bbox: BoundingBoxCoordinates) -> NDArray:
+def crop_to_bbox(image: NDArray[np.uint8], bbox: BoundingBoxCoordinates) -> NDArray[np.uint8]:
     img_height, img_width = image.shape[:2]
     from_x = int(img_width * bbox.top_left_x + 0.5)
     from_y = int(img_height * bbox.top_left_y + 0.5)
@@ -97,7 +64,7 @@ def crop_to_bbox(image: NDArray, bbox: BoundingBoxCoordinates) -> NDArray:
     return image[from_y:to_y, from_x:to_x]
 
 
-def poly_to_bbox(poly: PolygonCoordinates | NDArray) -> BoundingBoxCoordinates:
+def poly_to_bbox(poly: PolygonCoordinates | NDArray[np.float32]) -> BoundingBoxCoordinates:
     if isinstance(poly, PolygonCoordinates):
         rel_coords = np.array([[v.x, v.y] for v in poly.values])
     else:
@@ -111,7 +78,7 @@ def poly_to_bbox(poly: PolygonCoordinates | NDArray) -> BoundingBoxCoordinates:
 
 def rbbox_to_surrounding_bbox(rbb: RotatableBoundingBoxCoordinates, img_w: int, img_h: int) -> BoundingBoxCoordinates:
     abs_coords = rbb_to_poly(rbb, img_width=img_w, img_height=img_h)
-    rel_coords = abs_coords / np.array([[img_w, img_h]], dtype=float)
+    rel_coords = abs_coords / np.array([[img_w, img_h]], dtype=np.float32)
     return poly_to_bbox(rel_coords)
 
 
@@ -143,6 +110,6 @@ def crop_to_object(image: NDArray[np.uint8], coordinates: CroppableCoordinates) 
     return crop_to_bbox(image, box)
 
 
-def b64_encode_image(img: NDArray[np.uint8], format=".jpg"):
+def b64_encode_image(img: NDArray[np.uint8], format: Base64Formats =".jpg") -> str:
     _, encoded_image = cv2.imencode(format, img)
-    return base64.b64encode(encoded_image).decode("utf-8")
+    return base64.b64encode(encoded_image).decode("utf-8")  # type: ignore

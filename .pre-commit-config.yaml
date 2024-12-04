@@ -1,0 +1,32 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-fmt
+        name: ruff-fmt
+        entry: poetry run ruff format --config=pyproject.toml .
+        types_or: [ python, pyi ]
+        language: system
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff-check
+        entry: poetry run ruff check --config=pyproject.toml --fix .
+        types_or: [ python, pyi ]
+        language: system
+        pass_filenames: false
+
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy . --config-file=pyproject.toml
+        types_or: [ python, pyi ]
+        language: system
+        pass_filenames: false
+      
+      # - id: unittest
+      #   name: unittest
+      #   entry: poetry run pytest --cov=encord_agents --junitxml ea-unit-test-report.xml
+      #   types_or: [ python, pyi ]
+      #   language: system
+      #   pass_filenames: false
+default_stages: [ pre-push ]
+

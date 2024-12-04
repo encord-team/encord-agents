@@ -43,7 +43,7 @@ def editor_agent(
         A wrapped function suitable for gcp functions.
     """
 
-    def context_wrapper_inner(func: AgentFunction) -> Callable:
+    def context_wrapper_inner(func: AgentFunction) -> Callable[[Request], Response]:
         dependant = get_dependant(func=func)
 
         @wraps(func)

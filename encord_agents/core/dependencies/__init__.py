@@ -1,3 +1,3 @@
 from .models import Depends
 
-__ALL__ = ["Depends"]
+__all__ = ["Depends"]

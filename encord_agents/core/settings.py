@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     @field_validator("ssh_key_content")
     @classmethod
-    def check_key_content(cls, content: str | None):
+    def check_key_content(cls, content: str | None) -> str | None:
         if content is None:
             return content
 
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     @field_validator("ssh_key_file")
     @classmethod
-    def check_path_expand_and_exists(cls, path: Path | None):
+    def check_path_expand_and_exists(cls, path: Path | None) -> Path | None:
         if path is None:
             return path
 
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
         return path
 
     @model_validator(mode="after")
-    def check_key(self):
+    def check_key(self: "Settings") -> "Settings":
         if not any(map(bool, [self.ssh_key_content, self.ssh_key_file])):
             raise PrintableError(
                 f"Must specify either `[blue]ENCORD_SSH_KEY_FILE[/blue]` or `[blue]ENCORD_SSH_KEY[/blue]` env variables. If you don't have an ssh key, please refere to our docs:{os.linesep}[magenta]https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys#creating-keys-using-terminal-powershell[/magenta]"
@@ -80,4 +80,8 @@ class Settings(BaseSettings):
 
     @property
     def ssh_key(self) -> str:
-        return self.ssh_key_content if self.ssh_key_content else self.ssh_key_file.read_text()
+        if self.ssh_key_content is None:
+            if self.ssh_key_file is None:
+                raise ValueError("Both ssh key content and ssh key file is None")
+            self.ssh_key_content = self.ssh_key_file.read_text()
+        return self.ssh_key_content 

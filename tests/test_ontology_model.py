@@ -1,5 +1,6 @@
 from encord.objects.attributes import ChecklistAttribute, RadioAttribute, TextAttribute
 from encord.objects.common import Shape
+from encord.objects.ontology_object import Object
 from encord.objects.ontology_object_instance import ObjectInstance
 from encord.objects.ontology_structure import OntologyStructure
 
@@ -38,7 +39,7 @@ uids = [
 ]
 
 
-def test_simple_radio_attribute():
+def test_simple_radio_attribute() -> None:
     # Create structure
     gen = iter(uids)
     struct = OntologyStructure()
@@ -60,7 +61,7 @@ def test_simple_radio_attribute():
     assert encord_classification_instances[0].get_answer().value == "blue"  # type: ignore
 
 
-def test_nested_radio_attribute():
+def test_nested_radio_attribute() -> None:
     gen = iter(uids)
     # Create structure
     struct = OntologyStructure()
@@ -68,8 +69,8 @@ def test_nested_radio_attribute():
     attr = clf.add_attribute(RadioAttribute, name="color", feature_node_hash=next(gen))
 
     for opt in ["red", "blue", "green"]:
-        opt = attr.add_option(label=opt, feature_node_hash=next(gen))
-        nattr = opt.add_nested_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
+        ont_opt = attr.add_option(label=opt, feature_node_hash=next(gen))
+        nattr = ont_opt.add_nested_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
         nattr.add_option("0 to 5", feature_node_hash=next(gen))
         nattr.add_option("5 to 10", feature_node_hash=next(gen))
         nattr.add_option("10 to 15", feature_node_hash=next(gen))
@@ -82,7 +83,7 @@ def test_nested_radio_attribute():
     assert instances[0].get_answer()
 
 
-def test_simple_text_attribute():
+def test_simple_text_attribute() -> None:
     # Create structure
     gen = iter(uids)
     struct = OntologyStructure()
@@ -104,7 +105,7 @@ def test_simple_text_attribute():
     assert encord_classification_instances[0].get_answer() == set_value
 
 
-def test_simple_checklist():
+def test_simple_checklist() -> None:
     # Create structure
     gen = iter(uids)
     struct = OntologyStructure()
@@ -127,18 +128,18 @@ def test_simple_checklist():
     encord_classification_instances = model.validate_json(answer)
 
     assert len(encord_classification_instances) == 1
-    answer = encord_classification_instances[0].get_answer()
-    assert isinstance(answer, list)
-    assert len(answer) == 2
+    encord_answer = encord_classification_instances[0].get_answer()
+    assert isinstance(encord_answer, list)
+    assert len(encord_answer) == 2
 
-    names = [a.title for a in answer]
+    names = [a.title for a in encord_answer]
     assert "blueberry" in names
     assert "leaves" in names
     assert "strawberry" not in names
     assert "flies" not in names
 
 
-def test_flat_objects():
+def test_flat_objects() -> None:
     struct = OntologyStructure()
     ont_objects = [
         struct.add_object(obj_name, Shape.POLYGON) for obj_name in ["strawberry", "apple", "pineapple", "blueberry"]
@@ -147,16 +148,16 @@ def test_flat_objects():
     answer = """{
     "choice": "blueberry"
 }"""
-    answer = model.validate_json(answer)
-    assert isinstance(answer, ObjectInstance)
-    assert answer.object_name == "blueberry"
+    encord_answer = model.validate_json(answer)
+    assert isinstance(encord_answer, ObjectInstance)
+    assert encord_answer.object_name == "blueberry"
 
 
-def test_nested_objects():
+def test_nested_objects() -> None:
     gen = iter(uids)
     struct = OntologyStructure()
 
-    def add_object(obj_name):
+    def add_object(obj_name: str) -> Object:
         ont_obj = struct.add_object(obj_name, Shape.POLYGON, feature_node_hash=next(gen))
         attr = ont_obj.add_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
         attr.add_option("0 to 5", feature_node_hash=next(gen))
@@ -170,16 +171,16 @@ def test_nested_objects():
     answer = """{
 "choice": { "feature_node_hash": "6666aaaa", "count": { "feature_node_hash": "33337777", "choice": "6 to 10" } } }
 """
-    answer = model.validate_json(answer)
-    assert isinstance(answer, ObjectInstance)
-    assert answer.object_name == "blueberry"
+    encord_answer = model.validate_json(answer)
+    assert isinstance(encord_answer, ObjectInstance)
+    assert encord_answer.object_name == "blueberry"
 
-    nested_answer = answer.get_answer(answer.ontology_item.attributes[0])
+    nested_answer = encord_answer.get_answer(encord_answer.ontology_item.attributes[0])
     assert nested_answer
     assert nested_answer.label == "6 to 10"  # type: ignore
 
 
-def test_only_some_nested_radio_attributes():
+def test_only_some_nested_radio_attributes() -> None:
     gen = iter(uids)
     # Create structure
     struct = OntologyStructure()
@@ -187,10 +188,10 @@ def test_only_some_nested_radio_attributes():
     attr = clf.add_attribute(RadioAttribute, name="color", feature_node_hash=next(gen))
 
     for opt in ["red", "blue", "green"]:
-        opt = attr.add_option(label=opt, feature_node_hash=next(gen))
-        if opt.label == "red":
+        ont_opt = attr.add_option(label=opt, feature_node_hash=next(gen))
+        if ont_opt.label == "red":
             continue
-        nattr = opt.add_nested_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
+        nattr = ont_opt.add_nested_attribute(RadioAttribute, "count", feature_node_hash=next(gen))
         nattr.add_option("0 to 5", feature_node_hash=next(gen))
         nattr.add_option("5 to 10", feature_node_hash=next(gen))
         nattr.add_option("10 to 15", feature_node_hash=next(gen))
@@ -214,11 +215,11 @@ def test_only_some_nested_radio_attributes():
     assert nested_option.label == "5 to 10"  # type: ignore
 
 
-def test_only_some_nested_objects():
+def test_only_some_nested_objects() -> None:
     gen = iter(uids)
     struct = OntologyStructure()
 
-    def add_object(obj_name):
+    def add_object(obj_name: str) -> Object:
         ont_obj = struct.add_object(obj_name, Shape.POLYGON, feature_node_hash=next(gen))
         if obj_name == "blueberry":
             return ont_obj
@@ -235,25 +236,25 @@ def test_only_some_nested_objects():
 "choice": { "feature_node_hash": "6666aaaa", "count": { "feature_node_hash": "33337777", "choice": "6 to 10" } } }
 """
 
-    answer = model.validate_json(answer)
-    assert isinstance(answer, ObjectInstance)
-    assert answer.object_name == "blueberry"
-    assert len(answer.ontology_item.attributes) == 0
+    encord_answer = model.validate_json(answer)
+    assert isinstance(encord_answer, ObjectInstance)
+    assert encord_answer.object_name == "blueberry"
+    assert len(encord_answer.ontology_item.attributes) == 0
 
     answer = f"""{{
 "choice": {{ "feature_node_hash": "{uids[0]}", "count": {{ "feature_node_hash": "{uids[1]}", "choice": "6 to 10" }} }} }}
 """
-    answer = model.validate_json(answer)
-    nested_answer = answer.get_answer(answer.ontology_item.attributes[0])
+    encord_answer = model.validate_json(answer)
+    nested_answer = encord_answer.get_answer(encord_answer.ontology_item.attributes[0])
     assert nested_answer
     assert nested_answer.label == "6 to 10"  # type: ignore
 
 
-def test_just_one_nested_object():
+def test_just_one_nested_object() -> None:
     gen = iter(uids)
     struct = OntologyStructure()
 
-    def add_object(obj_name):
+    def add_object(obj_name: str) -> Object:
         ont_obj = struct.add_object(obj_name, Shape.POLYGON, feature_node_hash=next(gen))
         if obj_name == "blueberry":
             return ont_obj
@@ -278,10 +279,10 @@ def test_just_one_nested_object():
 }
 """
 
-    answer = model.validate_json(answer)
-    assert isinstance(answer, ObjectInstance)
-    assert answer.object_name == "my_single_object"
-    assert len(answer.ontology_item.attributes) == 1
-    attr = answer.ontology_item.attributes[0]
-    nested_answer = answer.get_answer(attr)
+    encord_answer = model.validate_json(answer)
+    assert isinstance(encord_answer, ObjectInstance)
+    assert encord_answer.object_name == "my_single_object"
+    assert len(encord_answer.ontology_item.attributes) == 1
+    attr = encord_answer.ontology_item.attributes[0]
+    nested_answer = encord_answer.get_answer(attr)
     assert nested_answer.label == "10 to 15"  # type: ignore

@@ -7,7 +7,7 @@ from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
 
 
-def verify_auth():
+def verify_auth() -> None:
     """
     FastAPI lifecycle start hook to fail early if ssh key is missing.
 

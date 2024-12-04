@@ -147,7 +147,7 @@ def dep_label_row(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
     return get_initialised_label_row(frame_data)
 
 
-def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Annotated[FrameData, Form()]):
+def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Annotated[FrameData, Form()]) -> NDArray[np.uint8]:
     """
     Dependency to inject the underlying asset of the frame data.
 
@@ -214,7 +214,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
         yield iter_video(asset)
 
 
-def dep_project(frame_data: Annotated[FrameData, Form()], client: Annotated[EncordUserClient, Depends(dep_client)]):
+def dep_project(frame_data: Annotated[FrameData, Form()], client: Annotated[EncordUserClient, Depends(dep_client)]) -> Project:
     r"""
     Dependency to provide an instantiated
     [Project](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2){ target="\_blank", rel="noopener noreferrer" }.

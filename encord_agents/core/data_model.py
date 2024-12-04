@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 
 from encord_agents.core.vision import DATA_TYPES, b64_encode_image
 
+Base64Formats = Literal[".jpeg", ".jpg", ".png"]
+
 
 class LabelRowMetadataIncludeArgs(BaseModel):
     """
@@ -61,7 +63,7 @@ class Frame:
     @overload
     def b64_encoding(
         self,
-        image_format: Literal[".jpeg", ".jpg", ".png"] = ".jpeg",
+        image_format: Base64Formats = ".jpeg",
         output_format: Literal["raw", "url"] = "raw",
     ) -> str: ...
 
@@ -70,13 +72,13 @@ class Frame:
         self,
         image_format: Literal[".jpeg", ".jpg", ".png"] = ".jpeg",
         output_format: Literal["openai", "anthropic"] = "openai",
-    ) -> dict: ...
+    ) -> dict[str, str | dict[str, str]]: ...
 
     def b64_encoding(
         self,
         image_format: Literal[".jpeg", ".jpg", ".png"] = ".jpeg",
         output_format: Literal["url", "openai", "anthropic", "raw"] = "url",
-    ) -> str | dict:
+    ) -> str | dict[str, str | dict[str, str]]:
         """
         Get a base64 representation of the image content.
 
