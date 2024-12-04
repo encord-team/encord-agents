@@ -7,7 +7,7 @@ from encord.objects.bitmask import BitmaskCoordinates
 from encord.objects.coordinates import BoundingBoxCoordinates, PolygonCoordinates, RotatableBoundingBoxCoordinates
 from numpy.typing import NDArray
 
-from encord_agents.core.data_model import Base64Formats
+from .types import Base64Formats
 
 CroppableCoordinates: TypeAlias = (
     BoundingBoxCoordinates | RotatableBoundingBoxCoordinates | BitmaskCoordinates | PolygonCoordinates
