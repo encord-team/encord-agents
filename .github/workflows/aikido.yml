@@ -11,8 +11,6 @@ jobs:
       image: aikidosecurity/local-scanner:v1.0.52
     steps: 
       - uses: actions/checkout@v4 
-        with: 
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          path: my-repo 
+
       - name: Run scan
         run: aikido-local-scanner scan my-repo --apikey ${{ secrets.AIKIDO_API_Key }} --repositoryname encord-agents-2 --branchname main
