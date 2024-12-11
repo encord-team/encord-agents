@@ -13,4 +13,4 @@ jobs:
       - uses: actions/checkout@v4 
 
       - name: Run scan
-        run: aikido-local-scanner scan my-repo --apikey ${{ secrets.AIKIDO_API_Key }} --repositoryname encord-agents --branchname main
+        run: aikido-local-scanner scan ./ --apikey ${{ secrets.AIKIDO_API_Key }} --repositoryname encord-agents --branchname main
