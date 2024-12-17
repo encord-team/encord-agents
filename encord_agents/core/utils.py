@@ -2,13 +2,14 @@ import mimetypes
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, cast
 
 import cv2
 import requests
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
+from encord.orm.storage import StorageItemType
 
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
@@ -98,21 +99,23 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
 
     file_type, suffix = mimetype.split("/")[:2]
 
-    if file_type == "video" and lr.data_type != DataType.VIDEO:
+    if (file_type == "audio" and lr.data_type != DataType.AUDIO) or (
+        file_type == "video" and lr.data_type != DataType.VIDEO
+    ):
         raise ValueError(f"Mimetype {mimetype} and lr data type {lr.data_type} did not match")
     elif file_type == "image" and lr.data_type not in {
         DataType.IMG_GROUP,
         DataType.IMAGE,
     }:
         raise ValueError(f"Mimetype {mimetype} and lr data type {lr.data_type} did not match")
-    elif file_type not in {"image", "video"}:
-        raise ValueError("File type not video or image")
+    elif file_type not in {"image", "video", "audio"}:
+        raise ValueError("File type not audio, video, or image")
 
     return f".{suffix}"
 
 
 @contextmanager
-def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, None]:
+def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, None, None]:
     """
     Download the asset associated to a label row to disk.
 
@@ -139,20 +142,27 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         The file path for the requested asset.
 
     """
-    if lr.data_link is not None:
+    url: str | None = None
+    if lr.data_link is not None and lr.data_link[:5] == "https":
         url = lr.data_link
-    else:
-        video_item, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
-        if lr.data_type in [DataType.VIDEO, DataType.IMAGE] and video_item:
-            url = video_item["file_link"]
-        elif lr.data_type == DataType.IMG_GROUP and images_list:
-            if frame is None:
-                raise NotImplementedError(
-                    "Downloading entire image group is not supported. Please contact Encord at support@encord.com for help or submit a PR with an implementation."
-                )
-            url = images_list[frame]["file_link"]
-        else:
-            raise ValueError(f"Couldn't load asset of type {lr.data_type}")
+    elif lr.backing_item_uuid is not None:
+        storage_item = get_user_client().get_storage_item(lr.backing_item_uuid, sign_url=True)
+        url = storage_item.get_signed_url()
+
+    # Fallback for fails and for image groups (they don't have a url)
+    if url is None:
+        _, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
+        if images_list is None:
+            raise ValueError("Image list should not be none for image groups.")
+        if frame is None:
+            raise NotImplementedError(
+                "Downloading entire image group is not supported. Please contact Encord at support@encord.com for help or submit a PR with an implementation."
+            )
+        image = images_list[frame]
+        url = cast(str | None, image.file_link)
+
+    if url is None:
+        raise ValueError("Failed to get a signed url for the asset")
 
     response = requests.get(url)
     response.raise_for_status()
@@ -160,7 +170,9 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
     suffix = _guess_file_suffix(url, lr)
     file_path = Path(lr.data_hash).with_suffix(suffix)
     with open(file_path, "wb") as f:
-        f.write(response.content)
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
 
     files_to_unlink = [file_path]
     if lr.data_type == DataType.VIDEO and frame is not None:  # Get that exact frame
@@ -169,6 +181,7 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         cv2.imwrite(frame_file.as_posix(), frame_content)
         files_to_unlink.append(frame_file)
         file_path = frame_file
+
     try:
         yield file_path
     finally:
