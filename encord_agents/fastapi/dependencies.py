@@ -189,7 +189,16 @@ def dep_single_frame(
     return np.asarray(img, dtype=np.uint8)
 
 
-def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
+def dep_asset(
+    lr: Annotated[
+        LabelRowV2,
+        Depends(
+            dep_label_row_with_args(
+                label_row_initialise_labels_args=LabelRowInitialiseLabelsArgs(include_signed_url=True)
+            )
+        ),
+    ],
+) -> Generator[Path, None, None]:
     """
     Get a local file path to data asset temporarily stored till end of agent execution.
 
