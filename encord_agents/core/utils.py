@@ -2,13 +2,13 @@ import mimetypes
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Generator, cast
 
 import cv2
 import requests
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord.orm.storage import StorageItemType
 from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
@@ -169,23 +169,20 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
     response = requests.get(url)
     response.raise_for_status()
 
-    _, suffix = _guess_file_suffix(url, lr)
-    file_path = Path(lr.data_hash).with_suffix(suffix)
-    with open(file_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=4096):
-            if chunk:
-                f.write(chunk)
+    with TemporaryDirectory() as dir_name:
+        dir_path = Path(dir_name)
 
-    files_to_unlink = [file_path]
-    if (lr.data_type == DataType.VIDEO or is_image_sequence) and frame is not None:  # Get that exact frame
-        frame_content = get_frame(file_path, frame)
-        frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
-        cv2.imwrite(frame_file.as_posix(), frame_content)
-        files_to_unlink.append(frame_file)
-        file_path = frame_file
+        _, suffix = _guess_file_suffix(url, lr)
+        file_path = dir_path / f"{lr.data_hash}{suffix}"
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
 
-    try:
+        if (lr.data_type == DataType.VIDEO or is_image_sequence) and frame is not None:  # Get that exact frame
+            frame_content = get_frame(file_path, frame)
+            frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
+            cv2.imwrite(frame_file.as_posix(), frame_content)
+            file_path = frame_file
+
         yield file_path
-    finally:
-        for to_unlink in files_to_unlink:
-            to_unlink.unlink(missing_ok=True)
