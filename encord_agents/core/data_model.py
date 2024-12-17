@@ -26,6 +26,20 @@ class LabelRowMetadataIncludeArgs(BaseModel):
     include_all_label_branches: bool = False
 
 
+class LabelRowInitialiseLabelsArgs(BaseModel):
+    """
+    Arguments used to specify how to initialise labels via the SDK.
+
+    The arguments are passed to `LabelRowV2.initialise_labels`.
+    """
+
+    include_object_feature_hashes: set[str] | None = None
+    include_classification_feature_hashes: set[str] | None = None
+    include_reviews: bool = False
+    overwrite: bool = False
+    include_signed_url: bool = False
+
+
 class FrameData(BaseModel):
     """
     Holds the data sent from the Encord Label Editor at the time of triggering the agent.

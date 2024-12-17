@@ -34,7 +34,7 @@ from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
 
-from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.vision import crop_to_object
 
@@ -76,8 +76,9 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
-def dep_label_row_with_include_args(
+def dep_label_row_with_args(
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+    label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> Callable[[FrameData], LabelRowV2]:
     """
     Dependency to provide an initialized label row.
@@ -85,18 +86,21 @@ def dep_label_row_with_include_args(
     **Example:**
 
     ```python
-    from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
-    from encord_agents.fastapi.depencencies import dep_label_row_with_include_args
+    from encord_agents.core.data_model import LabelRowMetadataIncludeArgs, LabelRowInitialiseLabelsArgs
+    from encord_agents.fastapi.depencencies import dep_label_row_with_args
     ...
 
     include_args = LabelRowMetadataIncludeArgs(
         include_client_metadata=True,
         include_workflow_graph_node=True,
     )
+    init_args = LabelRowInitialiseLabelsArgs(
+        include_signed_url=True,
+    )
 
     @app.post("/my-route")
     def my_route(
-        lr: Annotated[LabelRowV2, Depends(dep_label_row_with_include_args(include_args))]
+        lr: Annotated[LabelRowV2, Depends(dep_label_row_with_args(include_args, init_args))]
     ):
         assert lr.is_labelling_initialised  # will work
         assert lr.client_metadata           # will be available if set already
@@ -113,7 +117,9 @@ def dep_label_row_with_include_args(
     """
 
     def wrapper(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
-        return get_initialised_label_row(frame_data, label_row_metadata_include_args)
+        return get_initialised_label_row(
+            frame_data, include_args=label_row_metadata_include_args, init_args=label_row_initialise_labels_args
+        )
 
     return wrapper
 

@@ -10,7 +10,7 @@ from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import FrameData, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
 
 from .video import get_frame
@@ -31,7 +31,9 @@ def get_user_client() -> EncordUserClient:
 
 
 def get_initialised_label_row(
-    frame_data: FrameData, include_args: LabelRowMetadataIncludeArgs | None = None
+    frame_data: FrameData,
+    include_args: LabelRowMetadataIncludeArgs | None = None,
+    init_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> LabelRowV2:
     """
     Get an initialised label row from the frame_data information.
@@ -49,6 +51,7 @@ def get_initialised_label_row(
     user_client = get_user_client()
     project = user_client.get_project(str(frame_data.project_hash))
     include_args = include_args or LabelRowMetadataIncludeArgs()
+    init_args = init_args or LabelRowInitialiseLabelsArgs()
     matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash], **include_args.model_dump())
     num_matches = len(matched_lrs)
     if num_matches > 1:
@@ -56,7 +59,7 @@ def get_initialised_label_row(
     elif num_matches == 0:
         raise Exception("No label rows were matched!")
     lr = matched_lrs.pop()
-    lr.initialise_labels(include_signed_url=True)
+    lr.initialise_labels(**init_args.model_dump())
     return lr
 
 
@@ -136,17 +139,20 @@ def download_asset(lr: LabelRowV2, frame: int | None) -> Generator[Path, None, N
         The file path for the requested asset.
 
     """
-    video_item, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
-    if lr.data_type in [DataType.VIDEO, DataType.IMAGE] and video_item:
-        url = video_item["file_link"]
-    elif lr.data_type == DataType.IMG_GROUP and images_list:
-        if frame is None:
-            raise NotImplementedError(
-                "Downloading entire image group is not supported. Please contact Encord at support@encord.com for help or submit a PR with an implementation."
-            )
-        url = images_list[frame]["file_link"]
+    if lr.data_link is not None:
+        url = lr.data_link
     else:
-        raise ValueError(f"Couldn't load asset of type {lr.data_type}")
+        video_item, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
+        if lr.data_type in [DataType.VIDEO, DataType.IMAGE] and video_item:
+            url = video_item["file_link"]
+        elif lr.data_type == DataType.IMG_GROUP and images_list:
+            if frame is None:
+                raise NotImplementedError(
+                    "Downloading entire image group is not supported. Please contact Encord at support@encord.com for help or submit a PR with an implementation."
+                )
+            url = images_list[frame]["file_link"]
+        else:
+            raise ValueError(f"Couldn't load asset of type {lr.data_type}")
 
     response = requests.get(url)
     response.raise_for_status()

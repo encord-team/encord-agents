@@ -8,7 +8,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
-from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
@@ -27,7 +27,9 @@ def generate_response() -> Response:
 
 
 def editor_agent(
-    *, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None
+    *,
+    label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+    label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> Callable[[AgentFunction], Callable[[Request], Response]]:
     """
     Wrapper to make resources available for gcp editor agents.
@@ -38,6 +40,8 @@ def editor_agent(
     Args:
         label_row_metadata_include_args: arguments to overwrite default arguments
             on `project.list_label_rows_v2()`.
+        label_row_initialise_labels_args: Arguments to overwrite default arguments
+            on `label_row.initialise_labels(...)`
 
     Returns:
         A wrapped function suitable for gcp functions.
@@ -57,10 +61,11 @@ def editor_agent(
             label_row: LabelRowV2 | None = None
             if dependant.needs_label_row:
                 include_args = label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
+                init_args = label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                 label_row = project.list_label_rows_v2(
                     data_hashes=[str(frame_data.data_hash)], **include_args.model_dump()
                 )[0]
-                label_row.initialise_labels(include_signed_url=True)
+                label_row.initialise_labels(**init_args.model_dump())
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data)
             with ExitStack() as stack:

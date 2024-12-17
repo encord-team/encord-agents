@@ -19,7 +19,7 @@ from tqdm.auto import tqdm
 from typer import Abort, Option
 from typing_extensions import Annotated
 
-from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
@@ -35,12 +35,14 @@ class RunnerAgent:
         callable: Callable[..., TaskAgentReturn],
         printable_name: str | None = None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
     ):
         self.identity = identity
         self.printable_name = printable_name or identity
         self.callable = callable
         self.dependant: Dependant = get_dependant(func=callable)
         self.label_row_metadata_include_args = label_row_metadata_include_args
+        self.label_row_initialise_labels_args = label_row_initialise_labels_args
 
     def __repr__(self) -> str:
         return f'RunnerAgent("{self.printable_name}")'
@@ -130,6 +132,7 @@ class Runner:
         func: Callable[..., TaskAgentReturn],
         printable_name: str | None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None,
     ) -> None:
         self.agents.append(
             RunnerAgent(
@@ -137,11 +140,16 @@ class Runner:
                 callable=func,
                 printable_name=printable_name,
                 label_row_metadata_include_args=label_row_metadata_include_args,
+                label_row_initialise_labels_args=label_row_initialise_labels_args,
             )
         )
 
     def stage(
-        self, stage: str | UUID, *, label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None
+        self,
+        stage: str | UUID,
+        *,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
@@ -214,6 +222,8 @@ class Runner:
                 associated with.
             label_row_metadata_include_args: Arguments to be passed to
                 `project.list_label_rows_v2(...)`
+            label_row_initialise_labels_args: Arguments to be passed to
+                `label_row.initialise_labels(...)`
 
         Returns:
             The decorated function.
@@ -244,7 +254,9 @@ class Runner:
             )
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self._add_stage_agent(stage, func, printable_name, label_row_metadata_include_args)
+            self._add_stage_agent(
+                stage, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
+            )
             return func
 
         return decorator
@@ -415,6 +427,8 @@ def {fn_name}(...):
 
                 next_execution = datetime.now() + delta if delta else False
                 for runner_agent in self.agents:
+                    include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
+                    init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
 
                     batch: list[AgentTask] = []
@@ -429,9 +443,6 @@ def {fn_name}(...):
                         if len(batch) == task_batch_size:
                             batch_lrs = [None] * len(batch)
                             if runner_agent.dependant.needs_label_row:
-                                include_args = (
-                                    runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
-                                )
                                 label_rows = {
                                     UUID(lr.data_hash): lr
                                     for lr in project.list_label_rows_v2(
@@ -442,7 +453,7 @@ def {fn_name}(...):
                                 with project.create_bundle() as lr_bundle:
                                     for lr in batch_lrs:
                                         if lr:
-                                            lr.initialise_labels(bundle=lr_bundle)
+                                            lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
 
                             self._execute_tasks(
                                 project,
@@ -462,18 +473,14 @@ def {fn_name}(...):
                                 UUID(lr.data_hash): lr
                                 for lr in project.list_label_rows_v2(
                                     data_hashes=[t.data_hash for t in batch],
-                                    **(
-                                        runner_agent.label_row_metadata_include_args.model_dump()
-                                        if runner_agent.label_row_metadata_include_args
-                                        else {}
-                                    ),
+                                    **include_args.model_dump(),
                                 )
                             }
                             batch_lrs = [label_rows[t.data_hash] for t in batch]
                             with project.create_bundle() as lr_bundle:
                                 for lr in batch_lrs:
                                     if lr:
-                                        lr.initialise_labels(bundle=lr_bundle)
+                                        lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
                         self._execute_tasks(
                             project, zip(batch, batch_lrs), runner_agent, num_retries, pbar_update=pbar.update
                         )
