@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import Callable, Generator, Iterator
 from pathlib import Path
+from typing import Callable, Generator, Iterator
 
 import cv2
 import numpy as np
@@ -133,7 +133,7 @@ def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
     ...
     runner = Runner(project_hash="<project_hash_a>")
 
-    @runner.stage("<my_stage_name_in_project_a>")
+    @runner.stage("<stage_name_or_uuid>")
     def my_agent(
         asset: Annotated[Path, Depends(dep_asset)],
     ) -> str | None:
@@ -150,7 +150,6 @@ def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
     """
     with download_asset(lr) as asset:
         yield asset
-
 
 
 @dataclass(frozen=True)

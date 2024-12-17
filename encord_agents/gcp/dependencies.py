@@ -27,6 +27,7 @@ def my_agent(
 - [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2) is automatically loaded based on the frame data.
 """
 
+from pathlib import Path
 from typing import Callable, Generator, Iterator
 
 import cv2
@@ -106,11 +107,46 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     return np.asarray(img, dtype=np.uint8)
 
 
+def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
+    """
+    Get a local file path to data asset temporarily stored till end of agent execution.
+
+    This dependency will fetch the underlying data asset based on a signed url.
+    It will temporarily store the data on disk. Once the task is completed, the
+    asset will be removed from disk again.
+
+    **Example:**
+
+    ```python
+    from encord_agents.gcp import editor_agent
+    from encord_agents.gcp.dependencies import dep_asset
+    ...
+    runner = Runner(project_hash="<project_hash_a>")
+
+    @editor_agent()
+    def my_agent(
+        asset: Annotated[Path, Depends(dep_asset)]
+    ) -> None:
+        asset.stat()  # read file stats
+        ...
+    ```
+
+    Returns:
+        The path to the asset.
+
+    Raises:
+        `ValueError` if the underlying assets are not videos, images, or audio.
+        `EncordException` if data type not supported by SDK yet.
+    """
+    with download_asset(lr) as asset:
+        yield asset
+
+
 def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
-    **Intended use**
+    **Example:**
 
     ```python
     from encord_agents import FrameData

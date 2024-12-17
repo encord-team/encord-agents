@@ -8,8 +8,8 @@ import cv2
 import requests
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord.user_client import EncordUserClient
 from encord.orm.storage import StorageItemType
+from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
@@ -79,7 +79,7 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> tuple[str, str]:
         - lr: the associated label row
 
     Returns:
-        A file type and suffix that can be used to store the file. 
+        A file type and suffix that can be used to store the file.
         For example, ("image", ".jpg") or ("video", ".mp4").
     """
     fallback_mimetype = "video/mp4" if lr.data_type == DataType.VIDEO else "image/png"
