@@ -64,7 +64,7 @@ def get_initialised_label_row(
     return lr
 
 
-def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
+def _guess_file_suffix(url: str, lr: LabelRowV2) -> tuple[str, str]:
     """
     Best effort attempt to guess file suffix given a url and label row.
 
@@ -79,8 +79,8 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
         - lr: the associated label row
 
     Returns:
-        A file suffix that can be used to store the file. For example, ".jpg" or ".mp4"
-
+        A file type and suffix that can be used to store the file. 
+        For example, ("image", ".jpg") or ("video", ".mp4").
     """
     fallback_mimetype = "video/mp4" if lr.data_type == DataType.VIDEO else "image/png"
     mimetype, _ = next(
@@ -111,7 +111,7 @@ def _guess_file_suffix(url: str, lr: LabelRowV2) -> str:
     elif file_type not in {"image", "video", "audio"}:
         raise ValueError("File type not audio, video, or image")
 
-    return f".{suffix}"
+    return file_type, f".{suffix}"
 
 
 @contextmanager
@@ -149,8 +149,10 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
         storage_item = get_user_client().get_storage_item(lr.backing_item_uuid, sign_url=True)
         url = storage_item.get_signed_url()
 
-    # Fallback for fails and for image groups (they don't have a url)
+    # Fallback for native image groups (they don't have a url)
+    is_image_sequence = lr.data_type == DataType.IMG_GROUP
     if url is None:
+        is_image_sequence = False
         _, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
         if images_list is None:
             raise ValueError("Image list should not be none for image groups.")
@@ -167,7 +169,7 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
     response = requests.get(url)
     response.raise_for_status()
 
-    suffix = _guess_file_suffix(url, lr)
+    _, suffix = _guess_file_suffix(url, lr)
     file_path = Path(lr.data_hash).with_suffix(suffix)
     with open(file_path, "wb") as f:
         for chunk in response.iter_content(chunk_size=4096):
@@ -175,7 +177,7 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
                 f.write(chunk)
 
     files_to_unlink = [file_path]
-    if lr.data_type == DataType.VIDEO and frame is not None:  # Get that exact frame
+    if (lr.data_type == DataType.VIDEO or is_image_sequence) and frame is not None:  # Get that exact frame
         frame_content = get_frame(file_path, frame)
         frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
         cv2.imwrite(frame_file.as_posix(), frame_content)
