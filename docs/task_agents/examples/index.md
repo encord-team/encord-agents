@@ -148,7 +148,7 @@ Suppose you have a _fake_ model like this one, which predicts labels, bounding b
 
 <!--codeinclude-->
 
-[Fake model predictions](../../code_examples/tasks/prelabel_videos.py) lines:28-51
+[Fake model predictions](../../code_examples/tasks/prelabel_videos.py) lines:29-52
 
 <!--/codeinclude-->
 
@@ -176,7 +176,7 @@ Create a pre-labeling agent using the following code as a template:
 
 <!--codeinclude-->
 
-[prelabel_video.py](../../code_examples/tasks/prelabel_videos.py) lines:10-78
+[prelabel_video.py](../../code_examples/tasks/prelabel_videos.py) lines:10-77
 
 <!--/codeinclude-->
 
