@@ -52,7 +52,7 @@ def editor_agent(
 
         @wraps(func)
         def wrapper(request: Request) -> Response:
-            frame_data = FrameData.model_validate_json(orjson.dumps(request.form.to_dict()))
+            frame_data = FrameData.model_validate_json(request.data)
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()
