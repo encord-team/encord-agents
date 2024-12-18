@@ -39,10 +39,9 @@ class Settings(BaseSettings):
         if content is None:
             return content
 
-        file_attempt = Path(content).expanduser()
-        if file_attempt.is_file():
+        if os.path.exists(content):
             raise PrintableError(
-                f"The env variable `[blue]ENCORD_SSH_KEY[/blue]` (={file_attempt}) is set with a value that looks like a path and not ssh key content. Did you mean to set the `[blue]ENCORD_SSH_KEY_FILE[/blue]` environment variable with the private key file content directly?"
+                f"The env variable `[blue]ENCORD_SSH_KEY[/blue]` (={content}) is set with a value that looks like a path and not ssh key content. Did you mean to set the `[blue]ENCORD_SSH_KEY_FILE[/blue]` environment variable with the private key file content directly?"
             )
 
         return content
