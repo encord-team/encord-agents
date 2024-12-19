@@ -18,7 +18,9 @@ except ModuleNotFoundError:
 from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
 
 
-class EncordCORSMiddleware(CORSMiddleware):
+# Type checking does not work here because we do not enforce people to
+# install fastapi as they can use package for, e.g., task runner wo fastapi.
+class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc]
     """
     Like a regular `fastapi.midleware.cors.CORSMiddleware` but matches against
     the Encord origin by default.
