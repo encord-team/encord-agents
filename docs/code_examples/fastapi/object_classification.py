@@ -2,13 +2,13 @@ import os
 
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends, FastAPI, Form
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends, FastAPI
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import InstanceCrop
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
+from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
     FrameData,
     dep_label_row,
@@ -17,10 +17,7 @@ from encord_agents.fastapi.dependencies import (
 
 # Initialize FastAPI app
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*", "https://app.encord.com"],
-)
+app.add_middleware(EncordCORSMiddleware)
 
 # User client and ontology setup
 client = get_user_client()
@@ -49,7 +46,7 @@ anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 @app.post("/object_classification")
 async def classify_objects(
-    frame_data: Annotated[FrameData, Form()],
+    frame_data: FrameData,
     lr: Annotated[LabelRowV2, Depends(dep_label_row)],
     crops: Annotated[
         list[InstanceCrop],

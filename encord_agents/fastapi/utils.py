@@ -1,7 +1,5 @@
 import os
 
-from pydantic import ValidationError
-
 from encord_agents.core.settings import Settings
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
@@ -20,7 +18,7 @@ def verify_auth() -> None:
         on_startup=[verify_auth]
     ```
 
-    This will make the server fail early if auth is not setup.
+    This will make the server fail early if auth is not set up.
     """
     from datetime import datetime, timedelta
 

@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import ExitStack
 from functools import wraps
 from typing import Any, Callable
@@ -8,6 +9,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
@@ -49,10 +51,32 @@ def editor_agent(
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Request], Response]:
         dependant = get_dependant(func=func)
+        cors_regex = re.compile(ENCORD_DOMAIN_REGEX)
 
         @wraps(func)
         def wrapper(request: Request) -> Response:
-            frame_data = FrameData.model_validate_json(orjson.dumps(request.form.to_dict()))
+            if request.method == "OPTIONS":
+                response = make_response("")
+                response.headers["Vary"] = "Origin"
+
+                if not cors_regex.fullmatch(request.origin):
+                    response.status_code = 403
+                    return response
+
+                headers = {
+                    "Access-Control-Allow-Origin": request.origin,
+                    "Access-Control-Allow-Methods": "POST",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Max-Age": "3600",
+                }
+                response.headers.update(headers)
+                response.status_code = 204
+                return response
+
+            if request.is_json:
+                frame_data = FrameData.model_validate(request.get_json())
+            else:
+                frame_data = FrameData.model_validate_json(request.get_data())
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()

@@ -77,8 +77,8 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         request = requests.Request(
             "POST",
             f"http://localhost:{port}{target}",
-            data=payload,
-            headers={"Content-type": "application/x-www-form-urlencoded"},
+            json=payload,
+            headers={"Content-type": "application/json"},
         )
         prepped = request.prepare()
 
@@ -96,7 +96,8 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         table.add_section()
         table.add_row("[green]Request[/green]")
         table.add_row("url", prepped.url)
-        table.add_row("data", prepped.body)  # type: ignore
+        body_json_str = prepped.body.decode("utf-8")  # type: ignore
+        table.add_row("data", body_json_str)
         table_headers = ", ".join([f"'{k}': '{v}'" for k, v in prepped.headers.items()])
         table.add_row("headers", f"{{{table_headers}}}")
 
@@ -115,7 +116,7 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
 
         headers = ["'{0}: {1}'".format(k, v) for k, v in prepped.headers.items()]
         str_headers = " -H ".join(headers)
-        curl_command = f"curl -X {prepped.method} \\{os.linesep}  -H {str_headers} \\{os.linesep}  -d '{prepped.body!r}' \\{os.linesep}  '{prepped.url}'"
+        curl_command = f"curl -X {prepped.method} \\{os.linesep}  -H {str_headers} \\{os.linesep}  -d '{body_json_str}' \\{os.linesep}  '{prepped.url}'"
         table.add_row("curl", curl_command)
 
         rich.print(table)

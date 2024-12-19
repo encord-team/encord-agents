@@ -37,19 +37,16 @@ from typing_extensions import Annotated
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord_agents import FrameData
 from encord_agents.fastapi import dep_label_row
+from encord_agents.fastapi.cors import EncordCORSMiddleware
 
 from fastapi import FastAPI, Depends, Form
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*", "https://app.encord.com"],
-)
+app.add_middleware(EncordCORSMiddleware)
 
 @app.post("/my_agent")
 def my_agent(
-    frame_data: Annotated[FrameData, Form()],
+    frame_data: FrameData,
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
 ):
     # ... Do your edits to the labels

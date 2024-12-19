@@ -1047,7 +1047,7 @@ Let us go through the code section by section.
 First, we import dependencies and setup the FastAPI app with CORS middleware:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:1-25
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:1-22
 <!--/codeinclude-->
 
 The CORS middleware is crucial as it allows the Encord platform to make requests to your API.
@@ -1055,19 +1055,19 @@ The CORS middleware is crucial as it allows the Encord platform to make requests
 Next, we set up the Project and create a data model based on the Ontology:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:28-30
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:25-27
 <!--/codeinclude-->
 
 We create the system prompt that tells Claude how to structure its response:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:33-45
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:30-42
 <!--/codeinclude-->
 
 Finally, we define the endpoint to handle the classification:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:48-78
+[main.py](../../code_examples/fastapi/frame_classification.py) lines:45-75
 <!--/codeinclude-->
 
 The endpoint:
@@ -1155,25 +1155,25 @@ Let's walk through the key components.
 First, we setup the FastAPI app and CORS middleware:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:1-23
+[main.py](../../code_examples/fastapi/object_classification.py) lines:1-20
 <!--/codeinclude-->
 
 Then we setup the client, Project, and extract the generic Ontology object:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:26-32
+[main.py](../../code_examples/fastapi/object_classification.py) lines:23-29
 <!--/codeinclude-->
 
 We create the data model and system prompt for Claude:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:34-47
+[main.py](../../code_examples/fastapi/object_classification.py) lines:32-44
 <!--/codeinclude-->
 
 Finally, we define our object classification endpoint:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:50-97
+[main.py](../../code_examples/fastapi/object_classification.py) lines:47-94
 <!--/codeinclude-->
 
 The endpoint:
