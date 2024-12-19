@@ -13,7 +13,7 @@ from encord_agents import FrameData
 ...
 @app.post("/my-agent-route")
 def my_agent(
-    frame_data: Annotated[FrameData, Form()],
+    frame_data: FrameData,
 ):
     ...
 ```
@@ -117,7 +117,7 @@ def dep_label_row_with_args(
 
     """
 
-    def wrapper(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
+    def wrapper(frame_data: FrameData) -> LabelRowV2:
         return get_initialised_label_row(
             frame_data, include_args=label_row_metadata_include_args, init_args=label_row_initialise_labels_args
         )
@@ -125,7 +125,7 @@ def dep_label_row_with_args(
     return wrapper
 
 
-def dep_label_row(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
+def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     """
     Dependency to provide an initialized label row.
 
@@ -154,9 +154,7 @@ def dep_label_row(frame_data: Annotated[FrameData, Form()]) -> LabelRowV2:
     return get_initialised_label_row(frame_data)
 
 
-def dep_single_frame(
-    lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: Annotated[FrameData, Form()]
-) -> NDArray[np.uint8]:
+def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData) -> NDArray[np.uint8]:
     """
     Dependency to inject the underlying asset of the frame data.
 
@@ -266,9 +264,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
         yield iter_video(asset)
 
 
-def dep_project(
-    frame_data: Annotated[FrameData, Form()], client: Annotated[EncordUserClient, Depends(dep_client)]
-) -> Project:
+def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depends(dep_client)]) -> Project:
     r"""
     Dependency to provide an instantiated
     [Project](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2){ target="\_blank", rel="noopener noreferrer" }.
@@ -327,7 +323,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
     ...
     @app.post("/my-agent")
     def my_agent(
-        frame_data: Annotated[FrameData, Form()],
+        frame_data: FrameData,
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ):
         # Client will authenticated and ready to use.
