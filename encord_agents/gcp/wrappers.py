@@ -9,6 +9,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
@@ -25,14 +26,6 @@ def generate_response() -> Response:
     response = make_response("")
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
-
-
-ALLOWED_ORIGINS = [
-    r"^https:\/\/app.encord.com$",
-    r"^https:\/\/dev.encord.com$",
-    r"^https:\/\/staging.encord.com$",
-    r"^https:\/\/cord-ai-development--[\w\d]+-[\w\d]+\.web.app$",
-]
 
 
 def editor_agent(
@@ -58,6 +51,7 @@ def editor_agent(
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Request], Response]:
         dependant = get_dependant(func=func)
+        cors_regex = re.compile(ENCORD_DOMAIN_REGEX)
 
         @wraps(func)
         def wrapper(request: Request) -> Response:
@@ -65,7 +59,7 @@ def editor_agent(
                 response = make_response("")
                 response.headers["Vary"] = "Origin"
 
-                if not any(re.fullmatch(o, request.origin) for o in ALLOWED_ORIGINS):
+                if not cors_regex.fullmatch(request.origin):
                     response.status_code = 403
                     return response
 
