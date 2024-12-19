@@ -49,7 +49,7 @@ anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 @app.post("/object_classification")
 async def classify_objects(
-    frame_data: Annotated[FrameData, Form()],
+    frame_data: FrameData,
     lr: Annotated[LabelRowV2, Depends(dep_label_row)],
     crops: Annotated[
         list[InstanceCrop],

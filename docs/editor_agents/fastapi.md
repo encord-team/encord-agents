@@ -49,7 +49,7 @@ app.add_middleware(
 
 @app.post("/my_agent")
 def my_agent(
-    frame_data: Annotated[FrameData, Form()],
+    frame_data: FrameData,
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
 ):
     # ... Do your edits to the labels
