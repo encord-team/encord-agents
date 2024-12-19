@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import ExitStack
 from functools import wraps
 from typing import Any, Callable
@@ -24,6 +25,14 @@ def generate_response() -> Response:
     response = make_response("")
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
+
+
+ALLOWED_ORIGINS = [
+    r"^https:\/\/app.encord.com$",
+    r"^https:\/\/dev.encord.com$",
+    r"^https:\/\/staging.encord.com$",
+    r"^https:\/\/cord-ai-development--[\w\d]+-[\w\d]+\.web.app$",
+]
 
 
 def editor_agent(
@@ -52,7 +61,30 @@ def editor_agent(
 
         @wraps(func)
         def wrapper(request: Request) -> Response:
-            frame_data = FrameData.model_validate_json(request.data)
+            # Set CORS headers for the preflight request
+            if request.method == "OPTIONS":
+                # Allows GET requests from any origin with the Content-Type
+                # header and caches preflight response for an 3600s
+                response = make_response("")
+
+                if not any(re.fullmatch(o, request.origin) for o in ALLOWED_ORIGINS):
+                    response.status_code = 403
+                    return response
+
+                headers = {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "POST",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Max-Age": "3600",
+                }
+                response.headers.update(headers)
+                response.status_code = 204
+                return response
+
+            if request.is_json:
+                frame_data = FrameData.model_validate(request.get_json())
+            else:
+                frame_data = FrameData.model_validate_json(request.get_data())
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()
