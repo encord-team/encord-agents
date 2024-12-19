@@ -1167,7 +1167,7 @@ Then we setup the client, Project, and extract the generic Ontology object:
 We create the data model and system prompt for Claude:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:32-40
+[main.py](../../code_examples/fastapi/object_classification.py) lines:32-44
 <!--/codeinclude-->
 
 Finally, we define our object classification endpoint:
