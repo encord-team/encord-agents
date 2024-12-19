@@ -9,7 +9,7 @@
 
 ## FastAPI
 
-::: encord_agents.fastapi.dependencies
+::: encord_agents.fastapi
     options:
         show_if_no_docstring: false
         show_subodules: false

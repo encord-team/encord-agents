@@ -21,7 +21,7 @@ from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
 class EncordCORSMiddleware(CORSMiddleware):
     """
     Like a regular `fastapi.midleware.cors.CORSMiddleware` but matches against
-    the encord origin by default.
+    the Encord origin by default.
 
     **Example:**
     ```python
