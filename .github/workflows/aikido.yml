@@ -2,7 +2,9 @@ on:
   push:
     branches:
       - main
-
+  schedule:
+    # Schedule the workflow to run at 9:40 AM UK time
+    - cron: '40 9 * * *'
 name: Aikido Scan
 jobs:
   aikido-local-scan-repo:
