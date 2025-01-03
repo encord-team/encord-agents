@@ -1,6 +1,5 @@
 on:
   schedule:
-    # Schedule the workflow to run at 9:40 AM UK time
     - cron: '00 11 * * *'
 name: Aikido Scan
 jobs:
