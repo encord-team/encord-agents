@@ -74,6 +74,8 @@ types-requests = "^2.32.0.20241016"
 types-tqdm = "^4.67.0.20241119"
 mypy = "^1.13.0"
 pytest-cov = "^6.0.0"
+mkdocs-jupyter = "^0.25.1"
+notebook = "^7.3.2"
 
 
 [tool.poetry.scripts]

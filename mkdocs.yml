@@ -1,5 +1,6 @@
 site_name: "Encord Agents"
 repo_url: https://github.com/encord-team/encord-agents
+colab_prefix: https://colab.research.google.com/github/encord-team/encord-agents
 
 watch:
   - encord_agents
@@ -8,6 +9,7 @@ theme:
   logo: assets/logo_single.png
   favicon: assets/favicon.png
   name: "material"
+  custom_dir: docs/overrides
   features:
     - content.code.copy
     - navigation.footer
@@ -27,7 +29,8 @@ nav:
   - "Task Agents":
       - "Intro": task_agents/index.md
       - "Execution": task_agents/runner.md
-      - "Examples": task_agents/examples/index.md
+      - "Examples": #  task_agents/examples/index.md
+          - Prioritize Annotation Tasks: notebooks/task_agent_set_priority.ipynb
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
@@ -80,3 +83,6 @@ plugins:
             show_docstring_yields: true
             show_docstring_examples: true
   - glightbox
+  - mkdocs-jupyter:
+      include: ["*.ipynb"]
+      include_source: true
