@@ -31,49 +31,29 @@
   Hack: check whether the content contains a h1 headline. If it doesn't, the
   page title (or respectively site name) is used as the main headline.
 -->
+
+
 {% if "\x3ch1" not in page.content %}
 <h1>{{ page.title | d(config.site_name, true)}}</h1>
-{% endif %} {% if page.nb_url %}
-<div style="margin: -20px; display: flex; justify-content: center; column-gap: 2em;">
-  <a
-    href="{{ config.repo_url }}/blob/main{{ page.nb_url }}"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <span class="md-icon">{% include ".icons/material/github.svg" %}</span> View
-    on Github
-  </a>
-  
-  <a
-    href="{{ config.colab_prefix }}/blob/main{{ page.nb_url }}"
-    target="_blank"
-    rel="noopener noreferrer"
-    >
-        <span class="md-icon">{% include ".icons/simple/googlecolab.svg" %}</span>
-        Try in Colab
-    </a>
+{% endif %} 
 
-    <a 
-    href="{{ page.nb_url }}" 
-    target="_blank" 
-    rel="noopener noreferrer"
-    >
-      <span class="md-icon">{% include ".icons/material/download.svg" %}</span>
-      Download notebook
-    </a>
-</div>
-    {% endif %}
+{% if page.nb_url %}
+    {% include "partials/notebook_links.html" %}
+{% endif %}
 
-    <!-- Page content -->
-    {{ page.content }}
+<!-- Page content -->
+{{ page.content }}
 
-    <!-- Source file information -->
-    {% include "partials/source-file.html" %}
+{% if page.nb_url %}
+    {% include "partials/notebook_links.html" %}
+{% endif %}
 
-    <!-- Was this page helpful? -->
-    {% include "partials/feedback.html" %}
+<!-- Source file information -->
+{% include "partials/source-file.html" %}
 
-    <!-- Comment system -->
-    {% include "partials/comments.html" %}
-  </a>
-</div>
+
+<!-- Was this page helpful? -->
+{% include "partials/feedback.html" %}
+
+<!-- Comment system -->
+{% include "partials/comments.html" %}
