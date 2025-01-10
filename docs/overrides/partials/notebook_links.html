@@ -1,16 +1,13 @@
 {% set page_url_parts = page.nb_url.split('/') %}
 {% set gh_ns = namespace(gh_nb_url='') %}  {# Create a namespace to store the variable #}
 {% for page_url_part in page_url_parts %}
-    {% if loop.index + 1 < page_url_parts | length %}
-        {% set gh_ns.gh_nb_url = gh_ns.gh_nb_url + page_url_part %}
-        {% set gh_ns.gh_nb_url = gh_ns.gh_nb_url + '/' %}
-    {% elif loop.index == page_url_parts | length %}
+    {% if loop.index == page_url_parts | length %}
         {% set gh_ns.gh_nb_url = gh_ns.gh_nb_url + page_url_part %}
     {% endif %}
 {% endfor %}
 <div style="display: flex; justify-content: center; column-gap: 2em;">
   <a
-    href="{{ config.repo_url }}/blob/{{ config.branch_name }}/docs{{ gh_ns.gh_nb_url }}"
+    href="{{ config.repo_url }}/blob/{{ config.branch_name }}/docs/notebooks/{{ gh_ns.gh_nb_url }}"
     target="_blank"
     rel="noopener noreferrer"
   >
@@ -20,7 +17,7 @@
     </span>
   </a>
   <a
-    href="{{ config.colab_prefix }}/blob/{{ config.branch_name }}/docs{{ gh_ns.gh_nb_url }}"
+    href="{{ config.colab_prefix }}/blob/{{ config.branch_name }}/docs/notebooks/{{ gh_ns.gh_nb_url }}"
     target="_blank"
     rel="noopener noreferrer"
   >
