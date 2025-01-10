@@ -1,7 +1,7 @@
 site_name: "Encord Agents"
 repo_url: https://github.com/encord-team/encord-agents
 colab_prefix: https://colab.research.google.com/github/encord-team/encord-agents
-branch_name: feat/colab-task-examples # used for debugging should be "main"
+branch_name: main # used for debugging should be "main"
 
 watch:
   - encord_agents
