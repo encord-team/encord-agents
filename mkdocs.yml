@@ -30,8 +30,10 @@ nav:
   - "Task Agents":
       - "Intro": task_agents/index.md
       - "Execution": task_agents/runner.md
+      - "Examples old": task_agents/examples/index.md
       - "Examples": #  task_agents/examples/index.md
           - Prioritize Annotation Tasks: notebooks/task_agent_set_priority.ipynb
+          - Transfer labels to a twin project: notebooks/twin_project_label_transfer.ipynb
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
