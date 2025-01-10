@@ -30,7 +30,7 @@ LIGHT_LOGO = "https://storage.googleapis.com/docs-media.encord.com/Primary%20log
 
 def generate_public_private_keypair(public_key_path: Path = Path.cwd() / "temporary_key.pub") -> tuple[Path, Path]:
     """
-    Will look for the key. If it doesn't exist, it will created it along with a private key.
+    Will look for the key. If it doesn't exist, it will create it along with a private key.
     returns: public and private key paths, respectively.
 
     Args:
