@@ -34,6 +34,7 @@ nav:
           - Prioritize Annotation Tasks: notebooks/task_agent_set_priority.ipynb
           - Transfer labels to a twin project: notebooks/twin_project_label_transfer.ipynb
           - Pre-label videos with bounding boxes: notebooks/prelabel_videos_with_bounding_boxes.ipynb
+          - Pre-label videos with Mask-RCNN: notebooks/mask_rcnn_on_videos.ipynb
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
