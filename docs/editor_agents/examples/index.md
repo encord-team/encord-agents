@@ -128,7 +128,7 @@ An agent that transforms a labeling task from Figure A to Figure B, as shown bel
 
 ??? "The full code for `agent.py`"
     <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/frame_classification.py) linenums:1
+    [agent.py](../../code_examples/gcp/gcp_frame_classification.py) linenums:1
     <!--/codeinclude-->
 
 Let's go through the code section by section.
@@ -139,13 +139,13 @@ First, we import dependencies and set up the Project:
     Make sure to insert your Project's hash here.
 
 <!--codeinclude-->
-[agent.py](../../code_examples/gcp/frame_classification.py) lines:1-15
+[agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:1-15
 <!--/codeinclude-->
 
 Next, we create a data model and a system prompt based on the Project Ontology that will tell Claude how to structure its response:
 
 <!--codeinclude-->
-[agent.py](../../code_examples/gcp/frame_classification.py) lines:18-29
+[agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:18-29
 <!--/codeinclude-->
 
 
@@ -316,14 +316,14 @@ Next, we create a data model and a system prompt based on the Project Ontology t
 We also need an Anthropic API client to communicate with Claude:
 
 <!--codeinclude-->
-[agent.py](../../code_examples/gcp/frame_classification.py) lines:32-33
+[agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:32-33
 <!--/codeinclude-->
 
 
 Finally, we define our editor agent:
 
 <!--codeinclude-->
-[agent.py](../../code_examples/gcp/frame_classification.py) lines:36-65
+[agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:36-65
 <!--/codeinclude-->
 
 The agent:  
@@ -587,7 +587,7 @@ The goal is to be able to trigger an agent that takes a labeling task from Figur
 ??? "The full code for `agent.py`"
     <!--codeinclude-->
 
-    [agent.py](../../code_examples/gcp/object_classification.py) linenums:1
+    [agent.py](../../code_examples/gcp/gcp_object_classification.py) linenums:1
 
     <!--/codeinclude-->
 
@@ -597,7 +597,7 @@ For this, you will need to have your `<project_hash>` ready.
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:1-14
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:1-14
 
 <!--/codeinclude-->
 
@@ -605,7 +605,7 @@ Now that we have the project, we can extract the generic ontology object as well
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:15-19
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:15-19
 
 <!--/codeinclude-->
 
@@ -621,7 +621,7 @@ is only allowed to choose between the object types that are not of the generic o
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:22-30
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:22-30
 
 <!--/codeinclude-->
 
@@ -905,7 +905,7 @@ With the system prompt ready, we can instantiate an api client for Claude.
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:33-34
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:33-34
 
 <!--/codeinclude-->
 
@@ -913,7 +913,7 @@ Now, let's define the editor agent.
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:38-46
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:38-46
 
 <!--/codeinclude-->
 
@@ -927,7 +927,7 @@ Notice how the `crop` variable has a convenient `b64_encoding` method to produce
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:47-60
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:47-60
 
 <!--/codeinclude-->
 
@@ -938,7 +938,7 @@ If successful, the old generic object can be removed and the newly classified ob
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:63-80
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:63-80
 
 <!--/codeinclude-->
 
@@ -946,7 +946,7 @@ Finally, we'll save the labels with Encord.
 
 <!--codeinclude-->
 
-[agent.py](../../code_examples/gcp/object_classification.py) lines:83-84
+[agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:83-84
 
 <!--/codeinclude-->
 
@@ -1039,7 +1039,7 @@ The goal is to trigger an agent that takes a labeling task from Figure A to Figu
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/frame_classification.py) linenums:1
+    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) linenums:1
     <!--/codeinclude-->
 
 Let us go through the code section by section.
@@ -1047,7 +1047,7 @@ Let us go through the code section by section.
 First, we import dependencies and setup the FastAPI app with CORS middleware:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:1-22
+[main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:1-22
 <!--/codeinclude-->
 
 The CORS middleware is crucial as it allows the Encord platform to make requests to your API.
@@ -1055,19 +1055,19 @@ The CORS middleware is crucial as it allows the Encord platform to make requests
 Next, we set up the Project and create a data model based on the Ontology:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:25-27
+[main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:25-27
 <!--/codeinclude-->
 
 We create the system prompt that tells Claude how to structure its response:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:30-42
+[main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:30-42
 <!--/codeinclude-->
 
 Finally, we define the endpoint to handle the classification:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/frame_classification.py) lines:45-75
+[main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:45-75
 <!--/codeinclude-->
 
 The endpoint:
@@ -1147,7 +1147,7 @@ The goal is to trigger an agent that takes a labeling task from Figure A to Figu
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/object_classification.py) linenums:1
+    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) linenums:1
     <!--/codeinclude-->
 
 Let's walk through the key components.
@@ -1155,25 +1155,25 @@ Let's walk through the key components.
 First, we setup the FastAPI app and CORS middleware:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:1-20
+[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:1-20
 <!--/codeinclude-->
 
 Then we setup the client, Project, and extract the generic Ontology object:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:23-29
+[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:23-29
 <!--/codeinclude-->
 
 We create the data model and system prompt for Claude:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:32-44
+[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:32-44
 <!--/codeinclude-->
 
 Finally, we define our object classification endpoint:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/object_classification.py) lines:47-94
+[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:47-94
 <!--/codeinclude-->
 
 The endpoint:
