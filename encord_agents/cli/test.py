@@ -3,11 +3,18 @@ CLI utilities for testing agents.
 """
 
 import os
+import re
+import sys
 
+import requests
+import rich
+import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from typer import Argument, Option, Typer
 from typing_extensions import Annotated
+
+from encord_agents import FrameData
 
 app = Typer(
     name="test",
@@ -16,51 +23,17 @@ app = Typer(
     no_args_is_help=True,
 )
 
+EDITOR_URL_PARTS_REGEX = r"https:\/\/app.encord.com\/label_editor\/(?P<projectHash>.*?)\/(?P<dataHash>[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12})(/(?P<frame>\d+))?\??"
 
-@app.command(
-    "local",
-    short_help="Hit a localhost agents endpoint for testing",
-)
-def local(
-    target: Annotated[
-        str,
-        Argument(help="Name of the localhost endpoint to hit ('http://localhost/{target}')"),
-    ],
-    url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
-    port: Annotated[int, Option(help="Local host port to hit")] = 8080,
-) -> None:
-    """Hit a localhost agents endpoint for testing an agent by copying the url from the Encord Label Editor over.
 
-    Given
-
-        - A url of the form [blue]`https://app.encord.com/label_editor/[green]{project_hash}[/green]/[green]{data_hash}[/green]/[green]{frame}[/green]`[/blue]
-        - A [green]target[/green] endpoint
-        - A [green]port[/green] (optional)
-
-    The url [blue]http://localhost:[green]{port}[/green]/[green]{target}[/green][/blue] will be hit with a post request containing:
-    {
-        "projectHash": "[green]{project_hash}[/green]",
-        "dataHash": "[green]{data_hash}[/green]",
-        "frame": [green]frame[/green] or 0
-    }
-    """
-    import re
-    import sys
-    from pprint import pprint
-
-    import requests
-    import rich
-    import typer
-
-    parts_regex = r"https:\/\/app.encord.com\/label_editor\/(?P<projectHash>.*?)\/(?P<dataHash>[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12})(/(?P<frame>\d+))?\??"
-
+def parse_editor_url(editor_url: str) -> FrameData:
     try:
-        match = re.match(parts_regex, url)
+        match = re.match(EDITOR_URL_PARTS_REGEX, editor_url)
         if match is None:
             raise typer.Abort()
-
         payload = match.groupdict()
         payload["frame"] = payload["frame"] or 0
+        return FrameData.model_validate(payload)
     except Exception:
         rich.print(
             """Could not match url to the expected format.
@@ -70,14 +43,13 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         )
         raise typer.Abort()
 
-    if target and not target[0] == "/":
-        target = f"/{target}"
 
+def hit_endpoint(endpoint: str, payload: FrameData) -> None:
     with requests.Session() as sess:
         request = requests.Request(
             "POST",
-            f"http://localhost:{port}{target}",
-            json=payload,
+            endpoint,
+            json=payload.model_dump(mode="json", by_alias=True),
             headers={"Content-type": "application/json"},
         )
         prepped = request.prepare()
@@ -109,9 +81,7 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
 
         table.add_section()
         table.add_row("[green]Utilities[/green]")
-        editor_url = (
-            f"https://app.encord.com/label_editor/{payload['projectHash']}/{payload['dataHash']}/{payload['frame']}"
-        )
+        editor_url = f"https://app.encord.com/label_editor/{payload.project_hash}/{payload.data_hash}/{payload.frame}"
         table.add_row("label editor", editor_url)
 
         headers = ["'{0}: {1}'".format(k, v) for k, v in prepped.headers.items()]
@@ -120,3 +90,63 @@ Format is expected to be [blue]https://app.encord.com/label_editor/[magenta]{pro
         table.add_row("curl", curl_command)
 
         rich.print(table)
+
+
+@app.command("custom", short_help="Hit a custom endpoint for testing purposes")
+def custom(
+    endpoint: Annotated[str, Argument(help="Endpoint to hit with json payload")],
+    editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
+) -> None:
+    """
+    Hit a custom agents endpoint for testing an editor agent by copying the url from the Encord Label Editor.
+
+    Given
+
+        - The endpoint you wish to test
+        - An editor url of the form [blue]`https://app.encord.com/label_editor/[green]{project_hash}[/green]/[green]{data_hash}[/green]/[green]{frame}[/green]`[/blue]
+        - A [green]port[/green] (optional)
+
+    The url [blue]http://localhost:[green]{port}[/green]/[green]{target}[/green][/blue] will be hit with a post request containing:
+    {
+        "projectHash": "[green]{project_hash}[/green]",
+        "dataHash": "[green]{data_hash}[/green]",
+        "frame": [green]frame[/green] or 0
+    }
+    """
+    payload = parse_editor_url(editor_url)
+    hit_endpoint(endpoint, payload)
+
+
+@app.command(
+    "local",
+    short_help="Hit a localhost agents endpoint for testing",
+)
+def local(
+    target: Annotated[
+        str,
+        Argument(help="Name of the localhost endpoint to hit ('http://localhost/{target}')"),
+    ],
+    editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
+    port: Annotated[int, Option(help="Local host port to hit")] = 8080,
+) -> None:
+    """Hit a localhost agents endpoint for testing an agent by copying the url from the Encord Label Editor over.
+
+    Given
+
+        - An editor url of the form [blue]`https://app.encord.com/label_editor/[green]{project_hash}[/green]/[green]{data_hash}[/green]/[green]{frame}[/green]`[/blue]
+        - A [green]port[/green] (optional)
+
+    The url [blue]http://localhost:[green]{port}[/green]/[green]{target}[/green][/blue] will be hit with a post request containing:
+    {
+        "projectHash": "[green]{project_hash}[/green]",
+        "dataHash": "[green]{data_hash}[/green]",
+        "frame": [green]frame[/green] or 0
+    }
+    """
+    payload = parse_editor_url(editor_url)
+
+    if target and not target[0] == "/":
+        target = f"/{target}"
+    endpoint = f"http://localhost:{port}{target}"
+
+    hit_endpoint(endpoint, payload)

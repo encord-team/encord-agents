@@ -45,11 +45,11 @@ class FrameData(BaseModel):
     Holds the data sent from the Encord Label Editor at the time of triggering the agent.
     """
 
-    project_hash: UUID = Field(validation_alias="projectHash")
+    project_hash: UUID = Field(alias="projectHash")
     """
     The identifier of the given project.
     """
-    data_hash: UUID = Field(validation_alias="dataHash")
+    data_hash: UUID = Field(alias="dataHash")
     """
     The identifier of the given data asset.
     """
