@@ -26,6 +26,7 @@ nav:
       - "Intro": editor_agents/index.md
       - "GCP Cloud Functions": editor_agents/gcp.md
       - "FastAPI": editor_agents/fastapi.md
+      - "Hosting with Modal": editor_agents/modal.md
       - "Examples": editor_agents/examples/index.md
   - "Task Agents":
       - "Intro": task_agents/index.md
@@ -93,3 +94,4 @@ plugins:
   - mkdocs-jupyter:
       include: ["*.ipynb"]
       include_source: true
+  - macros
