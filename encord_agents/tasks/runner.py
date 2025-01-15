@@ -1,9 +1,11 @@
 import os
 import time
 import traceback
+from abc import ABC, abstractmethod
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Callable, Iterable, Optional, cast
+from functools import wraps
+from typing import Any, Callable, Iterable, Optional
 from uuid import UUID
 
 import rich
@@ -24,6 +26,8 @@ from encord_agents.core.dependencies.models import Context, DecoratedCallable, D
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
+
+from .models import AgentTaskConfig, TaskCompletionResult
 
 TaskAgentReturn = str | UUID | None
 
@@ -48,7 +52,150 @@ class RunnerAgent:
         return f'RunnerAgent("{self.printable_name}")'
 
 
-class Runner:
+class RunnerBase(ABC):
+    @staticmethod
+    def verify_project_hash(ph: str | UUID) -> str:
+        try:
+            ph = str(UUID(str(ph)))
+        except ValueError:
+            print("Could not read project_hash as a UUID")
+            raise Abort()
+        return ph
+
+    @staticmethod
+    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", ") -> str:
+        return join_str.join(
+            [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
+        )
+
+    def __init__(self, project_hash: str | UUID | None = None):
+        """
+        Initialize the runner with an optional project hash.
+
+        The `project_hash` will allow stricter stage validation.
+        If left unspecified, errors will first be raised during execution of the runner.
+
+        Args:
+            project_hash: The project hash that the runner applies to.
+
+                Can be left unspecified to be able to reuse same runner on multiple projects.
+        """
+        self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
+        self.client = get_user_client()
+
+        self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
+        self.validate_project(self.project)
+
+        self.valid_stages: list[AgentStage] | None = None
+        if self.project is not None:
+            self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
+        self.agents: list[RunnerAgent] = []
+
+    @staticmethod
+    def validate_project(project: Project | None) -> None:
+        if project is None:
+            return
+        PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
+        assert (
+            project.project_type == ProjectType.WORKFLOW
+        ), f"Provided project is not a workflow project. {PROJECT_MUSTS}"
+        assert (
+            len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
+        ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
+
+    def validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
+        """
+        Returns stage uuid and printable name.
+        """
+        printable_name = str(stage)
+        try:
+            stage = UUID(str(stage))
+        except ValueError:
+            pass
+
+        if self.valid_stages is not None:
+            selected_stage: WorkflowStage | None = None
+            for v_stage in self.valid_stages:
+                attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
+                if attr == stage:
+                    selected_stage = v_stage
+
+            if selected_stage is None:
+                agent_stage_names = self.get_stage_names(self.valid_stages)
+                raise PrintableError(
+                    rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
+                )
+            stage = selected_stage.uuid
+
+        if stage in [a.identity for a in self.agents]:
+            raise PrintableError(
+                f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
+            )
+        return stage, printable_name
+
+    def add_stage_agent(
+        self,
+        identity: str | UUID,
+        func: Callable[..., TaskAgentReturn],
+        printable_name: str | None,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None,
+    ) -> RunnerAgent:
+        runner_agent = RunnerAgent(
+            identity=identity,
+            callable=func,
+            printable_name=printable_name,
+            label_row_metadata_include_args=label_row_metadata_include_args,
+            label_row_initialise_labels_args=label_row_initialise_labels_args,
+        )
+        self.agents.append(runner_agent)
+        return runner_agent
+
+    @abstractmethod
+    def __call__(self, *args: Any, **kwds: Any) -> Any: ...
+
+    def run(self) -> None:
+        """
+        Execute the runner.
+
+        This function is intended to be called from the "main file".
+        It is an entry point to be able to run the agent(s) via your shell
+        with command line arguments.
+
+        **Example:**
+
+        ```python title="example.py"
+        runner = Runner(project_hash="<your_project_hash>")
+
+        @runner.stage(stage="...")
+        def your_func() -> str:
+            ...
+
+        if __name__ == "__main__":
+            runner.run()
+        ```
+
+        You can then run execute the runner with:
+
+        ```shell
+        python example.py --help
+        ```
+
+        to see the options is has (it's those from `Runner.__call__`).
+
+        """
+        from typer import Typer
+
+        self.was_called_from_cli = True
+        app = Typer(add_completion=False, rich_markup_mode="rich")
+        app.command(
+            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
+            short_help="Execute the runner as a CLI.",
+        )(self.__call__)
+        app()
+
+
+class Runner(RunnerBase):
     """
     Runs agents against Workflow projects.
 
@@ -80,15 +227,6 @@ class Runner:
 
     """
 
-    @staticmethod
-    def verify_project_hash(ph: str) -> str:
-        try:
-            ph = str(UUID(ph))
-        except ValueError:
-            print("Could not read project_hash as a UUID")
-            raise Abort()
-        return ph
-
     def __init__(self, project_hash: str | None = None):
         """
         Initialize the runner with an optional project hash.
@@ -101,48 +239,9 @@ class Runner:
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
         """
-        self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
-        self.client = get_user_client()
-
-        self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
-        self.validate_project(self.project)
-
-        self.valid_stages: list[AgentStage] | None = None
-        if self.project is not None:
-            self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
-
+        super().__init__(project_hash)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
-
-    @staticmethod
-    def validate_project(project: Project | None) -> None:
-        if project is None:
-            return
-        PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
-        assert (
-            project.project_type == ProjectType.WORKFLOW
-        ), f"Provided project is not a workflow project. {PROJECT_MUSTS}"
-        assert (
-            len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
-        ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
-
-    def _add_stage_agent(
-        self,
-        identity: str | UUID,
-        func: Callable[..., TaskAgentReturn],
-        printable_name: str | None,
-        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
-        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None,
-    ) -> None:
-        self.agents.append(
-            RunnerAgent(
-                identity=identity,
-                callable=func,
-                printable_name=printable_name,
-                label_row_metadata_include_args=label_row_metadata_include_args,
-                label_row_initialise_labels_args=label_row_initialise_labels_args,
-            )
-        )
 
     def stage(
         self,
@@ -228,34 +327,11 @@ class Runner:
         Returns:
             The decorated function.
         """
-        printable_name = str(stage)
-        try:
-            stage = UUID(str(stage))
-        except ValueError:
-            pass
-
-        if self.valid_stages is not None:
-            selected_stage: WorkflowStage | None = None
-            for v_stage in self.valid_stages:
-                attr = v_stage.title if isinstance(stage, str) else v_stage.uuid
-                if attr == stage:
-                    selected_stage = v_stage
-
-            if selected_stage is None:
-                agent_stage_names = self.get_stage_names(self.valid_stages)
-                raise PrintableError(
-                    rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
-                )
-            stage = selected_stage.uuid
-
-        if stage in [a.identity for a in self.agents]:
-            raise PrintableError(
-                f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
-            )
+        stage_uuid, printable_name = self.validate_stage(stage)
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self._add_stage_agent(
-                stage, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
+            self.add_stage_agent(
+                stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
             )
             return func
 
@@ -299,15 +375,8 @@ class Runner:
                             print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
                             traceback.print_exc()
 
-    @staticmethod
-    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", ") -> str:
-        return join_str.join(
-            [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
-        )
-
     def __call__(
         self,
-        # num_threads: int = 1,
         refresh_every: Annotated[
             Optional[int],
             Option(
@@ -497,42 +566,106 @@ def {fn_name}(...):
                     err.args = (plain_text,)
                 raise
 
-    def run(self) -> None:
-        """
-        Execute the runner.
 
-        This function is intended to be called from the "main file".
-        It is an entry point to be able to run the agent(s) via your shell
-        with command line arguments.
+class QueueRunner(RunnerBase):
+    def __init__(self, project_hash: str | UUID):
+        super().__init__(project_hash)
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        raise NotImplementedError(
+            "Calling the queue runner is not intended. Prefer using wrapped functions with, e.g., modal or Celeray."
+        )
+
+    def stage(
+        self,
+        stage: str | UUID,
+        *,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+    ) -> Callable[[Callable[..., str | UUID | None]], Callable[[str], str]]:
+        """
+        TODO proper docs
+
+        Will wrap the agent definition such that it can easily be used in a queueing system.
+
+        When you have an `encord.workflow.stages.agent.AgentTask` instance at hand, let's call
+        it `task`, then you can put `task.json()` into the queue.
+
+        This wrapper will then understand how to do take that string from the queue and resolve
+        all defined dependencies before calling the function.
+
 
         **Example:**
 
-        ```python title="example.py"
-        runner = Runner(project_hash="<your_project_hash>")
-
-        @runner.stage(stage="...")
-        def your_func() -> str:
-            ...
-
-        if __name__ == "__main__":
-            runner.run()
+        ```python
+        @serialization_wrapper(stage="my_stage")
+        def my_agent_definition(project: Project) -> str:
+            return "complete"
         ```
-
-        You can then run execute the runner with:
-
-        ```shell
-        python example.py --help
-        ```
-
-        to see the options is has (it's those from `Runner.__call__`).
-
         """
-        from typer import Typer
+        stage_uuid, printable_name = self.validate_stage(stage)
 
-        self.was_called_from_cli = True
-        app = Typer(add_completion=False, rich_markup_mode="rich")
-        app.command(
-            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
-            short_help="Execute the runner as a CLI.",
-        )(self.__call__)
-        app()
+        def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
+            runner_agent = self.add_stage_agent(
+                stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
+            )
+            include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
+            init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
+
+            @wraps(func)
+            def wrapper(json_str: str) -> str:
+                assert (
+                    self.project is not None
+                ), "Should not have happened. You should always execute agents on a project"
+                conf = AgentTaskConfig.model_validate_json(json_str)
+                try:
+                    stage = self.project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
+                except ValueError as e:
+                    return TaskCompletionResult(
+                        success=False,
+                        error=str(e),
+                    ).model_dump_json()
+
+                task = next((s for s in stage.get_tasks(data_hash=conf.data_hash)), None)
+                if task is None:
+                    # TODO logging?
+                    return TaskCompletionResult(
+                        success=False,
+                        error="Failed to obtain task from Encord",
+                    ).model_dump_json()
+
+                label_row: LabelRowV2 | None = None
+                try:
+                    if runner_agent.dependant.needs_label_row:
+                        label_row = self.project.list_label_rows_v2(
+                            data_hashes=[task.data_hash], **include_args.model_dump()
+                        )[0]
+                        label_row.initialise_labels(**init_args.model_dump())
+
+                    next_stage: TaskAgentReturn = None
+                    with ExitStack() as stack:
+                        context = Context(project=self.project, task=task, label_row=label_row)
+                        dependencies = solve_dependencies(
+                            context=context, dependant=runner_agent.dependant, stack=stack
+                        )
+                        next_stage = runner_agent.callable(**dependencies.values)
+
+                    if next_stage is None:
+                        # TODO: Should we log that task didn't continue?
+                        pass
+                    elif isinstance(next_stage, UUID):
+                        task.proceed(pathway_uuid=str(next_stage))
+                    else:
+                        try:
+                            next_stage = UUID(next_stage)
+                            task.proceed(pathway_uuid=str(next_stage))
+                        except ValueError:
+                            task.proceed(pathway_name=str(next_stage))
+                    return TaskCompletionResult(success=True, pathway=next_stage).model_dump_json()
+                except Exception:
+                    # TODO logging?
+                    return TaskCompletionResult(success=False, error=traceback.format_exc()).model_dump_json()
+
+            return wrapper
+
+        return decorator
