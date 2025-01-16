@@ -1,4 +1,5 @@
 from uuid import UUID
+from encord.workflow.stages.agent import AgentTask
 
 from pydantic import BaseModel, Field
 
@@ -11,6 +12,7 @@ class AgentTaskConfig(BaseModel):
 
 
 class TaskCompletionResult(BaseModel):
+    uuid: UUID = Field(description="UUID of the task in the Encord Queueing system")
     success: bool = Field(description="Agent executed without errors")
-    next_stage: str | UUID | None = Field(description="The pathway that the task was passed along to", default=None)
+    pathway: str | UUID | None = Field(description="The pathway that the task was passed along to", default=None)
     error: str | None = Field(description="Stack trace or error message if an error occured", default=None)

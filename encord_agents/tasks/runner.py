@@ -622,6 +622,7 @@ class QueueRunner(RunnerBase):
                     stage = self.project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
                 except ValueError as e:
                     return TaskCompletionResult(
+                        uuid=conf.uuid,
                         success=False,
                         error=str(e),
                     ).model_dump_json()
@@ -630,6 +631,7 @@ class QueueRunner(RunnerBase):
                 if task is None:
                     # TODO logging?
                     return TaskCompletionResult(
+                        uuid=conf.uuid,
                         success=False,
                         error="Failed to obtain task from Encord",
                     ).model_dump_json()
@@ -661,10 +663,10 @@ class QueueRunner(RunnerBase):
                             task.proceed(pathway_uuid=str(next_stage))
                         except ValueError:
                             task.proceed(pathway_name=str(next_stage))
-                    return TaskCompletionResult(success=True, pathway=next_stage).model_dump_json()
+                    return TaskCompletionResult(uuid=task.uuid, success=True, pathway=next_stage).model_dump_json()
                 except Exception:
                     # TODO logging?
-                    return TaskCompletionResult(success=False, error=traceback.format_exc()).model_dump_json()
+                    return TaskCompletionResult(uuid=task.uuid, success=False, error=traceback.format_exc()).model_dump_json()
 
             return wrapper
 
