@@ -12,6 +12,11 @@ class AgentTaskConfig(BaseModel):
 
 
 class TaskCompletionResult(BaseModel):
+    """
+    Data model to hold information about the completion result of
+    `encord_agents.tasks.QueueRunner` agents.
+    """
+
     task_uuid: UUID = Field(description="UUID of the task in the Encord Queueing system")
     stage_uuid: UUID | None = Field(
         description="UUID of the workflow stage at which the task was executed. If None, the stage could not be identified from the `task_uuid`.",
