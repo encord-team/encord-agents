@@ -79,7 +79,6 @@ class RunnerBase:
             len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
         ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
 
-
     def __init__(self, project_hash: str | UUID | None = None):
         """
         Initialize the runner with an optional project hash.
@@ -150,6 +149,7 @@ class RunnerBase:
         )
         self.agents.append(runner_agent)
         return runner_agent
+
 
 class Runner(RunnerBase):
     """
@@ -662,10 +662,14 @@ class QueueRunner(RunnerBase):
                             task.proceed(pathway_uuid=str(next_stage))
                         except ValueError:
                             task.proceed(pathway_name=str(next_stage))
-                    return TaskCompletionResult(task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage).model_dump_json()
+                    return TaskCompletionResult(
+                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage
+                    ).model_dump_json()
                 except Exception:
                     # TODO logging?
-                    return TaskCompletionResult(task_uuid=task.uuid, stage_uuid=stage.uuid, success=False, error=traceback.format_exc()).model_dump_json()
+                    return TaskCompletionResult(
+                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=False, error=traceback.format_exc()
+                    ).model_dump_json()
 
             return wrapper
 
@@ -675,7 +679,7 @@ class QueueRunner(RunnerBase):
         """
         Get the agent stages for which there exist an agent implementation.
 
-        This function is intended to make it easy to put agent tasks into 
+        This function is intended to make it easy to put agent tasks into
         external queueing systems like Celeray or Modal.
 
         *Example:*
