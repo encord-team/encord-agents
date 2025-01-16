@@ -1,7 +1,6 @@
 import os
 import time
 import traceback
-from abc import ABC, abstractmethod
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from functools import wraps
@@ -52,7 +51,7 @@ class RunnerAgent:
         return f'RunnerAgent("{self.printable_name}")'
 
 
-class RunnerBase(ABC):
+class RunnerBase:
     @staticmethod
     def verify_project_hash(ph: str | UUID) -> str:
         try:
@@ -134,7 +133,7 @@ class RunnerBase(ABC):
             )
         return stage, printable_name
 
-    def add_stage_agent(
+    def _add_stage_agent(
         self,
         identity: str | UUID,
         func: Callable[..., TaskAgentReturn],
@@ -287,7 +286,7 @@ class Runner(RunnerBase):
         stage_uuid, printable_name = self.validate_stage(stage)
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
-            self.add_stage_agent(
+            self._add_stage_agent(
                 stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
             )
             return func
@@ -564,14 +563,14 @@ def {fn_name}(...):
         app()
 
 
-
 class QueueRunner(RunnerBase):
     def __init__(self, project_hash: str | UUID):
         super().__init__(project_hash)
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         raise NotImplementedError(
-            "Calling the queue runner is not intended. Prefer using wrapped functions with, e.g., modal or Celeray."
+            # TODO make better description with link to docs here.
+            "Calling the QueueRunner is not intended. Prefer using wrapped functions with, e.g., modal or Celeray."
         )
 
     def stage(
@@ -596,15 +595,16 @@ class QueueRunner(RunnerBase):
         **Example:**
 
         ```python
-        @serialization_wrapper(stage="my_stage")
-        def my_agent_definition(project: Project) -> str:
+        @runner.stage(stage="my_stage")
+        def my_agent_definition(project: Project, custom_identifier: Annotated[str, Depends(dep_func)]) -> str:
+            # ... do your thing
             return "complete"
         ```
         """
         stage_uuid, printable_name = self.validate_stage(stage)
 
         def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
-            runner_agent = self.add_stage_agent(
+            runner_agent = self._add_stage_agent(
                 stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
             )
             include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
@@ -614,13 +614,13 @@ class QueueRunner(RunnerBase):
             def wrapper(json_str: str) -> str:
                 assert (
                     self.project is not None
-                ), "Should not have happened. You should always execute agents on a project"
+                ), "Should not have happened. QueueRunners should always be instantiated with an associated project."
                 conf = AgentTaskConfig.model_validate_json(json_str)
                 try:
                     stage = self.project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
                 except ValueError as e:
                     return TaskCompletionResult(
-                        uuid=conf.uuid,
+                        task_uuid=conf.task_uuid,
                         success=False,
                         error=str(e),
                     ).model_dump_json()
@@ -629,7 +629,8 @@ class QueueRunner(RunnerBase):
                 if task is None:
                     # TODO logging?
                     return TaskCompletionResult(
-                        uuid=conf.uuid,
+                        task_uuid=conf.task_uuid,
+                        stage_uuid=stage.uuid,
                         success=False,
                         error="Failed to obtain task from Encord",
                     ).model_dump_json()
@@ -661,11 +662,65 @@ class QueueRunner(RunnerBase):
                             task.proceed(pathway_uuid=str(next_stage))
                         except ValueError:
                             task.proceed(pathway_name=str(next_stage))
-                    return TaskCompletionResult(uuid=task.uuid, success=True, pathway=next_stage).model_dump_json()
+                    return TaskCompletionResult(task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage).model_dump_json()
                 except Exception:
                     # TODO logging?
-                    return TaskCompletionResult(uuid=task.uuid, success=False, error=traceback.format_exc()).model_dump_json()
+                    return TaskCompletionResult(task_uuid=task.uuid, stage_uuid=stage.uuid, success=False, error=traceback.format_exc()).model_dump_json()
 
             return wrapper
 
         return decorator
+
+    def get_agent_stages(self) -> Iterable[AgentStage]:
+        """
+        Get the agent stages for which there exist an agent implementation.
+
+        This function is intended to make it easy to put agent tasks into 
+        external queueing systems like Celeray or Modal.
+
+        *Example:*
+        ```python
+        runner = QueueRunner(project_hash="...")
+        @runner.stage("Agent 1")
+        def my_agent_implementation() -> str:
+            # ... do your thing
+            return "<pathway_name>"
+
+        my_queue = ...
+        for stage in runner.get_agent_stages():
+            for task in stage.get_tasks():
+                my_queue.append(task.model_dump_json())
+
+        while my_queue:
+            task_spec = my_queue.pop()
+            result_json = my_agent_implementation(task_spec)
+            result = TaskCompletionResult.model_validate_json(result_json)
+        ```
+
+        Note that if you didn't specify an implementation (by decorating your
+        function with `@runner.stage`, the task node will not show up here.
+
+        Returns:
+            An iterable over `encord.workflow.stages.agent.AgentStage` objects
+            where the runner contains an agent implementation.
+
+        Raises:
+            `AssertionError` if the runner does not have an associated project.
+        """
+        assert (
+            self.project is not None
+        ), "Should not have happened. QueueRunners should always be instantiated with an associated project."
+
+        for runner_agent in self.agents:
+            is_uuid = False
+            try:
+                UUID(str(runner_agent.identity))
+                is_uuid = True
+            except ValueError:
+                pass
+
+            if is_uuid:
+                stage = self.project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
+            else:
+                stage = self.project.workflow.get_stage(name=str(runner_agent.identity), type_=AgentStage)
+            yield stage
