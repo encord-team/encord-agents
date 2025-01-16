@@ -13,6 +13,7 @@ from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
+from encord_agents._version import __version__
 
 from .video import get_frame
 
@@ -27,7 +28,7 @@ def get_user_client() -> EncordUserClient:
 
     """
     settings = Settings()
-    kwargs: dict[str, Any] = {"domain": settings.domain} if settings.domain else {}
+    kwargs: dict[str, Any] = {"domain": settings.domain, "user_agent_suffix": f"encord-agents/{__version__}"} if settings.domain else {}
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
 
