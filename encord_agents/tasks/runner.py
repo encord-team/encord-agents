@@ -68,6 +68,19 @@ class RunnerBase(ABC):
             [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
         )
 
+    @staticmethod
+    def validate_project(project: Project | None) -> None:
+        if project is None:
+            return
+        PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
+        assert (
+            project.project_type == ProjectType.WORKFLOW
+        ), f"Provided project is not a workflow project. {PROJECT_MUSTS}"
+        assert (
+            len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
+        ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
+
+
     def __init__(self, project_hash: str | UUID | None = None):
         """
         Initialize the runner with an optional project hash.
@@ -90,18 +103,6 @@ class RunnerBase(ABC):
         if self.project is not None:
             self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         self.agents: list[RunnerAgent] = []
-
-    @staticmethod
-    def validate_project(project: Project | None) -> None:
-        if project is None:
-            return
-        PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
-        assert (
-            project.project_type == ProjectType.WORKFLOW
-        ), f"Provided project is not a workflow project. {PROJECT_MUSTS}"
-        assert (
-            len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
-        ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
 
     def validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
         """
@@ -150,50 +151,6 @@ class RunnerBase(ABC):
         )
         self.agents.append(runner_agent)
         return runner_agent
-
-    @abstractmethod
-    def __call__(self, *args: Any, **kwds: Any) -> Any: ...
-
-    def run(self) -> None:
-        """
-        Execute the runner.
-
-        This function is intended to be called from the "main file".
-        It is an entry point to be able to run the agent(s) via your shell
-        with command line arguments.
-
-        **Example:**
-
-        ```python title="example.py"
-        runner = Runner(project_hash="<your_project_hash>")
-
-        @runner.stage(stage="...")
-        def your_func() -> str:
-            ...
-
-        if __name__ == "__main__":
-            runner.run()
-        ```
-
-        You can then run execute the runner with:
-
-        ```shell
-        python example.py --help
-        ```
-
-        to see the options is has (it's those from `Runner.__call__`).
-
-        """
-        from typer import Typer
-
-        self.was_called_from_cli = True
-        app = Typer(add_completion=False, rich_markup_mode="rich")
-        app.command(
-            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
-            short_help="Execute the runner as a CLI.",
-        )(self.__call__)
-        app()
-
 
 class Runner(RunnerBase):
     """
@@ -565,6 +522,47 @@ def {fn_name}(...):
                     plain_text = Text.from_markup(err.args[0]).plain
                     err.args = (plain_text,)
                 raise
+
+    def run(self) -> None:
+        """
+        Execute the runner.
+
+        This function is intended to be called from the "main file".
+        It is an entry point to be able to run the agent(s) via your shell
+        with command line arguments.
+
+        **Example:**
+
+        ```python title="example.py"
+        runner = Runner(project_hash="<your_project_hash>")
+
+        @runner.stage(stage="...")
+        def your_func() -> str:
+            ...
+
+        if __name__ == "__main__":
+            runner.run()
+        ```
+
+        You can then run execute the runner with:
+
+        ```shell
+        python example.py --help
+        ```
+
+        to see the options is has (it's those from `Runner.__call__`).
+
+        """
+        from typer import Typer
+
+        self.was_called_from_cli = True
+        app = Typer(add_completion=False, rich_markup_mode="rich")
+        app.command(
+            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
+            short_help="Execute the runner as a CLI.",
+        )(self.__call__)
+        app()
+
 
 
 class QueueRunner(RunnerBase):
