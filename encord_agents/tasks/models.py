@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class AgentTaskConfig(BaseModel):
-    task_uuid: UUID = Field(description="The task uuid")
+    task_uuid: UUID = Field(description="The task uuid", validation_alias="uuid")
     data_hash: UUID = Field(description="The data hash of the underlying asset")
     data_title: str = Field(description="The data title used in the Encord system")
     label_branch_name: str = Field(description="The branch name of the associated labels")
