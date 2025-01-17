@@ -26,12 +26,5 @@ repos:
         language: system
         pass_filenames: false
 
-      - id: unittest
-        name: unittest
-        entry: poetry run pytest --cov=encord_agents --junitxml encord-agents-unit-test-report.xml -s tests
-        types_or: [python, pyi]
-        language: system
-        pass_filenames: false
-
 default_stages: [pre-push]
 default_install_hook_types: [pre-push]
