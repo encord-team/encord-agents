@@ -5,7 +5,7 @@ from typing import Callable, Generator, Iterator
 import cv2
 import numpy as np
 from encord.constants.enums import DataType
-from encord.exceptions import AuthenticationError, AuthorisationError
+from encord.exceptions import AuthenticationError, AuthorisationError, UnknownException
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
 from encord.storage import StorageItem
@@ -111,7 +111,7 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
         An iterator.
 
     """
-    if not lr.data_type == DataType.VIDEO:
+    if lr.data_type != DataType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
     with download_asset(lr, None) as asset:
@@ -216,6 +216,10 @@ def dep_twin_label_row(
         raise PrintableError(
             f"You do not seem to have access to the project with project hash `[blue]{twin_project_hash}[/blue]`"
         )
+    except UnknownException:
+        raise PrintableError(
+            f"An unknown error occurred while trying to get the project with project hash `[blue]{twin_project_hash}[/blue]` in the `dep_twin_label_row` dependency."
+        )
 
     label_rows: dict[str, LabelRowV2] = {lr.data_hash: lr for lr in twin_project.list_label_rows_v2()}
 
@@ -297,10 +301,20 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
         The (shared) lookup object.
 
     """
+    import warnings
+
+    warnings.warn(
+        "dep_data_lookup is deprecated and will be removed in a future version. "
+        "Use dep_storage_item instead for accessing storage items.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return lookup
 
 
-def dep_storage_item(lookup: Annotated[DataLookup, Depends(dep_data_lookup)], task: AgentTask) -> StorageItem:
+def dep_storage_item(
+    user_client: Annotated[EncordUserClient, Depends(dep_client)], label_row: LabelRowV2
+) -> StorageItem:
     r"""
     Get the storage item associated with the underlying agent task.
 
@@ -323,5 +337,13 @@ def dep_storage_item(lookup: Annotated[DataLookup, Depends(dep_data_lookup)], ta
         ...
     ```
 
+    Args:
+        user_client: The user client. Automatically injected.
+        label_row: The label row. Automatically injected.
+
+    Returns:
+        The storage item.
     """
-    return lookup.get_storage_item(task.data_hash)
+    if label_row.backing_item_uuid is None:
+        raise ValueError("Label row does not have a backing item UUID")
+    return user_client.get_storage_item(label_row.backing_item_uuid)

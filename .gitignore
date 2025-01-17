@@ -1,8 +1,13 @@
+# Integration Testing files
+**/get_secrets.sh
+**/private_key_integration_testing
+
 dist/
 encord-agents-unit-test-report.xml
 # Created by https://www.toptal.com/developers/gitignore/api/vim,python,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=vim,python,macos
 
+.vscode
 ### macOS ###
 # General
 .DS_Store

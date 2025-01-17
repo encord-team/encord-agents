@@ -109,6 +109,15 @@ ignore_missing_imports = true
 warn_return_any = true
 strict = true
 
+[tool.pytest.ini_options]
+addopts = "--cov=encord_agents --cov-report=html --junitxml=encord-agents-unit-test-report.xml"
+markers = [
+    "env_mode(AuthMode): mark test to run in a specific environment mode",
+]
+env = [
+  "ENCORD_SSH_KEY_FILE=tests/integration_tests/private_key_integration_testing"
+]
+
 [tool.codespell]
 skip = '*.lock,*.ipynb'
 count = false

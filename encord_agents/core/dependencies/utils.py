@@ -194,29 +194,26 @@ def solve_dependencies(
     dependency_cache: Optional[dict[Callable[..., Any], Any]] = None,
 ) -> SolvedDependency:
     values: dict[str, Any] = {}
-    dependency_cache = dependency_cache or {}
+    dependency_cache = dependency_cache if dependency_cache is not None else {}
     sub_dependant: Dependant
     for sub_dependant in dependant.dependencies:
         sub_dependant.func = cast(Callable[..., Any], sub_dependant.func)
         func = sub_dependant.func
-        use_sub_dependant = sub_dependant
 
-        solved_result = solve_dependencies(
-            context=context,
-            dependant=use_sub_dependant,
-            stack=stack,
-            dependency_cache=dependency_cache,
-        )
-
-        dependency_cache.update(solved_result.dependency_cache or {})
-
-        if sub_dependant.func in dependency_cache:
-            solved = dependency_cache[sub_dependant.func]
-        elif is_gen_callable(func):
-            solved = solve_generator(call=func, stack=stack, sub_values=solved_result.values)
+        if func in dependency_cache:
+            solved = dependency_cache[func]
         else:
-            solved = func(**solved_result.values)
-
+            solved_result = solve_dependencies(
+                context=context,
+                dependant=sub_dependant,
+                stack=stack,
+                dependency_cache=dependency_cache,
+            )
+            if is_gen_callable(func):
+                solved = solve_generator(call=func, stack=stack, sub_values=solved_result.values)
+            else:
+                solved = func(**solved_result.values)
+            dependency_cache.update({func: solved})
         if sub_dependant.name is not None:
             values[sub_dependant.name] = solved
 

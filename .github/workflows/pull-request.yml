@@ -6,6 +6,7 @@ on:
 
 env:
   PYTHON: 3.11.6
+  TEST_REPORT: encord-agents-test-report.xml
 
 concurrency:
   group: active-private-${{ github.ref }}-pr
@@ -32,8 +33,51 @@ jobs:
       - name: Setup root poetry environment
         uses: ./.github/actions/setup-root-poetry-environment
 
-      - name: Run linting, type checking
+      - name: Run linting and type checking
         uses: pre-commit/action@v3.0.0
         with:
           extra_args: "--all-files --hook-stage=push"
-        timeout-minutes: 60
+        timeout-minutes: 10
+      
+  tests:
+    needs: [setup-venv]
+    name: Run tests
+    runs-on: ubuntu-latest
+    env:
+      ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+      - name: Run tests
+        run: |
+          export ENCORD_SSH_KEY='${{ env.ENCORD_SSH_KEY }}'
+          poetry run pytest tests --verbose --junitxml=${{ env.TEST_REPORT }}
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.TEST_REPORT }}
+          path: ${{ env.TEST_REPORT }}
+
+  publish-test-reports:
+    name: Publish test reports
+    runs-on: ubuntu-24.04
+    needs: [tests]
+    if: ${{ !cancelled() }}
+
+    steps:
+      - name: Download report 
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.TEST_REPORT }}
+          path: ${{ env.TEST_REPORT }}
+
+      - name: Publish test report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: ${{ env.TEST_REPORT }}/*.xml
+          check_name: Encord Agents test report
