@@ -28,9 +28,10 @@ def get_user_client() -> EncordUserClient:
 
     """
     settings = Settings()
-    kwargs: dict[str, Any] = (
-        {"domain": settings.domain, "user_agent_suffix": f"encord-agents/{__version__}"} if settings.domain else {}
-    )
+    kwargs: dict[str, Any] = {"user_agent_suffix": f"encord-agents/{__version__}"}
+
+    if settings.domain:
+        kwargs["domain"] = settings.domain
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
 
 
