@@ -602,7 +602,7 @@ class QueueRunner(RunnerBase):
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         raise NotImplementedError(
             "Calling the QueueRunner is not intended. "
-            "Prefer using wrapped functions with, e.g., modal or Celeray. "
+            "Prefer using wrapped functions with, e.g., modal or Celery. "
             "For more documentation, please see the `QueueRunner.stage` documetation below."
         )
 
@@ -642,8 +642,6 @@ class QueueRunner(RunnerBase):
 
         As the pseudo code indicates, `wrapped_function` understands how to take that string from
         the queue and resolve all your defined dependencies before calling `your_function`.
-
-        For a complete example,
         """
         stage_uuid, printable_name = self.validate_stage(stage)
 
