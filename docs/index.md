@@ -43,9 +43,9 @@ This repository provides utility functions and examples for building both [edito
 
 **Key features:**
 
-1. ⚡**Easy**: Multiple template agents to be adapted and hosted via GCP, own infra, or cloud.
+1. ⚡ **Easy**: Multiple template agents to be adapted and hosted via GCP, own infra, or cloud.
 2. ⏩ **Convenient**: The library conveniently loads data via the [Encord SDK][encord_sdk]{ target="\_blank", rel="noopener noreferrer" } upon request.
-3. 👨‍💻 **Focus**: With essential resources readily available, you can focus on what matters. Create agents with pre-existing (or custom) dependencies for loading labels and data.
+3. 👨‍💻 **Focused**: With essential resources readily available, you can focus on what matters. Create agents with pre-existing (or custom) dependencies for loading labels and data.
 4. 🤏 **Slim**: the library is slim at it's `core` and should not conflict with the dependencies of most projects.
 
 **Choose what type of agent to use:**
