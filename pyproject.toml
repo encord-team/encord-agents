@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "encord-agents"
 version = "v0.1.6"
-description = "A framework for producing custom agens for the Encord echosystem."
+description = "A framework for producing custom agents for the Encord ecosystem."
 authors = ["Cord Technologies Limited <hello@encord.com>"]
 classifiers = [
   "Environment :: Console",

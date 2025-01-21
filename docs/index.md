@@ -22,7 +22,7 @@
   </div>
 </div>
 
-Easily build agents for the Encord echo system.
+Easily build agents for the Encord ecosystem.
 With just few lines of code, you can take automation to the next level.
 
 For a [workflow][docs-workflow]{ target="\_blank", rel="noopener noreferrer" } with a prioritization agent node looking like this:

@@ -40,7 +40,7 @@
   </div>
 </div>
 
-Easily build agents for the Encord echo system.
+Easily build agents for the Encord ecosystem.
 With just few lines of code, you can take automation to the next level.
 
 ```shell
