@@ -35,7 +35,7 @@ In this example, we use a project workflow that looks like this:
 ![Project Workflow](assets/project-workflow.png)
 
 Notice the purple node in the workflow; It's an agent node **with name: `pre-label`**.
-Furthermore, is has just one pathway called "annotate."
+Furthermore, it has just one pathway called "annotate."
 
 Copy the `Project ID` in the top left of the project page.
 
