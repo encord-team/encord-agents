@@ -21,7 +21,7 @@ from typer import Abort, Option
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependent
+from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
@@ -43,7 +43,7 @@ class RunnerAgent:
         self.identity = identity
         self.printable_name = printable_name or identity
         self.callable = callable
-        self.dependent: Dependent = get_dependant(func=callable)
+        self.dependant: Dependant = get_dependant(func=callable)
         self.label_row_metadata_include_args = label_row_metadata_include_args
         self.label_row_initialise_labels_args = label_row_initialise_labels_args
 
@@ -306,7 +306,7 @@ class Runner(RunnerBase):
             for task, label_row in tasks:
                 with ExitStack() as stack:
                     context = Context(project=project, task=task, label_row=label_row)
-                    dependencies = solve_dependencies(context=context, dependent=runner_agent.dependent, stack=stack)
+                    dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
                     for attempt in range(num_retries + 1):
                         try:
                             next_stage = runner_agent.callable(**dependencies.values)
@@ -467,7 +467,7 @@ def {fn_name}(...):
                         batch.append(task)
                         if len(batch) == task_batch_size:
                             batch_lrs = [None] * len(batch)
-                            if runner_agent.dependent.needs_label_row:
+                            if runner_agent.dependant.needs_label_row:
                                 label_rows = {
                                     UUID(lr.data_hash): lr
                                     for lr in project.list_label_rows_v2(
@@ -493,7 +493,7 @@ def {fn_name}(...):
 
                     if len(batch) > 0:
                         batch_lrs = [None] * len(batch)
-                        if runner_agent.dependent.needs_label_row:
+                        if runner_agent.dependant.needs_label_row:
                             label_rows = {
                                 UUID(lr.data_hash): lr
                                 for lr in project.list_label_rows_v2(
@@ -676,7 +676,7 @@ class QueueRunner(RunnerBase):
 
                 label_row: LabelRowV2 | None = None
                 try:
-                    if runner_agent.dependent.needs_label_row:
+                    if runner_agent.dependant.needs_label_row:
                         label_row = self._project.list_label_rows_v2(
                             data_hashes=[task.data_hash], **include_args.model_dump()
                         )[0]
@@ -686,7 +686,7 @@ class QueueRunner(RunnerBase):
                     with ExitStack() as stack:
                         context = Context(project=self._project, task=task, label_row=label_row)
                         dependencies = solve_dependencies(
-                            context=context, dependent=runner_agent.dependent, stack=stack
+                            context=context, dependant=runner_agent.dependant, stack=stack
                         )
                         next_stage = runner_agent.callable(**dependencies.values)
 

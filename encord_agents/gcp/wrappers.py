@@ -50,7 +50,7 @@ def editor_agent(
     """
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Request], Response]:
-        dependent = get_dependant(func=func)
+        dependant = get_dependant(func=func)
         cors_regex = re.compile(ENCORD_DOMAIN_REGEX)
 
         @wraps(func)
@@ -85,7 +85,7 @@ def editor_agent(
             project = client.get_project(str(frame_data.project_hash))
 
             label_row: LabelRowV2 | None = None
-            if dependent.needs_label_row:
+            if dependant.needs_label_row:
                 include_args = label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
                 init_args = label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                 label_row = project.list_label_rows_v2(
@@ -95,7 +95,7 @@ def editor_agent(
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data)
             with ExitStack() as stack:
-                dependencies = solve_dependencies(context=context, dependent=dependent, stack=stack)
+                dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
                 func(**dependencies.values)
             return generate_response()
 

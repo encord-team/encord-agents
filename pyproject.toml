@@ -113,3 +113,4 @@ strict = true
 skip = '*.lock,*.ipynb'
 count = false
 quiet-level = 3
+ignore-words-list = "dependant"

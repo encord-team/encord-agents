@@ -3,11 +3,6 @@ repos:
     rev: v2.2.4
     hooks:
     - id: codespell
-    exclude: |
-      (?x)(
-      poetry.lock |
-      ^*.ipynb
-      )
   - repo: local
     hooks:
       - id: ruff-fmt
