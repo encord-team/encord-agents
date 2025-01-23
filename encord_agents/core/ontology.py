@@ -300,7 +300,7 @@ class OntologyDataModel(Generic[OntologyType]):
     Class to create a pydantic model equivalent to an arbitrary classification ontology.
 
     The model can be used to form a json schema based on the ontology. This is useful if
-    you are, e.g., trying to get a structured respone from an LLM.
+    you are, e.g., trying to get a structured response from an LLM.
 
     **Example:**
 

@@ -11,7 +11,7 @@ from pydantic._internal._typing_extra import eval_type_lenient as evaluate_forwa
 from typing_extensions import Annotated, get_args, get_origin
 
 from encord_agents.core.data_model import FrameData
-from encord_agents.core.dependencies.models import Context, Dependant, Depends, ParamDetails, _Field
+from encord_agents.core.dependencies.models import Context, Dependent, Depends, ParamDetails, _Field
 
 
 def get_typed_annotation(annotation: Any, globalns: dict[str, Any]) -> Any:
@@ -41,10 +41,10 @@ def get_dependant(
     *,
     func: Callable[..., Any],
     name: Optional[str] = None,
-) -> Dependant:
+) -> Dependent:
     endpoint_signature = get_typed_signature(func)
     signature_params = endpoint_signature.parameters
-    dependant = Dependant(
+    dependent = Dependent(
         func=func,
         name=name,
     )
@@ -59,20 +59,20 @@ def get_dependant(
                 param_name=param_name,
                 depends=param_details.depends,
             )
-            dependant.dependencies.append(sub_dependant)
-            dependant.needs_label_row |= sub_dependant.needs_label_row
+            dependent.dependencies.append(sub_dependant)
+            dependent.needs_label_row |= sub_dependant.needs_label_row
         else:
-            dependant.field_params.append(_Field(name=param_name, type_annotation=param_details.type_annotation))
-            dependant.needs_label_row |= param_details.type_annotation is LabelRowV2
+            dependent.field_params.append(_Field(name=param_name, type_annotation=param_details.type_annotation))
+            dependent.needs_label_row |= param_details.type_annotation is LabelRowV2
 
-    return dependant
+    return dependent
 
 
 def get_param_sub_dependant(
     *,
     param_name: str,
     depends: Depends,
-) -> Dependant:
+) -> Dependent:
     assert depends.dependency
     return get_sub_dependant(
         dependency=depends.dependency,
@@ -84,7 +84,7 @@ def get_sub_dependant(
     *,
     dependency: Callable[..., Any],
     name: Optional[str] = None,
-) -> Dependant:
+) -> Dependent:
     sub_dependant = get_dependant(
         func=dependency,
         name=name,
@@ -189,21 +189,21 @@ def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTas
 def solve_dependencies(
     *,
     context: Context,
-    dependant: Dependant,
+    dependent: Dependent,
     stack: ExitStack,
     dependency_cache: Optional[dict[Callable[..., Any], Any]] = None,
 ) -> SolvedDependency:
     values: dict[str, Any] = {}
     dependency_cache = dependency_cache or {}
-    sub_dependant: Dependant
-    for sub_dependant in dependant.dependencies:
+    sub_dependant: Dependent
+    for sub_dependant in dependent.dependencies:
         sub_dependant.func = cast(Callable[..., Any], sub_dependant.func)
         func = sub_dependant.func
         use_sub_dependant = sub_dependant
 
         solved_result = solve_dependencies(
             context=context,
-            dependant=use_sub_dependant,
+            dependent=use_sub_dependant,
             stack=stack,
             dependency_cache=dependency_cache,
         )
@@ -220,7 +220,7 @@ def solve_dependencies(
         if sub_dependant.name is not None:
             values[sub_dependant.name] = solved
 
-    field_values = get_field_values(dependant.field_params, context)
+    field_values = get_field_values(dependent.field_params, context)
     values.update(field_values)
 
     return SolvedDependency(

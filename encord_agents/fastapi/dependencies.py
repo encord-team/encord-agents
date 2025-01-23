@@ -64,7 +64,7 @@ def dep_client() -> EncordUserClient:
 
     ```python
     from encord.user_client import EncordUserClient
-    from encord_agents.fastapi.depencencies import dep_client
+    from encord_agents.fastapi.dependencies import dep_client
     ...
     @app.post("/my-route")
     def my_route(
@@ -88,7 +88,7 @@ def dep_label_row_with_args(
 
     ```python
     from encord_agents.core.data_model import LabelRowMetadataIncludeArgs, LabelRowInitialiseLabelsArgs
-    from encord_agents.fastapi.depencencies import dep_label_row_with_args
+    from encord_agents.fastapi.dependencies import dep_label_row_with_args
     ...
 
     include_args = LabelRowMetadataIncludeArgs(
@@ -132,7 +132,7 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     **Example:**
 
     ```python
-    from encord_agents.fastapi.depencencies import dep_label_row
+    from encord_agents.fastapi.dependencies import dep_label_row
     ...
 
 
@@ -164,7 +164,7 @@ def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_da
     **Example:**
 
     ```python
-    from encord_agents.fastapi.depencencies import dep_single_frame
+    from encord_agents.fastapi.dependencies import dep_single_frame
     ...
 
     @app.post("/my-route")
@@ -207,7 +207,7 @@ def dep_asset(
     **Example:**
 
     ```python
-    from encord_agents.fastapi.depencencies import dep_asset
+    from encord_agents.fastapi.dependencies import dep_asset
     ...
     runner = Runner(project_hash="<project_hash_a>")
 
@@ -237,7 +237,7 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
     **Example:**
 
     ```python
-    from encord_agents.fastapi.depencencies import dep_video_iterator, Frame
+    from encord_agents.fastapi.dependencies import dep_video_iterator, Frame
     ...
 
     @app.post("/my-route")
@@ -273,7 +273,7 @@ def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depen
 
     ```python
     from encord.project import Project
-    from encord_agents.fastapi.depencencies import dep_project
+    from encord_agents.fastapi.dependencies import dep_project
     ...
     @app.post("/my-route")
     def my_route(

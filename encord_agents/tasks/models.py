@@ -26,7 +26,7 @@ class TaskCompletionResult(BaseModel):
     # TODO: When we can read pathway definitions via the `encord` SDK, pathway can be typed None | UUID only.
     # Currently, pathway can also be the name of the pathway.
     pathway: str | UUID | None = Field(
-        description="The pathway that the task was passed along to. If None, either the agent succeded but didn't return a pathway or the agent failed so the task didn't proceed.",
+        description="The pathway that the task was passed along to. If None, either the agent succeeded but didn't return a pathway or the agent failed so the task didn't proceed.",
         default=None,
     )
-    error: str | None = Field(description="Stack trace or error message if an error occured", default=None)
+    error: str | None = Field(description="Stack trace or error message if an error occurred", default=None)

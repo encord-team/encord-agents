@@ -32,7 +32,7 @@ def dep_client() -> EncordUserClient:
 
     ```python
     from encord.user_client import EncordUserClient
-    from encord_agents.tasks.depencencies import dep_client
+    from encord_agents.tasks.dependencies import dep_client
     ...
     @runner.stage("<my_stage_name>")
     def my_agent(
@@ -57,7 +57,7 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
 
     ```python
     from encord_agents import FrameData
-    from encord_agents.tasks.depencencies import dep_single_frame
+    from encord_agents.tasks.dependencies import dep_single_frame
     ...
 
     @runner.stage("<my_stage_name>")
@@ -89,7 +89,7 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
 
     ```python
     from encord_agents import FrameData
-    from encord_agents.tasks.depencencies import dep_video_iterator
+    from encord_agents.tasks.dependencies import dep_video_iterator
     ...
 
     @runner.stage("<my_stage_name>")
@@ -201,7 +201,7 @@ def dep_twin_label_row(
             from which you want to load the additional data.
         init_labels: If true, the label row will be initialized before calling the agent.
         include_task: If true, the `task` field of the `Twin` will be populated. If population
-            failes, e.g., for non-workflow projects, the task will also be None.
+            fails, e.g., for non-workflow projects, the task will also be None.
 
     Returns:
         The twin.

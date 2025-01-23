@@ -52,7 +52,7 @@ sequenceDiagram
 ```
 
 What you can use `encord-agents` for is filling in the logic that's supposed to happen in the "Editor Agent [custom API]" part of the diagram.
-That is, you will be responsible for programatically defining what to do, when your custom api is hit with a `project_hash`, `data_hash`, and potentially a `frame` number.
+That is, you will be responsible for programmatically defining what to do, when your custom api is hit with a `project_hash`, `data_hash`, and potentially a `frame` number.
 
 We help with two different ways of building such Custom APIs:
 

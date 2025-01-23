@@ -72,7 +72,7 @@ if __name__ == "__main__":
     runner.run()
 ```
 
-Notice the `my_agent_logic`, it recieves a [`LabelRowV2`][lrv2-class]{ target="\_blank", rel="noopener noreferrer" } instance.
+Notice the `my_agent_logic`, it receives a [`LabelRowV2`][lrv2-class]{ target="\_blank", rel="noopener noreferrer" } instance.
 That label row is associated with a task that is currently sitting in the `"pre-label"` agent stage.
 Also, the agent is returning the name of the pathway that the task is supposed to follow upon agent completion.
 

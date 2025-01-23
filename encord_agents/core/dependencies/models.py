@@ -27,10 +27,10 @@ class _Field:
 
 
 @dataclass
-class Dependant:
+class Dependent:
     name: Optional[str] = None
     func: Optional[Callable[..., Any]] = None
-    dependencies: list["Dependant"] = field(default_factory=list)
+    dependencies: list["Dependent"] = field(default_factory=list)
     field_params: list[_Field] = field(default_factory=list)
     needs_label_row: bool = False
 

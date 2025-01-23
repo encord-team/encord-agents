@@ -138,7 +138,7 @@ def generate_public_private_key_pair_with_instructions() -> tuple[Path, Path]:
     </style>
     <div style="border-radius: 5px; border: dashed 1px yellow; padding: 1rem;">
         <p>
-            <strong>NB</strong> Please follow these steps to link this notebook to your <span class="encord-logo"></span> Accont.
+            <strong>NB</strong> Please follow these steps to link this notebook to your <span class="encord-logo"></span> Account.
         </p>
         <ol style="line-height: 2em;">
             <li>Click the button to copy your public

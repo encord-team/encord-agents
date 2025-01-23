@@ -78,6 +78,6 @@ python -m pip install encord-agents
 
 ## Dependencies
 
-The dependencies of `encord-agents` are choosen to be lite.
+The dependencies of `encord-agents` are chosen to be lite.
 The only heavy dependencies that are somewhat heavy are `opencv-python` and `numpy`.
 To see the full list of dependencies, you can have a look [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.
