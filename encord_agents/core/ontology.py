@@ -396,7 +396,7 @@ class OntologyDataModel(Generic[OntologyType]):
         back to the encord "instance format".
 
         Args:
-            answer_str: The json object as a raw string.
+            answer: The json object as a raw string.
 
         Returns: a list of classification / object instances that you will then
             have to add to a label row.
