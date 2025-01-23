@@ -72,7 +72,7 @@ class DataLookup:
                 "DatasetCache was not able to locate storage_item because the associated data row could not be identified."
             )
 
-        return self.user_client.get_storage_item(dr.backing_item_uuid)
+        return self.user_client.get_storage_item(dr.backing_item_uuid, sign_url=sign_url)
 
     def get_storage_items(
         self, data_hashes: list[str | UUID], dataset_hash: str | UUID | None = None, sign_urls: bool = False
@@ -97,4 +97,4 @@ class DataLookup:
         except ValueError:
             raise ValueError("Failed to load storage items because one or more data rows could not be obtained")
 
-        return self.user_client.get_storage_items([dr.backing_item_uuid for dr in data_rows])
+        return self.user_client.get_storage_items([dr.backing_item_uuid for dr in data_rows], sign_url=sign_urls)
