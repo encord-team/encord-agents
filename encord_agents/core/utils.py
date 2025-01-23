@@ -137,7 +137,6 @@ def _guess_file_suffix(url: str, lr: LabelRowV2, storage_item: StorageItem | Non
 
     file_type, suffix = mimetype.split("/")[:2]
 
-    # FIXME: There must be a better way to do this
     suffix = translate_suffixes_to_filesystem_suffixes(suffix)
     return file_type, f".{suffix}"
 
