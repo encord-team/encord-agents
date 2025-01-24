@@ -27,17 +27,22 @@ EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"
 === HACK being ===
 Hack to enable the tests to run with the key file as well as the key content.
 
-Tests expect 
+Tests expect  (the invariant)
 os.environ["ENCORD_SSH_KEY"] to be set.
 os.environ["ENCORD_SSH_KEY_FILE"] to not be set.
 
 If key file is set, read the file content over to the content env variable, 
 and remove the file env variable.
 """
-if (key_file_path := os.environ.get("ENCORD_SSH_KEY_FILE")) is not None:
-    key_content = Path(key_file_path).read_text()
+key_file_path = os.environ.get("ENCORD_SSH_KEY_FILE")
+if os.environ.get("ENCORD_SSH_KEY") is None:
+    if key_file_path is not None:
+        key_content = Path(key_file_path).read_text()
+        os.environ["ENCORD_SSH_KEY"] = key_content
+    else:
+        raise ValueError("Neither ENCORD_SSH_KEY nor ENCORD_SSH_KEY_FILE is set.")
+if key_file_path is not None:
     del os.environ["ENCORD_SSH_KEY_FILE"]
-    os.environ["ENCORD_SSH_KEY"] = key_content
 """
 === HACK end ===
 """
