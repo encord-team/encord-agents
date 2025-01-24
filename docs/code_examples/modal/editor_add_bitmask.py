@@ -63,7 +63,10 @@ def put_ball_on_image(
         (o for o in label_row.ontology_structure.objects if o.shape == Shape.BITMASK),
         None,
     )
-    bitmask_object = next((o for o in label_row.ontology_structure.objects if o.shape == Shape.BITMASK), None)
+    bitmask_object = next(
+        (o for o in label_row.ontology_structure.objects if o.shape == Shape.BITMASK),
+        None,
+    )
     if not bitmask_object:
         return
 
@@ -80,7 +83,11 @@ def put_ball_on_image(
 
     # Add it as a label
     ins = bitmask_object.create_instance()
-    ins.set_for_frames(frames=frame_data.frame, confidence=0.8, coordinates=BitmaskCoordinates(mask > 0))
+    ins.set_for_frames(
+        frames=frame_data.frame,
+        confidence=0.8,
+        coordinates=BitmaskCoordinates(mask > 0),
+    )
     label_row.add_object_instance(ins)
 
     # Save update
