@@ -1,18 +1,13 @@
 import os
-from collections.abc import Callable, Iterator
-from copy import deepcopy
+from collections.abc import Iterator
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Generator, cast
+from typing import Generator
 
 import pytest
-from dotenv import load_dotenv
 from encord.dataset import Dataset
 from encord.ontology import Ontology
-from encord.project import Project
 from encord.user_client import EncordUserClient
-
-from .utils import AuthMode
 
 ONTOLOGY_HASH = "6d8bb167-0c9d-43b1-a577-3da0693d664e"
 ONE_OF_EACH_DATASET_HASH = (

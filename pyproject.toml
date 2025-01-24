@@ -92,7 +92,7 @@ target-version = "py310"
 line-length = 120
 
 [tool.ruff.lint]
-extend-select = ["W", "Q", "I"]
+extend-select = ["W", "Q", "I", "F401"]
 ignore = ["F401", "E402", "W291"]
 
 [tool.mypy]
