@@ -75,8 +75,8 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
     Effectively, this means starting an API that lives at `localhost:8080/my_agent` and expects a POST request with `JSON` data of the following format:
     ```json
     {
-        "project_hash": "<project_hash>",
-        "data_hash": "<data_hash>",
+        "projectHash": "<project_hash>",
+        "dataHash": "<data_hash>",
         "frame": <frame_number>
     }
     ```
