@@ -35,7 +35,7 @@ If key file is set, read the file content over to the content env variable,
 and remove the file env variable.
 """
 key_file_path = os.environ.get("ENCORD_SSH_KEY_FILE")
-if not os.environ.get("ENCORD_SSH_KEY"):
+if os.environ.get("ENCORD_SSH_KEY") is None:
     if key_file_path is not None:
         key_content = Path(key_file_path).read_text()
         os.environ["ENCORD_SSH_KEY"] = key_content
