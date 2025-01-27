@@ -14,6 +14,8 @@ ONE_OF_EACH_DATASET_HASH = (
     # dataset with [image, image group, image_sequence, pdf, audio, txt, and video]
     "5d06b07b-135a-4c6d-ba5d-fa7048d996da"
 )
+# Client metadata of the form: {"item_type": item.item_type, "a": "b"}
+
 AGENT_TO_COMPLETE_WORKFLOW_HASH = "a59b3190-09e2-432c-a8bb-f2925872e298"
 EPHEMERAL_PROJECT_TITLE = "encord-agents test project"
 EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"

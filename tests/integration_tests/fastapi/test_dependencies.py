@@ -7,7 +7,14 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.fastapi.dependencies import dep_client, dep_label_row, dep_project, dep_storage_item
+from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.fastapi.dependencies import (
+    dep_client,
+    dep_label_row,
+    dep_label_row_with_args,
+    dep_project,
+    dep_storage_item,
+)
 from tests.fixtures import EPHEMERAL_PROJECT_TITLE
 
 try:
@@ -46,6 +53,25 @@ def build_app(ephermeral_project: Project, video_label_row: LabelRowV2) -> FastA
         assert isinstance(storage_item, StorageItem)
         assert storage_item.uuid == video_label_row.backing_item_uuid
 
+    include_args = LabelRowMetadataIncludeArgs(
+        include_client_metadata=True,
+        include_workflow_graph_node=True,
+    )
+    init_args = LabelRowInitialiseLabelsArgs(
+        include_signed_url=True,
+    )
+
+    @app.post("/label-row-with-args")
+    def post_label_row_with_args(
+        label_row_with_args: Annotated[LabelRowV2, Depends(dep_label_row_with_args(include_args, init_args))],
+    ) -> None:
+        assert isinstance(label_row_with_args, LabelRowV2)
+        assert label_row_with_args.data_hash == video_label_row.data_hash
+        assert label_row_with_args.client_metadata is not None
+        assert label_row_with_args.client_metadata == {"a": "b", "item_type": "video"}
+        assert label_row_with_args.workflow_graph_node is not None
+        assert label_row_with_args.data_link is not None
+
     return app
 
 
@@ -83,7 +109,16 @@ class TestDependencyResolutionFastapi:
         resp = self.client.post("/client")
         assert resp.status_code == 200, resp.content
 
-    @pytest.mark.parametrize("router_path", ["/client", "/project", "/label-row", "/storage-item"])
+    @pytest.mark.parametrize(
+        "router_path",
+        [
+            "/client",
+            "/project",
+            "/label-row",
+            "/storage-item",
+            "/label-row-with-args",
+        ],
+    )
     def test_post_dependencies(self, router_path: str) -> None:
         resp = self.client.post(
             router_path,
