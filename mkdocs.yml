@@ -30,7 +30,10 @@ nav:
       - "Examples": editor_agents/examples/index.md
   - "Task Agents":
       - "Intro": task_agents/index.md
-      - "Execution": task_agents/runner.md
+      - "Execution":
+          - "Intro": task_agents/runner_intro.md
+          - "Sequential": task_agents/sequential_runner.md
+          - "Multi-processing (queues)": task_agents/queue_runner.md
       - "Examples":
           - Prioritize Annotation Tasks: notebooks/task_agent_set_priority.ipynb
           - Transfer labels to a twin project: notebooks/twin_project_label_transfer.ipynb
@@ -62,6 +65,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - attr_list
   - md_in_html
   - admonition
