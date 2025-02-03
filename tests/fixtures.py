@@ -7,6 +7,7 @@ from typing import Generator
 import pytest
 from encord.dataset import Dataset
 from encord.ontology import Ontology
+from encord.project import Project
 from encord.user_client import EncordUserClient
 
 ONTOLOGY_HASH = "6d8bb167-0c9d-43b1-a577-3da0693d664e"
@@ -112,8 +113,7 @@ def create_default_project(
         workflow_template_hash=workflow_hash,
     )
     yield project_hash
-    # TODO: enable when feature flag is enabled
-    # user_client.querier.basic_delete(Project, uid=project_hash)
+    user_client.querier.basic_delete(Project, uid=project_hash)
 
 
 @pytest.fixture(scope="function")
