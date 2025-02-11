@@ -1,12 +1,14 @@
 # Hosting Editor Agents with Modal
 
 [Modal][modal-docs] provides a serverless cloud for engineers and researchers who want to build compute-intensive applications without thinking about infrastructure.
-The cloud service well suited for building and hosting editor agents.
-On this page, we'll show you end-to-end how to set up an editor agent via Modal.
+The cloud service is well suited for building and hosting editor agents.
+On this page, we will show you end-to-end how to set up an editor agent via Modal.
 
-The example we'll give will put a bitmask "ball" in the center of the current image in the label editor.
+The example, will put a bitmask "ball" in the center of the current image in the label editor.
 However, you can look at the [Examples](./examples/index.md) to get more inspiration in terms of what you want your editor agent to do.
-Everything within the _FastAPI examples_ will be possible to do with Modal, as Modal is wrapper around FastAPI.
+
+!!! info
+    Everything within the _FastAPI examples_ will be possible to do with Modal, as Modal is wrapper around FastAPI.
 
 While this page is not intended to explain everything that [Modal][modal-docs] does -- as it does a lot --, it should be self-contained and enough to get you to a working example.
 The page will follow these steps:

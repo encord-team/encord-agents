@@ -58,15 +58,16 @@ We help with two different ways of building such Custom APIs:
 
 1. Using [`Google run functions`][gcp-functions]{ target="\_blank", rel="noopener noreferrer" } which is Google's way of building cloud functions.
 2. Using [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" } which is a flexible (self-hosted) python library for building custom APIs.
+3. Using [Modal][modal-docs]{ target="\_blank", rel="noopener noreferrer" } which provides a serverless cloud for engineers and researchers who want to build compute-intensive applications without thinking about infrastructure.
 
 !!! tip
     Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" }. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection]{ target="\_blank", rel="noopener noreferrer" } from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
 
 Google run functions are good for more light-weight operations like acting as proxies to other model inference APIs or tweaking labels.
-FastAPI apps are better suited for actually hosting your own models.
+FastAPI and Modal apps are better suited for actually hosting your own models and running more resource-intensive operations.
 
 In the next section, you will find a GCP example.
-If you need to build a FastAPI application, feel free to [skip it](./fastapi.md).
+If you need to build a FastAPI (or Modal) application, feel free to [skip it](./fastapi.md).
 
 [task-agents]: ../task_agents/index.md
 [dinov]: https://github.com/UX-Decoder/DINOv/tree/main
@@ -74,3 +75,4 @@ If you need to build a FastAPI application, feel free to [skip it](./fastapi.md)
 [gcp-functions]: https://cloud.google.com/functions/docs
 [fastapi]: https://fastapi.tiangolo.com/
 [fastapi-dependency-injection]: https://fastapi.tiangolo.com/tutorial/dependencies/
+[modal-docs]: https://modal.com/docs

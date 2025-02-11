@@ -18,7 +18,7 @@ def my_agent(frame: Annotated[np.ndarray, Depends(dep_single_frame)]):
 ```
 
 The `{module}` depends on which type of agent you're building.
-Please see the [references section](reference/editor_agents.md#encord_agents.gcp.dependencies) for more details on available agents.
+Please see the [references section](reference/editor_agents.md#encord_agents.gcp.dependencies) for more details on available dependencies.
 
 ## Custom dependencies
 

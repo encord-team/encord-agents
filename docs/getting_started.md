@@ -90,7 +90,7 @@ def my_agent_logic(lr: LabelRowV2) -> str:
 ```
 
 > **Too simple?**  
-> If the example is too simple, please see the [task examples](task_agents/examples/index.md)
+> If the example is too simple, please see the [task examples](task_agents/index.md)
 > to find something more useful to your use-case.
 
 ### 4. Running the agent
