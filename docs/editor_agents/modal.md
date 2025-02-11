@@ -8,7 +8,7 @@ The example, will put a bitmask "ball" in the center of the current image in the
 However, you can look at the [Examples](./examples/index.md) to get more inspiration in terms of what you want your editor agent to do.
 
 !!! info
-    Everything within the _FastAPI examples_ will be possible to do with Modal, as Modal is wrapper around FastAPI.
+    Everything within the _FastAPI examples_ will be possible to do with Modal, as Modal is a wrapper around FastAPI.
 
 While this page is not intended to explain everything that [Modal][modal-docs] does -- as it does a lot --, it should be self-contained and enough to get you to a working example.
 The page will follow these steps:
