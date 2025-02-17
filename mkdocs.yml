@@ -43,6 +43,7 @@ nav:
           - Use YOLO model from Ultralytics: notebooks/yolo_example.ipynb
           - Transcribe multi-speaker conversations: notebooks/audio_transcription_agent_multi_speaker.ipynb
           - Sentiment analysis: notebooks/sentiment_analysis.ipynb
+          - Multistage VLM video captioning: notebooks/multistage_video_summarisation.ipynb
   - "Reference":
       - "Editor agents": reference/editor_agents.md
       - "Task agents": reference/task_agents.md
