@@ -40,6 +40,7 @@ nav:
           - Pre-label videos with bounding boxes: notebooks/prelabel_videos_with_bounding_boxes.ipynb
           - Pre-label videos with Mask-RCNN: notebooks/mask_rcnn_on_videos.ipynb
           - Use models from Hugging Face 🤗: notebooks/hugging_face_agent_example.ipynb
+          - Use YOLO model from Ultralytics: notebooks/yolo_example.ipynb
           - Transcribe multi-speaker conversations: notebooks/audio_transcription_agent_multi_speaker.ipynb
           - Sentiment analysis: notebooks/sentiment_analysis.ipynb
   - "Reference":
