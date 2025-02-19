@@ -1,6 +1,17 @@
 The `Runner` classes are the core components for building task agents in Encord.
 They provide a simple interface for defining agent logic and moving tasks through the Encord project workflows.
 
+The `Runner`s manage the execution of agent logic on tasks within specific workflow stages.
+They are responsible for:
+
+- Connect directly to your Encord project via the Encord [SDK](https://docs.encord.com/sdk-documentation/getting-started-sdk/installation-sdk){ target="\_blank", rel="noopener noreferrer" }
+- Provide function decorators to associate your agent logic with workflow stages
+- Manage retries and error handling
+- Handle task fetching and updates
+- Optimize performance through batched updates and data loading
+
+In the following sections, we will go through the different components of the `Runner`s and how to use them.
+
 
 ## Stage Decorators
 
@@ -126,35 +137,9 @@ That is, if you define a runner with two stages:
         return "next"
     ```
 
-The queue for `"stage_1"` will be emptied first and successively the queue for `"stage_2"`. 
-If you set the `refresh_every` argument, the runner will poll both queues again after emptying the initial queues. 
-In turn, data that came into the queue after the initial poll by the runner will be picked up in the second iteration.
-In the case where the time of an execution has already exceeded the `refresh_every` threshold, the agent will poll for new tasks instantly.
-
-To give you an idea about the order of execution, please find the pseudo code below.
-
-```python
-# ⚠️  PSEUDO CODE - not intended for copying ⚠️
-def execute(self, refresh_every = None):
-    timestamp = datetime.now()
-    while True:
-        # self.agents ≈ [stage_1, stage_2]
-        for agent in self.agents:  
-            for task in agent.get_tasks():
-                # Inject params based on task
-                stage.execute(solve_dependencies(task, agent))  
-
-        if refresh_every is None:
-            break
-        else:
-            # repeat after timestamp + timedelta(seconds=refresh_every)
-            # or straight away if already exceeded
-            ...
-```
-
 ### Optional arguments
 
-When you wrap a function with the `@runner.stage(...)` wrapper, you can add include a [`label_row_metadata_include_args: LabelRowMetadataIncludeArgs`](../reference/core.md#encord_agents.core.data_model.LabelRowMetadataIncludeArgs) argument which will be passed on to the Encord Project's [`list_label_row_v2` method](https://docs.encord.com/sdk-documentation/sdk-references/project#list-label-rows-v2){ target="\_blank", rel="noopener noreferrer" }. This is useful to, e.g., be able to _read_ the client metadata associated to a task.
+When you wrap a function with the `@runner.stage(...)` wrapper, you can include a [`label_row_metadata_include_args: LabelRowMetadataIncludeArgs`](../reference/core.md#encord_agents.core.data_model.LabelRowMetadataIncludeArgs) argument which will be passed on to the Encord Project's [`list_label_row_v2` method](https://docs.encord.com/sdk-documentation/sdk-references/project#list-label-rows-v2){ target="\_blank", rel="noopener noreferrer" }. This is useful to, e.g., be able to _read_ the client metadata associated to a task.
 Notice, if you need to update the metadata, you will have to use the `dep_storage_item` dependencies.
 
 Here is an example:
@@ -176,7 +161,7 @@ The Runner supports dependency injection similar to FastAPI. Dependencies are fu
 ### Built-in Dependencies
 
 #### Example
-The library provides many commonly dependencies. 
+The library provides multiple commonly used dependencies. 
 Please see the [References section](../reference/task_agents.md#encord_agents.tasks.dependencies) for an explicit list.
 In the example below, we show how to obtain both label rows from "twin projects" and a frame iterator for videos -- just by specifying that it's something that the agent function depends on.
 
@@ -201,6 +186,9 @@ def my_agent(
     pass
 ```
 
+In the function body above, the `task`, `lr`, `twin`, and `frames` variables will be automatically injected with the respective dependencies.
+This gives you the flexibility to only inject the dependencies that you need and focus on the logic of your agent.
+
 #### Annotations
 There are three object types that you can get without any extensive type annotations.
 
@@ -217,9 +205,9 @@ def my_agent(project: Project):
     ...
 ```
 
-the `project` will be the [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } instance for the `project_hash` you specified when executing the runner.
+The `project` will be the [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } instance for the `project_hash` you specified when defining or executing the runner.
 
-Similarly, the `task` and `label_row` (associated with the task) can be obtained as follows:
+Similarly, the `task` and `label_row` (associated with the given task) can be obtained as follows:
 
 ```python
 from encord.objects import LabelRowV2
@@ -245,7 +233,7 @@ from encord_agents.tasks.dependencies import (
 @runner.stage("your_stage_name")
 def my_agent(
     storage_item_1: Annotated[StorageItem, Depends(dep_storage_item)],
-    storage_item_2: StorageItem = Depends(dep_storage_item)
+    # or storage_item_1: StorageItem = Depends(dep_storage_item)
 ):
     ...
 ```
@@ -278,3 +266,14 @@ def my_agent(
     # metadata is automatically injected
     return "next_stage"
 ```
+
+## Running the runner
+
+There are two different types of runners with different use-cases. They also have two slightly different execution interfaces. 
+Please refer to the following pages for more information:
+
+1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner that will run the agent functions one after the other. It's easier to debug and understand. Use this for simple workflows or for testing out functionality befor you scale it with the `QueueRunner`.
+2. [`QueueRunner`](./queue_runner.md#running-agents): This is a more advanced runner that will allow you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
+
+
+[docs-workflow-project]: https://docs.encord.com/sdk-documentation/sdk-references/project#workflow-project

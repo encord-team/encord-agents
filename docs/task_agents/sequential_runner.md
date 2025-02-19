@@ -1,15 +1,7 @@
-TODO - intro
-
 ## Overview
-
-The Runner manages the execution of agent logic on tasks within specific workflow stages.
-It:
-
-- Connects directly to your Encord project via the Encord [SDK](https://docs.encord.com/sdk-documentation/getting-started-sdk/installation-sdk){ target="\_blank", rel="noopener noreferrer" }
-- Provides function decorators to associate the functions with workflow stages
-- Manages retries and error handling
-- Handles task fetching and updates
-- Optimizes performance through batched updates and data loading
+The `Runner` executes tasks in a sequential order.
+It is useful for debugging and testing the workflow. 
+Use this for simple workflows or for testing out functionality before you scale compute it with the `QueueRunner`.
 
 ## Basic Usage
 
@@ -18,6 +10,8 @@ The basic usage pattern of the `Runner` follows three steps:
 1. Initialize the runner
 2. Implement the logic for each stage in your workflow you want to capture with the runner.
 3. Execute the runner
+
+The following example shows how to initialize the runner and implement the logic for each stage in your workflow you want to capture with the runner.
 
 ```python title="example_agent.py"
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -45,9 +39,6 @@ if __name__ == "__main__":
     runner.run()
 
     # or via code
-    # simple
-    runner()
-    # args
     runner(
         project_hash="<your_project_hash">,
         refresh_every=3600,  # seconds
@@ -96,6 +87,34 @@ python my_agent.py \
     --refresh-every 3600 # seconds
 ```
 
+### Order of execution
+
+The queue for `"stage_1"` will be emptied first and successively the queue for `"stage_2"`. 
+If you set the `refresh_every` argument, the runner will poll both queues again after emptying the initial queues. 
+In turn, data that came into the queue after the initial poll by the runner will be picked up in the second iteration.
+In the case where the time of an execution has already exceeded the `refresh_every` threshold, the agent will poll for new tasks instantly.
+
+To give you an idea about the order of execution, please find the pseudo code below.
+
+```python
+# ⚠️  PSEUDO CODE - not intended for copying ⚠️
+def execute(self, refresh_every = None):
+    timestamp = datetime.now()
+    while True:
+        # self.agents ≈ [stage_1, stage_2]
+        for agent in self.agents:  
+            for task in agent.get_tasks():
+                # Inject params based on task
+                stage.execute(solve_dependencies(task, agent))  
+
+        if refresh_every is None:
+            break
+        else:
+            # repeat after timestamp + timedelta(seconds=refresh_every)
+            # or straight away if already exceeded
+            ...
+```
+
 ### Error Handling
 
 The runner will:
@@ -105,20 +124,15 @@ The runner will:
 - Continue processing other tasks if one fails
 - Bundle updates for better performance (configurable via `task_batch_size`)
 
+
 ## Configuration
 
 ### Initialization
-
-Initialization specs:
-
----
 
 ::: encord_agents.tasks.runner.Runner.__init__
     options:
         show_if_no_docstring: false
         show_subodules: false
-
----
 
 ### Runtime Configuration
 
@@ -174,7 +188,7 @@ $ python example.py --help
 
 ### Performance Considerations
 
-By default, the Runner bundles task updates for better performance with a batch size of 100. For debugging or when immediate updates are needed, you can set task_batch_size=1:
+By default, the Runner bundles task updates for better performance with a batch size of 300. For debugging or when immediate updates are needed, you can set task_batch_size=1:
 
 ```shell
 # Via CLI
