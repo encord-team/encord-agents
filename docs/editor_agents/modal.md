@@ -28,7 +28,7 @@ Once you have a private ssh key (preferably corresponding to a service account),
 
 Now you can configure the secret:
 
-1. Go to [https://modal.com/secrets][https://modal.com/secrets]
+1. Go to [https://modal.com/secrets](https://modal.com/secrets)
 2. Click "Create new secret"
 3. Choose the "Custom" option
 4. Name it `encord-ssh-key` (you can choose the name but it needs to match the name in the code below)

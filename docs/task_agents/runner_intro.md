@@ -300,8 +300,20 @@ def my_agent(
 There are two different types of runners with different use-cases. They also have two slightly different execution interfaces. 
 Please refer to the following pages for more information:
 
-1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner that will run the agent functions one after the other. It's easier to debug and understand. Use this for simple workflows or for testing out functionality befor you scale it with the `QueueRunner`.
+1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner that will run the agent functions one after the other. It's easier to debug and understand. Use this for simple workflows or for testing out functionality before you scale it with the `QueueRunner`.
 2. [`QueueRunner`](./queue_runner.md#running-agents): This is a more advanced runner that will allow you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
+
+## Comparison between `Runner` and `QueueRunner`
+
+The key differences between `QueueRunner` and the sequential `Runner` are:
+
+| Feature | [Runner](./sequential_runner.md) | [QueueRunner](./queue_runner.md) |
+|---------|---------|-------------|
+| **Execution Model** | Executes tasks sequentially in a single process | Designed for distributed execution across multiple processes |
+| **Project Hash** | Optional at initialization | Required at initialization |
+| **Function Wrapping** | Executes your function directly with injected dependencies | Additionally wraps your function to handle JSON task specifications |
+| **Execution Control** | Handles task polling and execution | You control task distribution and execution through your queue system |
+| **Scaling** | Not suitable for scaling | Suitable for scaling |
 
 
 [docs-workflow-project]: https://docs.encord.com/sdk-documentation/sdk-references/project#workflow-project

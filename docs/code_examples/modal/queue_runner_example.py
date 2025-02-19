@@ -27,22 +27,28 @@ The example:
 3. Defines a simple agent that extracts the last 8 characters of label titles
 4. Processes tasks in parallel using Modal's map functionality
 
+## Setting up authentication
+
+You need to [authenticate](../authentication.md) with Encord first.
+Once you have a private ssh key (preferably corresponding to a service account), you should also ensure that you have [signed up for Modal](https://modal.com/signup).
+
+Now you can configure the secret:
+
+1. Go to [https://modal.com/secrets](https://modal.com/secrets)
+2. Click "Create new secret"
+3. Choose the "Custom" option
+4. Name it `encord-ssh-key` (you can choose the name but it needs to match the name in the code below)
+5. Add an environment variable names `ENCORD_SSH_KEY` with the content of your private ssh key file. Similar to the figure below.
+
+This setup will allow `encord-agents` to authenticate with Encord via the provided key.
+
 ## Usage
 
-1. Ensure Modal CLI is configured:
-   ```bash
-   modal token new
-   ```
+```bash
+modal run queue_runner_example.py
+```
 
-2. Set up your Modal SSH key secret:
-   ```bash
-   modal secret create encord-ssh-key
-   ```
-
-3. Run the example:
-   ```bash
-   modal run queue_runner_example.py
-   ```
+You can follow the progress of the tasks on the Modal dashboard: [https://modal.com/apps](https://modal.com/apps)
 
 ## Code Structure
 
@@ -60,12 +66,13 @@ Update these values for your use case:
 
 from typing import Iterable
 from uuid import UUID
-from typing_extensions import Annotated
-from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents.tasks import QueueRunner, Depends
-from encord_agents.tasks.models import TaskCompletionResult
 
 import modal
+from encord.objects.ontology_labels_impl import LabelRowV2
+from typing_extensions import Annotated
+
+from encord_agents.tasks import Depends, QueueRunner
+from encord_agents.tasks.models import TaskCompletionResult
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -73,31 +80,33 @@ image = (
         "git",
         "libgl1",
         "libglib2.0-0",
-    ).pip_install(
+    )
+    .pip_install(
         "fastapi[standard]",
         "encord-agents",
         "modal",
     )
 )
-APP_NAME = "my-job-queue"
+APP_NAME = "<app-name>"
 app = modal.App(name=APP_NAME, image=image)
 
 runner = QueueRunner(project_hash="<project-hash>")
 
+
 def last_eight(lr: LabelRowV2) -> str:
     return lr.data_title[-8:]
 
-# Define the agent stage and put it in a (remote) modal function 
+
+# Define the agent stage and put it in a (remote) modal function
 @app.function(
     secrets=[modal.Secret.from_name("encord-ssh-key")],
     concurrency_limit=5,
 )
 @runner.stage("<agent-stage>")
-def stage_1(
-    prefix: Annotated[str, Depends(last_eight)]
-):
+def stage_1(prefix: Annotated[str, Depends(last_eight)]):
     print(f"From agent: {prefix}")
     return "<path-name-to-follow>"
+
 
 # Define the main function that will be executed when the modal is run
 # to populate the queue with tasks
@@ -105,15 +114,8 @@ def stage_1(
 def main():
     for stage in runner.get_agent_stages():
         # Remote execution of function on tasks
-        result_strings: list[str] = list(
-            stage_1.map(
-                [t.model_dump_json() for t in stage.get_tasks()]
-            )
-        )
+        result_strings: list[str] = list(stage_1.map([t.model_dump_json() for t in stage.get_tasks()]))
 
         print(stage.title)
         completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
         print(f"Example completion result: {completion_result}")
-
-
-

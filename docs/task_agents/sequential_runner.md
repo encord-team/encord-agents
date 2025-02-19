@@ -244,4 +244,18 @@ Here's an example of how the difference manifests:
 
     Please refer to the [Celery example](./queue_runner.md) or [Modal example](./queue_runner.md) for more information.
 
+
+## Comparison with Queue Runner
+
+The key differences between `QueueRunner` and the sequential `Runner` are:
+
+| Feature | [Runner](./sequential_runner.md) | [QueueRunner](./queue_runner.md) |
+|---------|---------|-------------|
+| **Execution Model** | Executes tasks sequentially in a single process | Designed for distributed execution across multiple processes |
+| **Project Hash** | Optional at initialization | Required at initialization |
+| **Function Wrapping** | Executes your function directly with injected dependencies | Additionally wraps your function to handle JSON task specifications |
+| **Execution Control** | Handles task polling and execution | You control task distribution and execution through your queue system |
+| **Scaling** | Not suitable for scaling | Suitable for scaling |
+
+
 [docs-workflow-project]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects

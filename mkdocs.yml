@@ -31,7 +31,7 @@ nav:
   - "Task Agents":
       - "Intro": task_agents/index.md
       - "Execution":
-          - "Intro": task_agents/runner_intro.md
+          - "Execution intro": task_agents/runner_intro.md
           - "Sequential": task_agents/sequential_runner.md
           - "Multi-processing (queues)": task_agents/queue_runner.md
       - "Examples":

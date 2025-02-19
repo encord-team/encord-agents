@@ -1,13 +1,12 @@
-from typing_extensions import Annotated
+import modal  # tested with modal client version: 0.72.10
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents.tasks import QueueRunner, Depends
+from typing_extensions import Annotated
+
+from encord_agents.tasks import Depends, QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
 
-import modal  # tested with modal client version: 0.72.10
-
-
-# 1. Modal configuration 
-# Define a Docker image with the necessary dependencies 
+# 1. Modal configuration
+# Define a Docker image with the necessary dependencies
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install(
@@ -28,7 +27,6 @@ runner = QueueRunner(project_hash="<project_hash>")
 print("instantiated runner")
 
 
-
 # 3. Optional - you can still define your own dependencies
 #        that the agent definition will rely on.
 def last_eight(lr: LabelRowV2) -> str:
@@ -46,6 +44,7 @@ def stage_1(prefix: Annotated[str, Depends(last_eight)]):
     print(f"From agent: {prefix}")
     return None
 
+
 # 6. Execute the agent
 @app.local_entrypoint()
 def main():
@@ -54,7 +53,7 @@ def main():
             stage_1.map(  # Remote execution of function on tasks
                 map(
                     lambda t: t.model_dump_json(),  # Call function with serializable strings
-                    stage.get_tasks()
+                    stage.get_tasks(),
                 )
             )
         )
