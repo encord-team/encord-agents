@@ -89,8 +89,7 @@ def my_agent(lr: LabelRowV2, ...) -> str | UUID | None:
     pass
 ```
 
-The `my_agent` function will be called by the runner for every task that's in the specified stage. 
-It is supposed to return where the task should go next.
+The agent function is supposed to return where the task should go next.
 This can be done by pathways names or `UUID`s. 
 If None is returned, the task will not move and the runner will pick up that task again in the future.
 
@@ -108,7 +107,7 @@ def validate_task(lr: LabelRowV2) -> str:
     return "complete"
 ```
 
-If you define multiple stages, the task queues for each stage will be emptied one queue at a time in the order in which the stages were defined in the runner.
+If you define multiple stages. Depending on which type of runner you use, the execution logic will differ.
 That is, if you define a runner with two stages:
 
 === "Runner"
@@ -123,6 +122,8 @@ That is, if you define a runner with two stages:
     def stage_2():
         return "next"
     ```
+    The `Runner` will execute the tasks in the order in which the stages were defined in the runner.
+    That is, the tasks will be processed by `stage_1` first and then by `stage_2`.
 
 === "QueueRunner"
     ```python
@@ -136,6 +137,8 @@ That is, if you define a runner with two stages:
     def stage_2():
         return "next"
     ```
+    The `QueueRunner` will give you control over the task queues for each stage.
+    Please refer to the [QueueRunner documentation](./queue_runner.md) for more information.
 
 ### Optional arguments
 
@@ -156,7 +159,8 @@ def my_agent(lr: LabelRowV2):
 
 ## Dependencies
 
-The Runner supports dependency injection similar to FastAPI. Dependencies are functions that provide common resources or utilities to your agent functions.
+The Runner supports dependency injection similar to [FastAPI](https://fastapi.tiangolo.com/tutorial/dependencies/){ target="\_blank", rel="noopener noreferrer" }. 
+Dependencies are functions that provide common resources or utilities to your agent functions.
 
 ### Built-in Dependencies
 
@@ -240,8 +244,32 @@ def my_agent(
 
 ### Custom Dependencies
 
-Dependencies can actually be any function that has a similar function declaration to the ones above. 
-That is, functions that have parameters typed with `AgentTask`, `Project`, `LabelRowV2`, or other dependencies annotated with `Depends`.
+Dependencies can be any function that has a similar function declaration to the ones above. 
+Specifically, functions that have parameters typed with `AgentTask`, `Project`, `LabelRowV2`, or other dependencies annotated with `Depends`.
+
+> !!!warning
+> 
+> Your custom dependencies should not include any default values or additinoal arguments.
+> If you need to pass additional arguments, you can do so by wrapping the dependency in a function:
+> 
+> ```python
+> from functools import partial
+> def my_dependency(arg1: str, arg2: int):
+>     ...
+> 
+> def my_dependency_with_default_arg(arg1: str, arg2: int = 42):
+>     return partial(my_dependency, arg2=arg2)
+> 
+> @runner.stage("my_stage")
+> def my_agent(
+>     # Notice the call to the function                                  👇
+>     dep: Annotated[MyDependency, Depends(my_dependency_with_default_arg())]  
+> ):
+>     ...
+> ```
+> 
+> This will allow you to set default values when you call the dependency.
+
 
 You can create your own dependencies that can also use nested dependencies like this:
 

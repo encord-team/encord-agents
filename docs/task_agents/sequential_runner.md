@@ -1,7 +1,7 @@
 ## Overview
 The `Runner` executes tasks in a sequential order.
 It is useful for debugging and testing the workflow. 
-Use this for simple workflows or for testing out functionality before you scale compute it with the `QueueRunner`.
+Use this for simple workflows or for testing out functionality before you scale compute it with the [`QueueRunner`](./queue_runner.md).
 
 ## Basic Usage
 
@@ -119,7 +119,7 @@ def execute(self, refresh_every = None):
 
 The runner will:
 
-- Retry failed tasks up to `num_retries` times (default: 3)
+- Retry failed tasks up to `num_retries` times (default: 3). Note that changes to the label row are not rolled back.
 - Log errors for debugging
 - Continue processing other tasks if one fails
 - Bundle updates for better performance (configurable via `task_batch_size`)
@@ -200,5 +200,48 @@ Or in code
 ```python
 runner(task_batch_size=1)
 ```
+
+## Scaling with the `QueueRunner`
+
+The [`QueueRunner`](./queue_runner.md) is a more advanced runner that will allow you to process multiple tasks in parallel.
+It is useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
+
+Both the `Runner` and the `QueueRunner` share the same interface.
+The difference lies in how you execute them.
+
+The `Runner` executes tasks in a sequential order with the `run()` function.
+The `QueueRunner` translates your implementations into functions that take in a task specification as a JSON string and returns a `encord_agents.tasks.models.TaskCompletionResult` as a JSON string.
+Stringified JSON tasks are used to pass messages over queues that typically don't allow for custom object types.
+
+Here's an example of how the difference manifests:
+
+=== "The (sequential) `Runner`"
+    ```python
+    runner = Runner()
+    @runner.stage("my_stage")
+    def my_agent(task: AgentTask, label_row: LabelRowV2):
+        ...
+    runner()
+    ```
+=== "The (parallel) `QueueRunner`"
+    ```python
+    queue_runner = QueueRunner()  # Change the runner to the queue runner
+    
+    # The implementation stays the same
+    @queue_runner.stage("my_stage")
+    def my_agent(task: AgentTask, label_row: LabelRowV2):
+        ...
+
+    # Change the execution to use the queue runner
+    for agent in queue_runner.get_agent_stages():
+        your_task_queue = []
+        for task in agent.get_tasks():
+            your_task_queue.append(task)
+
+        for task in your_queue:
+            result = my_agent(task)
+    ```
+
+    Please refer to the [Celery example](./queue_runner.md) or [Modal example](./queue_runner.md) for more information.
 
 [docs-workflow-project]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects
