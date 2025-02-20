@@ -460,7 +460,7 @@ def {fn_name}(...):
                     batch_lrs: list[LabelRowV2 | None] = []
 
                     tasks = list(stage.get_tasks())
-                    pbar = tqdm(desc="Executing tasks", total=len(tasks))
+                    pbar = tqdm(desc=f"Executing tasks for stage: {stage.title}", total=len(tasks))
                     for task in tasks:
                         if not isinstance(task, AgentTask):
                             continue
