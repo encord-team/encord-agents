@@ -362,6 +362,10 @@ class Runner(RunnerBase):
         project_hash: Annotated[
             Optional[str], Option(help="The project hash if not defined at runner instantiation.")
         ] = None,
+        max_tasks_per_stage: Annotated[
+            Optional[int],
+            Option(help="Max number of tasks to try to process per stage on a given run. If `None`, will attempt all"),
+        ] = None,
     ) -> None:
         """
         Run your task agent `runner(...)`.
@@ -474,6 +478,8 @@ def {fn_name}(...):
                     batch_lrs: list[LabelRowV2 | None] = []
 
                     tasks = list(stage.get_tasks())
+                    if max_tasks_per_stage:
+                        tasks = tasks[:max_tasks_per_stage]
                     pbar = tqdm(desc=f"Executing tasks for stage: {stage.title}", total=len(tasks))
                     for task in tasks:
                         if not isinstance(task, AgentTask):
