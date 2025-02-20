@@ -407,6 +407,10 @@ class Runner(RunnerBase):
 
         self.validate_project(project)
 
+        # Verify args
+        if max_tasks_per_stage is not None:
+            if max_tasks_per_stage < 1:
+                raise PrintableError("We require that `max_tasks_per_stage` >= 1")
         # Verify stages
         valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         agent_stages: dict[str | UUID, WorkflowStage] = {
