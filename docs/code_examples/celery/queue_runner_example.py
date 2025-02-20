@@ -38,7 +38,7 @@ def agent_stage_name(
     return "<next-stage-name>"  # or UUID of the next stage
 
 
-# Create a Celery task that will execute the wrapped agent
+# Create a Celery task to execute the wrapped agent
 @celery_app.task(name="celery_function_name")
 def celery_function(task_spec: str) -> str:
     """

@@ -124,7 +124,7 @@ task_spec = task.model_dump_json()
 result = my_agent(task_spec)  # Returns TaskCompletionResult as JSON
 ```
 
-A task specification will be a string that looks like this:
+A task specification is a string in the following format:
 
 ```json
 {

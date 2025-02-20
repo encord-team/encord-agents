@@ -54,7 +54,7 @@ python worker.py
 python populate_queue.py
 ```
 
-The workers will automatically start processing tasks as they are added to the queue.
+The workers automatically start processing tasks as they are added to the queue.
 
 ## Monitoring
 
@@ -68,7 +68,7 @@ You can monitor the RabbitMQ queue through the management interface at http://lo
 
 ## Architecture
 
-This example implements a distributed task processing pipeline with these components:
+This example implements a distributed task processing pipeline with the following components:
 
 1. **QueueRunner**: Wraps your agent implementation to handle Encord-specific logic
 2. **Celery**: Manages the distributed task queue and workers
@@ -82,13 +82,13 @@ The workflow follows these steps:
 
 ## Scaling
 
-To scale processing horizontally, simply start more worker processes on the same or different machines:
+To scale processing horizontally, start more worker processes on the same or different machines:
 
 ```bash
 python worker.py
 ```
 
-Benefits of this architecture:
+This architecture has the following benefits:
 
 - **Automatic load balancing**: Celery distributes tasks among available workers
 - **Fault tolerance**: Failed tasks can be automatically retried
@@ -103,7 +103,7 @@ Benefits of this architecture:
 4. Start one or more workers
 5. Run the populate queue script
 
-The workers will process tasks as they become available in the queue.
+The workers process tasks as they become available in the queue.
 
 ## Customization
 

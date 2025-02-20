@@ -19,7 +19,7 @@ image = (
     )
 )
 
-# The modal app that will be running the jobs
+# The modal app that runs the jobs
 app = modal.App(name="encord-agents-job-queue", image=image)
 
 # 2. Set up the QueueRunner

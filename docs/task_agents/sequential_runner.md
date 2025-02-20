@@ -65,7 +65,7 @@ runner.run()  # will run the runner as CLI tool
 runner()      # will run the runner directly
 ```
 
-Both will:
+Both options:
 
 1. Connect to your Encord project
 2. Poll for tasks in the configured stages
@@ -73,7 +73,7 @@ Both will:
 4. Move tasks according to returned pathway
 5. Retry failed tasks up to `num_retries` times
 
-See below for [configuration options](.#runtime-configuration).
+See the [configuration options](.#runtime-configuration) below.
 
 ### Command Line Interface
 
@@ -89,10 +89,10 @@ python my_agent.py \
 
 ### Order of execution
 
-The queue for `"stage_1"` will be emptied first and successively the queue for `"stage_2"`. 
-If you set the `refresh_every` argument, the runner will poll both queues again after emptying the initial queues. 
-In turn, data that came into the queue after the initial poll by the runner will be picked up in the second iteration.
-In the case where the time of an execution has already exceeded the `refresh_every` threshold, the agent will poll for new tasks instantly.
+The queue for `"stage_1"` is emptied first, and successively the queue for `"stage_2"`. 
+If you set the `refresh_every` argument, the runner polls both queues again after emptying the initial queues. 
+In turn, data that came into the queue after the initial poll by the runner is picked up in the second iteration.
+In the case where the time of an execution has already exceeded the `refresh_every` threshold, the agent polls for new tasks instantly.
 
 To give you an idea about the order of execution, please find the pseudo code below.
 
@@ -117,12 +117,12 @@ def execute(self, refresh_every = None):
 
 ### Error Handling
 
-The runner will:
+The runner:
 
-- Retry failed tasks up to `num_retries` times (default: 3). Note that changes to the label row are not rolled back.
-- Log errors for debugging
-- Continue processing other tasks if one fails
-- Bundle updates for better performance (configurable via `task_batch_size`)
+- Retries failed tasks up to `num_retries` times (default: 3). Changes to the label row are not rolled back.
+- Logs errors for debugging
+- Continues processing other tasks if a task fails
+- Bundles updates for better performance (configurable via `task_batch_size`)
 
 
 ## Configuration
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     runner.run()
 ```
 
-Then, the runner will turn into a CLI tool with the exact same arguments as running it via code:
+Then, the runner functions as a CLI tool, accepting the same arguments as when executed in code.
 
 ```shell
 $ python example.py --help

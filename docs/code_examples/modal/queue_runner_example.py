@@ -22,6 +22,7 @@ This example shows how to:
 ## How it Works
 
 The example:
+
 1. Creates a Modal app with a Debian-based environment
 2. Sets up a QueueRunner connected to an Encord project
 3. Defines a simple agent that extracts the last 8 characters of label titles
@@ -37,10 +38,10 @@ Now you can configure the secret:
 1. Go to [https://modal.com/secrets](https://modal.com/secrets)
 2. Click "Create new secret"
 3. Choose the "Custom" option
-4. Name it `encord-ssh-key` (you can choose the name but it needs to match the name in the code below)
+4. Name it `encord-ssh-key` (ensure that any name you choose matches the name in the code below)
 5. Add an environment variable names `ENCORD_SSH_KEY` with the content of your private ssh key file. Similar to the figure below.
 
-This setup will allow `encord-agents` to authenticate with Encord via the provided key.
+This setup allows `encord-agents` to authenticate with Encord using the provided key.
 
 ## Usage
 
@@ -59,7 +60,8 @@ You can follow the progress of the tasks on the Modal dashboard: [https://modal.
 
 ## Configuration
 
-Update these values for your use case:
+Update the following values for your use case:
+
 - `project_hash`: Your Encord project hash
 - `concurrency_limit`: Number of parallel executions (default: 5)
 """
@@ -108,7 +110,7 @@ def stage_1(prefix: Annotated[str, Depends(last_eight)]):
     return "<path-name-to-follow>"
 
 
-# Define the main function that will be executed when the modal is run
+# Define the main function to be executed when the modal is run
 # to populate the queue with tasks
 @app.local_entrypoint()
 def main():

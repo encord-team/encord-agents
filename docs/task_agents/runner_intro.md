@@ -16,8 +16,8 @@ In the following sections, we will go through the different components of the `R
 ## Stage Decorators
 
 Imagine that you have a workflow with three stages: `start`, `agent`, and `complete`.
-The `Runner` objects from `encord_agents.tasks.runner` will allow you to define the logic for the purple stages.
-In this case, the `Runner` will allow you to define the logic for the `Agent 1` stage.
+The `Runner` objects from `encord_agents.tasks.runner` allows you to define the logic for the purple stages.
+In this case, the `Runner` allows you to define the logic for the `Agent 1` stage.
 
 === "Workflow"
     ```mermaid
@@ -91,7 +91,7 @@ def my_agent(lr: LabelRowV2, ...) -> str | UUID | None:
 
 The agent function is supposed to return where the task should go next.
 This can be done by pathways names or `UUID`s. 
-If None is returned, the task will not move and the runner will pick up that task again in the future.
+If None is returned, the task is not moved and the runner picks up that task again at a later stage.
 
 You can also define multiple stages in a single runner:
 
@@ -107,7 +107,7 @@ def validate_task(lr: LabelRowV2) -> str:
     return "complete"
 ```
 
-If you define multiple stages. Depending on which type of runner you use, the execution logic will differ.
+If you define multiple stages. Depending on which type of runner you use, the execution logic differs
 That is, if you define a runner with two stages:
 
 === "Runner"
@@ -122,8 +122,8 @@ That is, if you define a runner with two stages:
     def stage_2():
         return "next"
     ```
-    The `Runner` will execute the tasks in the order in which the stages were defined in the runner.
-    That is, the tasks will be processed by `stage_1` first and then by `stage_2`.
+    The `Runner` executes the tasks in the order in which the stages were defined in the runner.
+    That is, the tasks are processed in `stage_1` first and in `stage_2` next.
 
 === "QueueRunner"
     ```python
@@ -137,12 +137,12 @@ That is, if you define a runner with two stages:
     def stage_2():
         return "next"
     ```
-    The `QueueRunner` will give you control over the task queues for each stage.
+    The `QueueRunner` gives you control over the task queues for each stage.
     Please refer to the [QueueRunner documentation](./queue_runner.md) for more information.
 
 ### Optional arguments
 
-When you wrap a function with the `@runner.stage(...)` wrapper, you can include a [`label_row_metadata_include_args: LabelRowMetadataIncludeArgs`](../reference/core.md#encord_agents.core.data_model.LabelRowMetadataIncludeArgs) argument which will be passed on to the Encord Project's [`list_label_row_v2` method](https://docs.encord.com/sdk-documentation/sdk-references/project#list-label-rows-v2){ target="\_blank", rel="noopener noreferrer" }. This is useful to, e.g., be able to _read_ the client metadata associated to a task.
+When you wrap a function with the `@runner.stage(...)` wrapper, you can include a [`label_row_metadata_include_args: LabelRowMetadataIncludeArgs`](../reference/core.md#encord_agents.core.data_model.LabelRowMetadataIncludeArgs) argument to be passed on to the Encord Project's [`list_label_row_v2` method](https://docs.encord.com/sdk-documentation/sdk-references/project#list-label-rows-v2){ target="\_blank", rel="noopener noreferrer" }. This is useful to, e.g., be able to _read_ the client metadata associated to a task.
 Notice, if you need to update the metadata, you will have to use the `dep_storage_item` dependencies.
 
 Here is an example:
@@ -196,7 +196,7 @@ This gives you the flexibility to only inject the dependencies that you need and
 #### Annotations
 There are three object types that you can get without any extensive type annotations.
 
-If you type __any__ parameter of your stage implementation, e.g., the `my_agent` function above, with either of `[AgentTask, Project, LabelRowV2]`, the function will be called with that type of object, matching the task at hand.
+If you type __any__ parameter of your stage implementation, e.g., the `my_agent` function above, with either of `[AgentTask, Project, LabelRowV2]`, the function is called with that type of object, matching the task at hand.
 
 That is, if you do:
 
@@ -209,7 +209,7 @@ def my_agent(project: Project):
     ...
 ```
 
-The `project` will be the [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } instance for the `project_hash` you specified when defining or executing the runner.
+The `project` is the [workflow project][docs-workflow-project]{ target="\_blank", rel="noopener noreferrer" } instance for the `project_hash` that was specified when defining or executing the runner.
 
 Similarly, the `task` and `label_row` (associated with the given task) can be obtained as follows:
 
@@ -300,8 +300,8 @@ def my_agent(
 There are two different types of runners with different use-cases. They also have two slightly different execution interfaces. 
 Please refer to the following pages for more information:
 
-1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner that will run the agent functions one after the other. It's easier to debug and understand. Use this for simple workflows or for testing out functionality before you scale it with the `QueueRunner`.
-2. [`QueueRunner`](./queue_runner.md#running-agents): This is a more advanced runner that will allow you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
+1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner to run the agent functions one after the other. It is easier to debug and understand. Use this for simple workflows or for testing out functionality before you scale it with the `QueueRunner`.
+2. [`QueueRunner`](./queue_runner.md#running-agents): This is a more advanced runner that allows you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
 
 ## Comparison between `Runner` and `QueueRunner`
 
