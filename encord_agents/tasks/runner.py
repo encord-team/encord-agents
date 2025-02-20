@@ -102,7 +102,7 @@ class RunnerBase:
             self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         self.agents: list[RunnerAgent] = []
 
-    def validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
+    def validate_stage(self, stage: str | UUID, *, overwrite: bool = False) -> tuple[UUID | str, str]:
         """
         Returns stage uuid and printable name.
         """
@@ -127,9 +127,11 @@ class RunnerBase:
             stage = selected_stage.uuid
 
         if stage in [a.identity for a in self.agents]:
-            raise PrintableError(
-                f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
-            )
+            if not overwrite:
+                raise PrintableError(
+                    f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
+                )
+            self.agents = [agent for agent in self.agents if agent.identity != stage]
         return stage, printable_name
 
     def _add_stage_agent(
@@ -205,6 +207,7 @@ class Runner(RunnerBase):
         *,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+        overwrite: bool = False,
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
@@ -279,15 +282,21 @@ class Runner(RunnerBase):
                 `project.list_label_rows_v2(...)`
             label_row_initialise_labels_args: Arguments to be passed to
                 `label_row.initialise_labels(...)`
+            overwrite: Overwrite the method associated to this stage if it already exists
+                will throw an error otherwise
 
         Returns:
             The decorated function.
         """
-        stage_uuid, printable_name = self.validate_stage(stage)
+        stage_uuid, printable_name = self.validate_stage(stage, overwrite=overwrite)
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
             self._add_stage_agent(
-                stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
+                stage_uuid,
+                func,
+                printable_name,
+                label_row_metadata_include_args,
+                label_row_initialise_labels_args,
             )
             return func
 
