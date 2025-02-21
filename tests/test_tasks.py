@@ -1,4 +1,5 @@
 import pytest
+from typer import BadParameter
 
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.runner import Runner
@@ -24,3 +25,11 @@ def test_overrride_runner() -> None:
     assert len(runner.agents) == 1
     agent_YEP = runner.agents[0]
     assert agent_YEP.callable() == "3"
+
+
+def test_max_tasks_per_stage_validation() -> None:
+    runner = Runner()
+
+    with pytest.raises(PrintableError):
+        runner(max_tasks_per_stage=-1)
+    # As is, can't test actually making max_tasks without major re-factor / mocking

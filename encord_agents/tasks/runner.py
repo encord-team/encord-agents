@@ -18,7 +18,7 @@ from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
 from rich.panel import Panel
 from tqdm.auto import tqdm
-from typer import Abort, Option
+from typer import Abort, BadParameter, Option
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
@@ -81,6 +81,13 @@ class RunnerBase:
         assert (
             len([s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]) > 0
         ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
+
+    @staticmethod
+    def validate_max_tasks_per_stage(max_tasks_per_stage: int | None) -> int | None:
+        if max_tasks_per_stage is not None:
+            if max_tasks_per_stage < 1:
+                raise PrintableError("We require that `max_tasks_per_stage` >= 1")
+        return max_tasks_per_stage
 
     def __init__(self, project_hash: str | UUID | None = None):
         """
@@ -364,7 +371,9 @@ class Runner(RunnerBase):
         ] = None,
         max_tasks_per_stage: Annotated[
             Optional[int],
-            Option(help="Max number of tasks to try to process per stage on a given run. If `None`, will attempt all"),
+            Option(
+                help="Max number of tasks to try to process per stage on a given run. If `None`, will attempt all",
+            ),
         ] = None,
     ) -> None:
         """
@@ -384,6 +393,9 @@ class Runner(RunnerBase):
         Returns:
             None
         """
+        # Verify args that don't depend on external service first
+        max_tasks_per_stage = self.validate_max_tasks_per_stage(max_tasks_per_stage)
+
         # Verify project
         if project_hash is not None:
             project_hash = self.verify_project_hash(project_hash)
@@ -406,11 +418,6 @@ class Runner(RunnerBase):
             )
 
         self.validate_project(project)
-
-        # Verify args
-        if max_tasks_per_stage is not None:
-            if max_tasks_per_stage < 1:
-                raise PrintableError("We require that `max_tasks_per_stage` >= 1")
         # Verify stages
         valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         agent_stages: dict[str | UUID, WorkflowStage] = {
@@ -481,9 +488,7 @@ def {fn_name}(...):
                     batch: list[AgentTask] = []
                     batch_lrs: list[LabelRowV2 | None] = []
 
-                    tasks = list(stage.get_tasks())
-                    if max_tasks_per_stage:
-                        tasks = tasks[:max_tasks_per_stage]
+                    tasks = list(stage.get_tasks())[:max_tasks_per_stage]
                     pbar = tqdm(desc=f"Executing tasks for stage: {stage.title}", total=len(tasks))
                     for task in tasks:
                         if not isinstance(task, AgentTask):
