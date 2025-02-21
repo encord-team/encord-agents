@@ -29,6 +29,7 @@ from typing_extensions import Annotated
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
+from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import get_user_client, batch_iterator
 from encord_agents.exceptions import PrintableError
 
@@ -37,28 +38,6 @@ from .models import AgentTaskConfig, TaskCompletionResult
 TaskAgentReturn = str | UUID | None
 
 logger = logging.getLogger(__name__)
-
-class TaskSpeedColumn(ProgressColumn):
-    """Renders human readable transfer speed."""
-    def __init__(self, unit: str = "tasks") -> None:
-        super().__init__()
-        self.unit = unit
-
-    def _format_speed(self, speed: float) -> str:
-        resolution = "s" if speed > 1/60 else "m" if speed > 1/3600 else "h"
-        if resolution == "m":
-            speed /= 60
-        elif resolution == "h":
-            speed /= 3600
-        return f"{speed:.2f} {self.unit}/{resolution}"
-
-    def render(self, task: Task) -> Text:
-        """Show data transfer speed."""
-        speed = task.finished_speed or task.speed
-        if speed is None:
-            return Text("?", style="progress.data.speed")
-
-        return Text(self._format_speed(speed), style="progress.data.speed")
 
 
 class RunnerAgent:
@@ -508,7 +487,7 @@ def {fn_name}(...):
 
                 next_execution = datetime.now() + delta if delta else False
                 global_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), TaskSpeedColumn(unit="batches"), TimeElapsedColumn(), transient=True)
-                batch_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TimeElapsedColumn(), TaskSpeedColumn(unit="tasks"), TaskProgressColumn(show_speed=True), transient=True)
+                batch_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TimeElapsedColumn(), TaskSpeedColumn(unit="tasks"), TaskProgressColumn(), transient=True)
 
                 global_task_format = "Executing agent {agent_name} [cyan](total: {total})"
                 global_task = global_pbar.add_task(description=global_task_format.format(agent_name="", total=0))
