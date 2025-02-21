@@ -118,7 +118,7 @@ markers = [
 ]
 
 [tool.pytest_env]
-ENCORD_SSH_KEY_FILE = {value="tests/integration_tests/private_key_integration_testing", skif_if_set = false}
+ENCORD_SSH_KEY_FILE = {value="tests/integration_tests/private_key_integration_testing", skip_if_set = false}
 
 [tool.codespell]
 skip = '*.lock,*.ipynb'
