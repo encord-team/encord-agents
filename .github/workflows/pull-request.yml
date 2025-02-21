@@ -67,6 +67,8 @@ jobs:
     name: Publish test reports
     runs-on: ubuntu-latest
     permissions:
+      contents: write
+      pull-requests: write
       repository-projects: write
     needs: [tests]
     if: ${{ !cancelled() }}
