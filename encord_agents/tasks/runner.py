@@ -511,11 +511,16 @@ def {fn_name}(...):
                     transient=True,
                 )
 
-                global_task_format = "Executing agent {agent_name} [cyan](total: {total})"
+                # Information to the formats will be updated in the loop below
+                global_task_format = "Executing agent [magenta]`{agent_name}`[/magenta] [cyan](total: {total})"
+                batch_task_format = "Executing batch [cyan]{batch_num}[/cyan]"
+
+                # The two tasks that will display the progress
                 global_task = global_pbar.add_task(description=global_task_format.format(agent_name="", total=0))
-                batch_task_format = "Executing batch {batch_num}"
                 batch_task = batch_pbar.add_task(description=batch_task_format.format(batch_num=""), total=0)
 
+                # To display two progress bars side at once, we need to create a table
+                # and add the two progress bars to it
                 progress_table = Table.grid()
                 progress_table.add_row(global_pbar)
                 progress_table.add_row(batch_pbar)
@@ -524,6 +529,8 @@ def {fn_name}(...):
                     include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
                     init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
+
+                    # Set the progress bar description to display the agent name and total tasks completed
                     global_pbar.update(
                         global_task,
                         description=global_task_format.format(agent_name=runner_agent.printable_name, total=0),
@@ -537,6 +544,7 @@ def {fn_name}(...):
 
                     with Live(progress_table, refresh_per_second=1):
                         for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
+                            # Reset the batch progress bar to display the current batch number and total tasks
                             batch_pbar.reset(
                                 batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num)
                             )
