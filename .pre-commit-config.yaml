@@ -3,6 +3,10 @@ repos:
     rev: v2.2.4
     hooks:
     - id: codespell
+  - repo: https://github.com/srstevenson/nb-clean
+    rev: 4.0.1
+    hooks:
+      - id: nb-clean
   - repo: local
     hooks:
       - id: ruff-fmt
