@@ -84,6 +84,8 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
 def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
+    This will use OpenCV and the local backend on your machine.
+    Decoding support may vary dependant on the video format, codec and your local configuration
 
     **Intended use**
 
