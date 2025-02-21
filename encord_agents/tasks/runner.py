@@ -5,13 +5,8 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Literal
+from typing import Any, Callable, Iterable, Literal, Optional
 from uuid import UUID
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, BarColumn, TaskProgressColumn, ProgressColumn, Task
-from rich.live import Live
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 
 import rich
 from encord.http.bundle import Bundle
@@ -21,7 +16,20 @@ from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
+from rich.live import Live
 from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    ProgressColumn,
+    SpinnerColumn,
+    Task,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
+from rich.text import Text
 from tqdm.auto import tqdm
 from typer import Abort, BadParameter, Option
 from typing_extensions import Annotated
@@ -30,7 +38,7 @@ from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRow
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
-from encord_agents.core.utils import get_user_client, batch_iterator
+from encord_agents.core.utils import batch_iterator, get_user_client
 from encord_agents.exceptions import PrintableError
 
 from .models import AgentTaskConfig, TaskCompletionResult
@@ -486,8 +494,22 @@ def {fn_name}(...):
                     break
 
                 next_execution = datetime.now() + delta if delta else False
-                global_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), TaskSpeedColumn(unit="batches"), TimeElapsedColumn(), transient=True)
-                batch_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TimeElapsedColumn(), TaskSpeedColumn(unit="tasks"), TaskProgressColumn(), transient=True)
+                global_pbar = Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    TaskSpeedColumn(unit="batches"),
+                    TimeElapsedColumn(),
+                    transient=True,
+                )
+                batch_pbar = Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TimeElapsedColumn(),
+                    TaskSpeedColumn(unit="tasks"),
+                    TaskProgressColumn(),
+                    transient=True,
+                )
 
                 global_task_format = "Executing agent {agent_name} [cyan](total: {total})"
                 global_task = global_pbar.add_task(description=global_task_format.format(agent_name="", total=0))
@@ -502,7 +524,10 @@ def {fn_name}(...):
                     include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
                     init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
-                    global_pbar.update(global_task, description=global_task_format.format(agent_name=runner_agent.printable_name, total=0))
+                    global_pbar.update(
+                        global_task,
+                        description=global_task_format.format(agent_name=runner_agent.printable_name, total=0),
+                    )
 
                     batch_lrs: list[LabelRowV2 | None] = []
 
@@ -512,7 +537,9 @@ def {fn_name}(...):
 
                     with Live(progress_table, refresh_per_second=1):
                         for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
-                            batch_pbar.reset(batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num))
+                            batch_pbar.reset(
+                                batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num)
+                            )
                             batch_lrs = [None] * len(batch)
 
                             if runner_agent.dependant.needs_label_row:
@@ -539,7 +566,13 @@ def {fn_name}(...):
                             batch = []
                             batch_lrs = []
 
-                            global_pbar.update(global_task, advance=1, description=global_task_format.format(agent_name=runner_agent.printable_name, total=total))
+                            global_pbar.update(
+                                global_task,
+                                advance=1,
+                                description=global_task_format.format(
+                                    agent_name=runner_agent.printable_name, total=total
+                                ),
+                            )
                             if max_tasks_per_stage and total >= max_tasks_per_stage:
                                 break
 
