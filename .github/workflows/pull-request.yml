@@ -65,7 +65,9 @@ jobs:
 
   publish-test-reports:
     name: Publish test reports
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    permissions:
+      repository-projects: write
     needs: [tests]
     if: ${{ !cancelled() }}
 
