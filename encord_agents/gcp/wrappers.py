@@ -73,15 +73,11 @@ def editor_agent(
                 response.status_code = 204
                 return response
 
-            # TODO: We'll remove FF from FE on Jan. 31 2025.
-            #   At that point, only the if statement applies and the else should be removed.
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
                 return generate_response()
-            if request.is_json:
-                request_json = request.get_json()
-                frame_data = FrameData.model_validate(request_json)
-            else:
-                frame_data = FrameData.model_validate_json(request.get_data())
+            if not request.is_json:
+                raise Exception("Request should be JSON. Migrated over to new format")
+            frame_data = FrameData.model_validate(request.get_json())
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()
