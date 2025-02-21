@@ -5,8 +5,13 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, Literal
 from uuid import UUID
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, BarColumn, TaskProgressColumn, ProgressColumn, Task
+from rich.live import Live
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
 
 import rich
 from encord.http.bundle import Bundle
@@ -24,7 +29,7 @@ from typing_extensions import Annotated
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
-from encord_agents.core.utils import get_user_client
+from encord_agents.core.utils import get_user_client, batch_iterator
 from encord_agents.exceptions import PrintableError
 
 from .models import AgentTaskConfig, TaskCompletionResult
@@ -32,6 +37,28 @@ from .models import AgentTaskConfig, TaskCompletionResult
 TaskAgentReturn = str | UUID | None
 
 logger = logging.getLogger(__name__)
+
+class TaskSpeedColumn(ProgressColumn):
+    """Renders human readable transfer speed."""
+    def __init__(self, unit: str = "tasks") -> None:
+        super().__init__()
+        self.unit = unit
+
+    def _format_speed(self, speed: float) -> str:
+        resolution = "s" if speed > 1/60 else "m" if speed > 1/3600 else "h"
+        if resolution == "m":
+            speed /= 60
+        elif resolution == "h":
+            speed /= 3600
+        return f"{speed:.2f} {self.unit}/{resolution}"
+
+    def render(self, task: Task) -> Text:
+        """Show data transfer speed."""
+        speed = task.finished_speed or task.speed
+        if speed is None:
+            return Text("?", style="progress.data.speed")
+
+        return Text(self._format_speed(speed), style="progress.data.speed")
 
 
 class RunnerAgent:
@@ -420,7 +447,7 @@ class Runner(RunnerBase):
         self.validate_project(project)
         # Verify stages
         valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
-        agent_stages: dict[str | UUID, WorkflowStage] = {
+        agent_stages: dict[str | UUID, AgentStage] = {
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
@@ -480,22 +507,35 @@ def {fn_name}(...):
                     break
 
                 next_execution = datetime.now() + delta if delta else False
+                global_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), TaskSpeedColumn(unit="batches"), TimeElapsedColumn(), transient=True)
+                batch_pbar = Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TimeElapsedColumn(), TaskSpeedColumn(unit="tasks"), TaskProgressColumn(show_speed=True), transient=True)
+
+                global_task_format = "Executing agent {agent_name} [cyan](total: {total})"
+                global_task = global_pbar.add_task(description=global_task_format.format(agent_name="", total=0))
+                batch_task_format = "Executing batch {batch_num}"
+                batch_task = batch_pbar.add_task(description=batch_task_format.format(batch_num=""), total=0)
+
+                progress_table = Table.grid()
+                progress_table.add_row(global_pbar)
+                progress_table.add_row(batch_pbar)
+
                 for runner_agent in self.agents:
                     include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
                     init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
+                    global_pbar.update(global_task, description=global_task_format.format(agent_name=runner_agent.printable_name, total=0))
 
-                    batch: list[AgentTask] = []
                     batch_lrs: list[LabelRowV2 | None] = []
 
-                    tasks = list(stage.get_tasks())[:max_tasks_per_stage]
-                    pbar = tqdm(desc=f"Executing tasks for stage: {stage.title}", total=len(tasks))
-                    for task in tasks:
-                        if not isinstance(task, AgentTask):
-                            continue
-                        batch.append(task)
-                        if len(batch) == task_batch_size:
+                    total = 0
+                    tasks = stage.get_tasks()
+                    bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
+
+                    with Live(progress_table, refresh_per_second=1):
+                        for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
+                            batch_pbar.reset(batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num))
                             batch_lrs = [None] * len(batch)
+
                             if runner_agent.dependant.needs_label_row:
                                 label_rows = {
                                     UUID(lr.data_hash): lr
@@ -514,30 +554,18 @@ def {fn_name}(...):
                                 zip(batch, batch_lrs),
                                 runner_agent,
                                 num_retries,
-                                pbar_update=pbar.update,
+                                pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
                             )
-
+                            total += len(batch)
                             batch = []
                             batch_lrs = []
 
-                    if len(batch) > 0:
-                        batch_lrs = [None] * len(batch)
-                        if runner_agent.dependant.needs_label_row:
-                            label_rows = {
-                                UUID(lr.data_hash): lr
-                                for lr in project.list_label_rows_v2(
-                                    data_hashes=[t.data_hash for t in batch],
-                                    **include_args.model_dump(),
-                                )
-                            }
-                            batch_lrs = [label_rows[t.data_hash] for t in batch]
-                            with project.create_bundle() as lr_bundle:
-                                for lr in batch_lrs:
-                                    if lr:
-                                        lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
-                        self._execute_tasks(
-                            project, zip(batch, batch_lrs), runner_agent, num_retries, pbar_update=pbar.update
-                        )
+                            global_pbar.update(global_task, advance=1, description=global_task_format.format(agent_name=runner_agent.printable_name, total=total))
+                            if max_tasks_per_stage and total >= max_tasks_per_stage:
+                                break
+
+                    global_pbar.stop()
+                    batch_pbar.stop()
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
                 panel = Panel(err.args[0], width=None)

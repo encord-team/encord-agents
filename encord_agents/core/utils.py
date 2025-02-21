@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Generator, cast
+from typing import Any, Generator, cast, Iterable, TypeVar, List
 
 import cv2
 import requests
@@ -235,3 +235,29 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
             file_path = frame_file
 
         yield file_path
+
+
+
+T = TypeVar('T')
+
+def batch_iterator(iterator: Iterable[T], batch_size: int) -> Iterable[List[T]]:
+    """Yield batches of items from an iterator.
+    
+    Args:
+        iterator: The source iterator
+        batch_size: Size of each batch > 0
+    
+    Returns:
+        Iterable of lists, each containing up to batch_size items
+    """
+    iterator = iter(iterator)  # Ensure we have an iterator
+    while True:
+        batch = []
+        for _ in range(batch_size):
+            try:
+                batch.append(next(iterator))
+            except StopIteration:
+                break
+        if not batch:
+            break
+        yield batch
