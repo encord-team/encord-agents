@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import traceback
@@ -29,6 +30,8 @@ from encord_agents.exceptions import PrintableError
 from .models import AgentTaskConfig, TaskCompletionResult
 
 TaskAgentReturn = str | UUID | None
+
+logger = logging.getLogger(__name__)
 
 
 class RunnerAgent:
@@ -132,6 +135,8 @@ class RunnerBase:
                     f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
                 )
             self.agents = [agent for agent in self.agents if agent.identity != stage]
+            if len(self.agents) >= 1:
+                logger.warning("Overriding the Stage will change the order of execution for the stages")
         return stage, printable_name
 
     def _add_stage_agent(
