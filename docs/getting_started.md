@@ -2,7 +2,7 @@
 
 Here's the steps to follow to run your first [task agent](task_agents/index.md).
 The example agent will modify the priority of each task before passing it along.
-We also provide multiple [task agent examples](task_agents/examples/index.md) and [editor agent examples](editor_agents/examples/index.md).
+We also provide multiple [task agent examples](task_agents/index.md) and [editor agent examples](editor_agents/examples/index.md).
 
 ### 1. Setup
 
