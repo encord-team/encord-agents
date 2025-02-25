@@ -30,4 +30,4 @@ Here are some common use-cases:
 
 Think of these agents as agents that can _automatically_ trigger when a task reaches the associated agent state in the project workflow.
 
-Learning to build task agents are best done via [example](./examples/).
+Learning to build task agents are best done via [example](../notebooks/task_agent_set_priority.ipynb).
