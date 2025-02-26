@@ -97,7 +97,7 @@ In the template code above, we have
 3. An actual endpoint definition, which has access to the ssh key. `encord-agents` will know how to access that key (since it's names `ENCORD_SSH_KEY`) and use it for authenticating the `encord` SDK)
 4. A place to define our agent logic. There are multiple examples [here](./examples/index.md#fastapi-examples) on what could go in that function.
 
-The magical part is that since this is a FastAPI route, we can, e.g., use all the dependencies defined in [`encord_agents.fastapi.dependencies`](../references/editor_agents.md#encord_agents.fastapi.dependencies) to make our lives easier.
+The magical part is that since this is a FastAPI route, we can, e.g., use all the dependencies defined in [`encord_agents.fastapi.dependencies`](../reference/editor_agents.md#encord_agents.fastapi.dependencies) to make our lives easier.
 
 Next, we'll define some concrete logic to go into the agent.
 

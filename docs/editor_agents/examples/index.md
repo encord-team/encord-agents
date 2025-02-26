@@ -920,7 +920,7 @@ Now, let's define the editor agent.
 In the code above, there are two main things to stress.
 
 1. All arguments are automatically injected when this agent is called. For more details on dependency injections, please see [here](../../dependencies.md).
-2. The [`dep_object_crops`](../../references/editor_agents.md#encord_agents.gcp.dependencies.dep_object_crops) dependency is a little special in that you can provide it filtering arguments. In this case, we tell it to only include object crops when the object instances are of the "generic" type. We do this because we don't want to keep on working on those that have already been converted to "actual labels."
+2. The [`dep_object_crops`](../../reference/editor_agents.md#encord_agents.gcp.dependencies.dep_object_crops) dependency is a little special in that you can provide it filtering arguments. In this case, we tell it to only include object crops when the object instances are of the "generic" type. We do this because we don't want to keep on working on those that have already been converted to "actual labels."
 
 Now, we can call Claude given the image crops.
 Notice how the `crop` variable has a convenient `b64_encoding` method to produce an input that Claude understands.

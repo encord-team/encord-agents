@@ -1,11 +1,11 @@
 # Google Cloud Run Functions
 
 !!! warning
-    ⚠️ Before we begin, please make sure that you have [authentication](/authentication) covered.
+    ⚠️ Before we begin, please make sure that you have [authentication](../authentication.md) covered.
 
 !!! info
     This example shows the general structure of how to build a GCP cloud function.
-    For concrete implementations of agents with specific abilities, please see the [examples section](../examples/).
+    For concrete implementations of agents with specific abilities, please see the [examples section](./examples/index.md).
 
 ## Create a project
 
@@ -58,7 +58,7 @@ def my_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
 
 Fill in the function `my_agent` with what you want to happen when your agent is triggered.
 
-> 💡 Notice that you can inject multiple different [dependencies](/reference/editor_agents/#encord_agents.gcp.dependencies) into the function if you want.
+> 💡 Notice that you can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if you want.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 
