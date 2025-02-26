@@ -301,7 +301,7 @@ There are two different types of runners with different use-cases. They also hav
 Please refer to the following pages for more information:
 
 1. [`Runner`](./sequential_runner.md#running-agents):  This is a simple sequential runner to run the agent functions one after the other. It is easier to debug and understand. Use this for simple workflows or for testing out functionality before you scale it with the `QueueRunner`.
-2. [`QueueRunner`](./queue_runner.md#running-agents): This is a more advanced runner that allows you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
+2. [`QueueRunner`](./queue_runner.md#basic-usage): This is a more advanced runner that allows you to run the agent functions in parallel. It's useful when you have a lot of tasks to process and you want to speed up the processing time via parallel execution.
 
 ## Comparison between `Runner` and `QueueRunner`
 
