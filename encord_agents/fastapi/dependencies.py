@@ -108,9 +108,7 @@ def dep_label_row_with_args(
     ```
 
     Args:
-        frame_data: the frame data from the route. This parameter is automatically injected
-            if it's a part of your route (see example above)
-
+        frame_data: the frame data from the route. This parameter is automatically injected if it is a part of your route (see example above)
 
     Returns:
         The initialized label row.
