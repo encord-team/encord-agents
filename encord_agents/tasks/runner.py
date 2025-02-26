@@ -810,7 +810,7 @@ class QueueRunner(RunnerBase):
             where the runner contains an agent implementation.
 
         Raises:
-            `AssertionError` if the runner does not have an associated project.
+            AssertionError: if the runner does not have an associated project.
         """
         for runner_agent in self.agents:
             is_uuid = False

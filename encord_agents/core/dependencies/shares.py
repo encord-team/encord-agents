@@ -84,7 +84,6 @@ class DataLookup:
             dataset_hash: If you didn't provide the associated dataset hash in the constructor,
                 this is your last chance.
             sign_urls: If `True`, pre-fetch a signed URLs for the items (otherwise the URLs will be signed on demand).
-            return self.user_client.get_storage_items()
 
         Raises:
             ValueError: Mainly if underlying data row cannot be found.

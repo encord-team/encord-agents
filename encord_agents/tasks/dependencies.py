@@ -147,8 +147,8 @@ def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
         The path to the asset.
 
     Raises:
-        `ValueError` if the underlying assets are not videos, images, or audio.
-        `EncordException` if data type not supported by SDK yet.
+        ValueError: if the underlying assets are not videos, images, or audio.
+        EncordException: if data type not supported by SDK yet.
     """
     with download_asset(lr) as asset:
         yield asset
@@ -209,7 +209,7 @@ def dep_twin_label_row(
         The twin.
 
     Raises:
-        `encord.AuthorizationError` if you do not have access to the project.
+        encord.AuthorizationError: if you do not have access to the project.
     """
     client = get_user_client()
     try:
