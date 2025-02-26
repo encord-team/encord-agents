@@ -1,9 +1,6 @@
-# Dependencies
+When defining your agents, you can easily inject essential dependencies such as the path to the underlying asset or frame iterators. You can also add custom dependencies if needed.  
 
-When you are defining your agents, we've made it easy to inject essential dependencies like the a path to the underlying asset, frame iterators, etc.
-Similarly, you can also inject your own custom dependencies, if you need to.
-
-The way you inject dependencies is by type-annotating your agent function variables with the `Depends` class.
+To inject dependencies, simply type-annotate your agent function variables using the `Depends` class.
 
 ```python
 from typing_extensions import Annotated
@@ -20,12 +17,9 @@ def my_agent(frame: Annotated[np.ndarray, Depends(dep_single_frame)]):
 The `{module}` depends on which type of agent you're building.
 Please see the [references section](reference/editor_agents.md#encord_agents.gcp.dependencies) for more details on available dependencies.
 
-## Custom dependencies
+## Custom Dependencies
 
-Custom dependencies are also easy. Just define how to load them in a function and depend on that function.
-The function it self can also depend on other dependencies.
-
-Here is an example:
+Adding custom dependencies is simple. Define a function that loads them, and then use that function as a dependency. The function itself can also rely on other dependencies if needed.
 
 ```python
 def my_custom_dependency(label_row: LabelRowV2) -> dict:

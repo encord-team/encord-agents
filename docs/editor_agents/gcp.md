@@ -1,47 +1,42 @@
-# Google Cloud Run Functions
-
 !!! warning
-    ⚠️ Before we begin, please make sure that you have [authentication](../authentication.md) covered.
+    Before you start, ensure that you can [authenticate](../authentication.md) with Encord.
 
 !!! info
-    This example shows the general structure of how to build a GCP cloud function.
-    For concrete implementations of agents with specific abilities, please see the [examples section](./examples/index.md).
+    The following example shows the general structure of how to build a GCP cloud function.
+    For concrete implementations of agents with specific abilities, see the [examples section](./examples/index.md).
 
-## Create a project
+## STEP 1: Create a Project
 
-Create a new project:
+1. Create a new Encord Project:
 
 ```shell
 mkdir my_project
 cd my_project
 ```
 
-Create and source a new virtual environment.
+2. Create and source a new virtual environment.
 
 ```
 python -m venv venv
 source venv/bin/activate
 ```
 
-Make a requirements file:
+3. Create a requirements file.
 
 ```requirements title="requirements.txt"
 functions-framework
 encord-agents
 ```
 
-Install the dependencies.
-
-!!! warning
-    Make sure you sourced the environment above. Otherwise, the dependencies will be installed globally.    
+4. Install dependencies.  
 
 ```shell
 python -m pip install -r requirements.txt
 ```
 
-## Develop your agent
+## STEP 2: Define the Agent
 
-Create a `main.py` file with the following template:
+Create a `main.py` file using the following template:
 
 ```python title="main.py"
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -56,15 +51,16 @@ def my_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
     # label_row.save()
 ```
 
-Fill in the function `my_agent` with what you want to happen when your agent is triggered.
+Complete the `my_agent` function with the logic you want to execute when the agent is triggered.
 
-> 💡 Notice that you can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if you want.
+!!! tip
+    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 
-## Test the agent
+## STEP 3: Test the Agent
 
-First, run the agent locally, such that it can be triggered.
+Trigger the agent by running it locally.
 
 ```shell
 ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
@@ -72,7 +68,7 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
 ```
 
 !!! info
-    Effectively, this means starting an API that lives at `localhost:8080/my_agent` and expects a POST request with `JSON` data of the following format:
+    This means starting an API at `localhost:8080/my_agent` that expects a POST request with `JSON` data with the following format:
     ```json
     {
         "projectHash": "<project_hash>",
@@ -81,10 +77,9 @@ ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
     }
     ```
 
-To hit that agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor){ target="\_blank", rel="noopener noreferrer" } in your browser on a frame for which you want to test your agent. Copy the URL.
+To test the agent endpoint, open the [Label Editor](https://docs.encord.com/platform-documentation/Annotate/annotate-label-editor){ target="\_blank", rel="noopener noreferrer" } in your browser on a frame where you want to run the agent. Then, copy the URL.
 
-Open a new terminal in the `my_project` directory.
-Then, run
+Open a new terminal in the `my_project` directory and run:
 
 ```shell
 source venv/bin/activate
@@ -94,12 +89,13 @@ encord-agents test local my_agent '<the_pasted_url>'
 !!! warning
     Notice the single quotes around `<the_pasted_url>`. They are important and should be there because you might copy a url with, e.g., an `&` character that have a [special meaning](https://www.howtogeek.com/439199/15-special-characters-you-need-to-know-for-bash/#amp-background-process){ target="_blank", rel="noopener noreferrer" } if it is not within a string (or escaped).
 
-Refresh the label editor in your browser to see the effect that you applied to the `label_row: LabelRowV2` happening.
+Refresh the Label Editor in your browser to see the effect.
 
-## Deployment
+## STEP 4: Deployment
 
-To go from development to production, you need to deploy your agent on the Google infrastructure.
-This is an example of how you could deploy the agent to the cloud.
+To go from development to production, you must deploy your agent on the Google infrastructure.
+
+The following example shows how you can deploy the agent to the cloud.
 
 ```shell
 gcloud functions deploy my_agent \
@@ -112,12 +108,13 @@ gcloud functions deploy my_agent \
     --set-secrets="ENCORD_SSH_KEY=SERVICE_ACCOUNT_KEY:latest"
 ```
 
-Notice how we set secrets (the ssh key that the agent should use).
+Notice how secrets are set (the ssh key that the agent should use).
 
-Here are the official [Google run function deploy docs](https://cloud.google.com/functions/docs/create-deploy-gcloud){ target="\_blank", rel="noopener noreferrer" }.
+See the official [Google run function deploy docs](https://cloud.google.com/functions/docs/create-deploy-gcloud){ target="\_blank", rel="noopener noreferrer" } for more information.
+
 There are a couple of things that you need to pay attention to:
 
-- You must make sure to authenticate `gcloud` and select the appropriate project first
-- You should configure a secret with the ssh_key content. Please see [Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets){ target="\_blank", rel="noopener noreferrer" }
+* You must make sure to authenticate `gcloud` and select the appropriate project first
+* You should configure a secret with the ssh_key content. See [Google Secrets docs](https://cloud.google.com/functions/docs/configuring/secrets){ target="\_blank", rel="noopener noreferrer" }
 
 

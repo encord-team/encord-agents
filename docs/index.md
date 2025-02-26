@@ -22,42 +22,21 @@
   </div>
 </div>
 
-Easily build agents for the Encord ecosystem.
-With just few lines of code, you can take automation to the next level.
+Welcome to Encord Agents, where you can easily enhance your workflow automation with just a few lines of code. Encord Agents are divided into two categories: Task Agents and Editor Agents.
 
-For a [workflow][docs-workflow]{ target="\_blank", rel="noopener noreferrer" } with a prioritization agent node looking like this:
+> Agents can be hosted on GCP, your own infrastructure, or any cloud.
 
-![](assets/examples/tasks_agents/prioritize_by_title_workflow.png)
-
-Here's how to build a [Task Agent](task_agents/index.md) that prioritizes annotation tasks based on data titles.
-
-<!--codeinclude-->
-
-[](code_examples/tasks/prioritize_by_data_title_specific.py)
-
-<!--/codeinclude-->
-
-> 💡 For the full end-to-end example, please see [here](getting_started.md).
-
-This repository provides utility functions and examples for building both [editor agents][editor_agents]{ target="\_blank", rel="noopener noreferrer" } and [task agents][task_agents]{ target="\_blank", rel="noopener noreferrer" }.
-
-**Key features:**
-
-1. ⚡ **Easy**: Multiple template agents to be adapted and hosted via GCP, own infra, or cloud.
-2. ⏩ **Convenient**: The library conveniently loads data via the [Encord SDK][encord_sdk]{ target="\_blank", rel="noopener noreferrer" } upon request.
-3. 👨‍💻 **Focused**: With essential resources readily available, you can focus on what matters. Create agents with pre-existing (or custom) dependencies for loading labels and data.
-4. 🤏 **Slim**: the library is slim at it's `core` and should not conflict with the dependencies of most projects.
 
 **Choose what type of agent to use:**
 
+- **Task Agents** run on each task and are part of your Encord Workflow. They enable actions like pre-labeling with models like GPT-4o, automated quality assurance, and other custom tasks.
+- **Editor Agents** are custom API endpoints that extend the functionality of your Encord platform.
+
 ![Decision tree for which agent to use](assets/decide-on-agent-type.png)
 
-Upon [installation](./installation.md) and [authentication](./authentication.md), you should continue your reading as follows:
 
-- If you plan to build an editor agent, please go to the [Editor agents section](editor_agents/index.md).
-- If you plan to build a task agent, please go to the [Task agents section](task_agents/index.md).
+**Key features:**
 
-[editor_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-editor-agents
-[task_agents]: https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-task-agents
-[encord_sdk]: https://pypi.org/project/encord/
-[docs-workflow]: https://docs.encord.com/sdk-documentation/projects-sdk/sdk-workflow-projects#workflow-projects
+1. ⚡ **Easy**: Agent templates are flexible and can be adapted for various use cases. 
+2. ⏩ **Convenient**: The library loads data on-demand using the [Encord SDK][encord_sdk]{ target="_blank", rel="noopener noreferrer" }.
+3. 🤏 **Slim**: The library is lightweight at its core and will not conflict with most Encord Project dependencies.

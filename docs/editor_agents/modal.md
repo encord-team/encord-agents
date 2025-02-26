@@ -1,27 +1,20 @@
-# Hosting Editor Agents with Modal
-
 [Modal][modal-docs] provides a serverless cloud for engineers and researchers who want to build compute-intensive applications without thinking about infrastructure.
-The cloud service is well suited for building and hosting editor agents.
-On this page, we will show you end-to-end how to set up an editor agent via Modal.
+The cloud service is well suited for building and hosting Encord Editor Agents.
 
-The example, will put a bitmask "ball" in the center of the current image in the label editor.
-However, you can look at the [Examples](./examples/index.md) to get more inspiration in terms of what you want your editor agent to do.
+This example places a bitmask "ball" in the center of an image in the Label Editor.
+
+!!! tip
+    See the Editor Agent [examples](./examples/index.md) for more sophisticated use cases.
 
 !!! info
-    Everything within the _FastAPI examples_ will be possible to do with Modal, as Modal is a wrapper around FastAPI.
+    Everything in the *FastAPI examples* can also be done using Modal, as Modal acts as a wrapper around FastAPI.
 
-While this page is not intended to explain everything that [Modal][modal-docs] does -- as it does a lot --, it should be self-contained and enough to get you to a working example.
-The page will follow these steps:
+This page is not intended to explain everything that [Modal][modal-docs] can do -- as it does a lot --, but it does provide a working example.
 
-1. Setting up authentication
-2. Inspect the Modal template
-3. Defining the agent logic
-4. Testing the agent
-5. Deploying the agent
+!!! tip
+    For a complete code example, see [here]({{ config.repo_url }}/blob/main/docs/code_examples/modal/editor_add_bitmask.py).
 
-👀 For a complete code example, please see [here]({{ config.repo_url }}/blob/main/docs/code_examples/modal/editor_add_bitmask.py).
-
-## Setting up authentication
+## STEP 1: Authentication
 
 You need to [authenticate](../authentication.md) with Encord first.
 Once you have a private ssh key (preferably corresponding to a service account), you should also ensure that you have [signed up for Modal](https://modal.com/signup).
@@ -36,13 +29,11 @@ Now you can configure the secret:
 
 ![Modal environment variable configuration](../assets/modal_setup_env_variable.png)
 
-This setup will allow `encord-agents` to authenticate with Encord via the provided key.
+This setup allows `encord-agents` to authenticate with Encord using the provided key.
 
-## Inspecting the modal template
+## STEP 2: Installation
 
-Next, let's have a look at a template for creating an endpoint that can be used for defining an Editor Agent.
-
-Do make sure that you have installed `encord-agents` and `modal`:
+Ensure that you have installed `encord-agents` and `modal`:
 
 ```shell
 python -m venv venv
@@ -50,9 +41,29 @@ source venv/bin/activate
 python -m pip install encord-agents modal
 ```
 
-Under the hood, Modal uses FastAPI which means that everything that is available in `encord_agents.fastapi` will also be usable within Modal `web_endpoint`s.
+## STEP 3: Inspecting the Modal Template
 
-Let us have a look:
+Now you need a template for creating an endpoint that can be used for defining an Editor Agent.
+
+The following example:  
+
+1. **Creates a Docker Image** – We define a container that includes all necessary dependencies:  
+   - `encord-agents` (the library for building agents)  
+   - `modal` (for hosting the agent)  
+   - `libgl` (required by `opencv`)  
+
+   Modal automatically handles setting up this container for you.  
+
+2. **Defines an App** – We create a FastAPI application to manage the agent's endpoints.  
+
+3. **Sets Up Authentication** – We add an endpoint that uses an SSH key for authentication.  
+   - The SSH key should be stored as `ENCORD_SSH_KEY`.  
+   - `encord-agents` automatically detects this key and use it to authenticate with the Encord SDK.  
+
+4. **Implements the Agent Logic** – defines what the agent should do when triggered.  
+   - Check out [these examples](./examples/index.md#fastapi-examples) to see different ways to customize your agent.  
+
+Since this is a FastAPI route, you can also take advantage of built-in dependencies from [`encord_agents.fastapi.dependencies`](../reference/editor_agents.md#encord_agents.fastapi.dependencies) to simplify your setup.
 
 ```python
 from typing_extensions import Annotated
@@ -90,23 +101,20 @@ def put_ball_on_image(
 	...
 ```
 
-In the template code above, we have
+Next, you must define some logic to go into the agent.
 
-1. Defined a docker image that contain the required dependencies (`encord-agents` and `modal` + `libgl` which is required by `opencv`). Modular automatically sets up a container with these dependencies.
-2. Defined an app to contain the endpoints that we define.
-3. An actual endpoint definition, which has access to the ssh key. `encord-agents` will know how to access that key (since it's names `ENCORD_SSH_KEY`) and use it for authenticating the `encord` SDK)
-4. A place to define our agent logic. There are multiple examples [here](./examples/index.md#fastapi-examples) on what could go in that function.
+## STEP 4: Defining the Agent
 
-The magical part is that since this is a FastAPI route, we can, e.g., use all the dependencies defined in [`encord_agents.fastapi.dependencies`](../reference/editor_agents.md#encord_agents.fastapi.dependencies) to make our lives easier.
-
-Next, we'll define some concrete logic to go into the agent.
-
-## Defining the agent logic
-
-In this example, we'll add a circular bitmask in the middle of current frame.
+The following example adds a circular bitmask in the middle of current frame.
 However, it could easily be running your own model ([even on the GPU](https://modal.com/docs/guide/gpu)).
 
-In the function definition of our route, we'll add the following code:
+In the function definition of your route, add the following code to: 
+
+1. Ensure that the Project's Ontology has a bitmask object. If it does not, there's nothing to do here.
+2. Ensure that the task is a visual data unit (an image, image group, or video).
+3. Place a bitmask with the appropriate shape and fills in a sphere.
+4. Adds the bitmask to the label row.
+5. Saves the labels.
 
 ```python
 @app.function(secrets=[modal.Secret.from_name("encord-ssh-key")])
@@ -151,21 +159,12 @@ def put_ball_on_image(
     label_row.save()
 ```
 
-The code performs the following steps:
+Upon completion, the `encord_agents` library sends a 200 response to the Label Editor, causing the editor to refresh its state. The result is a sphere in the middle of the image.
 
-1. It ensures that the project ontology has a bitmask object. If it does not, there's nothing to do here
-2. It ensures that we're looking at a visual asset (an image, image group, or video)
-3. It constructs a bitmask with the appropriate shape and fills in a sphere
-4. It adds the bitmask to the label row
-5. Saves the labels
-
-Upon completion, the `encord_agents` library will send a 200 response to the label editor, causing the editor to refresh it's state.
-The result should be a sphere in the middle of the image.
-
-## Testing the agent
+## STEP 5: Testing the Agent
 
 To test the agent, there is a dedicated CLI tool.
-You will have to first run the agent locally (with your python environment sourced).
+You must first run the agent locally (with your python environment sourced).
 Assuming that the python file you created is named `example.py`, you can run:
 
 ```shell
@@ -200,18 +199,16 @@ You should see a green box detaining the request and the response.
 
 If the status code is 200, refresh your browser to see the new bitmask in the Label Editor.
 
-## Deploying the agent
+## STEP 6: Deployment
 
-Once you're done developing your agent, it's very easy to deploy the agent.
-Simply run:
+When you are done developing your agent, run the following to deploy your agent.
 
 ```shell
 modal deploy example.py
 ```
 
-This will deploy the agent more permanently.
 Copy the displayed url and configure it in the Encord platform by following [the documentation](https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-editor-agents).
 
-Afterwards, you should be able to right-click the frame in the Label Editor to trigger the agent.
+Once that is done, you can right-click the frame in the Label Editor to trigger the agent.
 
 [modal-docs]: https://modal.com/docs

@@ -1,4 +1,4 @@
-site_name: "Encord Agents"
+site_name: "Data Agents"
 repo_url: https://github.com/encord-team/encord-agents
 colab_prefix: https://colab.research.google.com/github/encord-team/encord-agents
 branch_name: main # used for debugging should be "main"
@@ -12,24 +12,35 @@ theme:
   name: "material"
   custom_dir: docs/overrides
   features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
     - content.code.copy
-    - navigation.footer
-    - navigation.expand
+    - content.code.select
+    - navigation.path
+    #    - navigation.expand
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tracking
+    - toc.follow
 
 nav:
-  - "Home": index.md
-  - "Installation": installation.md
-  - "Authentication": authentication.md
-  - "Getting started": getting_started.md
-  - "Dependencies": dependencies.md
+  - "Basics": 
+    - "Home": index.md
+    - "Authentication": authentication.md
+    - "Get Started":
+        - "Installation": installation.md
+        - "Basic Example": basic_example.md
+    - "Dependencies": dependencies.md
   - "Editor Agents":
-      - "Intro": editor_agents/index.md
+      - "Editor Agents Basics": editor_agents/index.md
       - "GCP Cloud Functions": editor_agents/gcp.md
       - "FastAPI": editor_agents/fastapi.md
       - "Hosting with Modal": editor_agents/modal.md
       - "Examples": editor_agents/examples/index.md
   - "Task Agents":
-      - "Intro": task_agents/index.md
+      - "Introduction": task_agents/index.md
       - "Execution":
           - "Execution intro": task_agents/runner_intro.md
           - "Sequential": task_agents/sequential_runner.md
@@ -41,6 +52,7 @@ nav:
           - Pre-label videos with Mask-RCNN: notebooks/mask_rcnn_on_videos.ipynb
           - Use models from Hugging Face 🤗: notebooks/hugging_face_agent_example.ipynb
           - Use YOLO model from Ultralytics: notebooks/yolo_example.ipynb
+          
           - Transcribe multi-speaker conversations: notebooks/audio_transcription_agent_multi_speaker.ipynb
           - Sentiment analysis: notebooks/sentiment_analysis.ipynb
           - Multimodal LLM as a Judge: notebooks/llm_as_a_judge.ipynb

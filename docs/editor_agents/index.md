@@ -1,6 +1,3 @@
-!!! info
-    Editor Agents are API endpoints triggered on individual tasks within the Label Editor. They differ from [Task Agents][task-agents], which are Workflow components that activate on all tasks passing through the Agent stage.
-
 <div>
   <div style="display: flex; justify-content: space-between;">
     <div style="flex: 1; padding: 10px; text-align: center">
@@ -23,6 +20,7 @@
 
 Editor Agents enable you to integrate your own API endpoint, such as your own model hosted on a server (or in a cloud function), with Encord to enhance your annotation processes.
 Agents can be called while annotating in the Label Editor.
+
 Some common use-cases are:
 
 - _Validate the current state of the annotations_ within a frame, video, or image group. You might, for example, want to give the labelers an option to annotate the current state of the labels before submitting.
@@ -30,9 +28,12 @@ Some common use-cases are:
 - Employ custom prompting models like [DINOv][dinov]{ target="\_blank", rel="noopener noreferrer" } or [T-Rex2][trex2]{ target="\_blank", rel="noopener noreferrer" } to speed up annotations.
 - _Trigger notifications_ internally related to the given task.
 
-Think of these agents as agents that your annotators can trigger at will _while they are labeling_.
+Think of these agents as actions your annotators can trigger _while they are labeling_.
 
-## The general concepts
+!!! info
+    Editor Agents are API endpoints triggered on individual tasks within the Label Editor. They differ from [Task Agents][task-agents], which are Workflow components that activate on all tasks passing through the Agent stage.
+
+## General Concepts
 
 Editor agents work in the following way:
 
