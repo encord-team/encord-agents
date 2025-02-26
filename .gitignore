@@ -1,6 +1,7 @@
 # Integration Testing files
 **/get_secrets.sh
 **/private_key_integration_testing
+scratches/
 
 dist/
 encord-agents-unit-test-report.xml
