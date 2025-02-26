@@ -91,7 +91,7 @@ def my_agent(lr: LabelRowV2, ...) -> str | UUID | None:
 
 The agent function is supposed to return where the task should go next.
 This can be done by pathways names or `UUID`s. 
-If None is returned, the task is not moved and the runner will process the task again on a subsequent process of that stage.
+If None is returned, the task remains in its current stage. It is processed by the runner on the next execution of that stage.
 
 You can also define multiple stages in a single runner:
 
@@ -163,13 +163,13 @@ Additionally, when developing your agent in a REPL environment (such as Jupyter 
 def stage():
     ...
 ```
-snippet, the library will raise an error as we validate against attempting to define multiple agents for a given stage. If you wish to overwrite the function associated to a given stage, this can be done by:
+snippet, the library raises an error as we validate against attempting to define multiple agents for a given stage. If you wish to overwrite the function associated to a given stage, this can be done by:
 ```python
 @runner.stage("<my_stage_name>", overwrite=True)
 def stage():
     ...
 ```
-which will update the definition for the given stage on each re-run. It also ensures that the order of execution is preserved; That is, stages are executed in the order in which they were originally defined.
+which updates the definition for the given stage on each re-run. It also ensures that the order of execution is preserved; That is, stages are executed in the order in which they were originally defined.
 
 ## Dependencies
 
