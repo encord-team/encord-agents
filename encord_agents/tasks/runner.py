@@ -126,7 +126,7 @@ class RunnerBase:
             self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         self.agents: list[RunnerAgent] = []
 
-    def validate_stage(self, stage: str | UUID, *, overwrite: bool = False) -> tuple[UUID | str, str]:
+    def validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
         """
         Returns stage uuid and printable name.
         """
@@ -150,20 +150,26 @@ class RunnerBase:
                 )
             stage = selected_stage.uuid
 
+        return stage, printable_name
+
+    def check_stage_already_defined(
+        self, stage: UUID | str, printable_name: str, *, overwrite: bool = False
+    ) -> int | None:
         if stage in [a.identity for a in self.agents]:
             if not overwrite:
                 raise PrintableError(
                     f"Stage name [blue]`{printable_name}`[/blue] has already been assigned a function. You can only assign one callable to each agent stage."
                 )
-            self.agents = [agent for agent in self.agents if agent.identity != stage]
-            if len(self.agents) >= 1:
-                logger.warning("Overriding the Stage will change the order of execution for the stages")
-        return stage, printable_name
+            previous_index = [agent.identity for agent in self.agents].index(stage)
+            return previous_index
+        return None
 
     def _add_stage_agent(
         self,
         identity: str | UUID,
         func: Callable[..., TaskAgentReturn],
+        *,
+        stage_insertion: int | None,
         printable_name: str | None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None,
@@ -175,7 +181,12 @@ class RunnerBase:
             label_row_metadata_include_args=label_row_metadata_include_args,
             label_row_initialise_labels_args=label_row_initialise_labels_args,
         )
-        self.agents.append(runner_agent)
+        if stage_insertion is not None:
+            if stage_insertion >= len(self.agents):
+                raise ValueError("This should be impossible. Trying to update an agent at a location not defined")
+            self.agents[stage_insertion] = runner_agent
+        else:
+            self.agents.append(runner_agent)
         return runner_agent
 
 
@@ -314,15 +325,17 @@ class Runner(RunnerBase):
         Returns:
             The decorated function.
         """
-        stage_uuid, printable_name = self.validate_stage(stage, overwrite=overwrite)
+        stage_uuid, printable_name = self.validate_stage(stage)
+        stage_insertion = self.check_stage_already_defined(stage_uuid, printable_name, overwrite=overwrite)
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
             self._add_stage_agent(
                 stage_uuid,
                 func,
-                printable_name,
-                label_row_metadata_include_args,
-                label_row_initialise_labels_args,
+                stage_insertion=stage_insertion,
+                printable_name=printable_name,
+                label_row_metadata_include_args=label_row_metadata_include_args,
+                label_row_initialise_labels_args=label_row_initialise_labels_args,
             )
             return func
 
@@ -724,7 +737,12 @@ class QueueRunner(RunnerBase):
 
         def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
             runner_agent = self._add_stage_agent(
-                stage_uuid, func, printable_name, label_row_metadata_include_args, label_row_initialise_labels_args
+                stage_uuid,
+                func,
+                stage_insertion=None,
+                printable_name=printable_name,
+                label_row_metadata_include_args=label_row_metadata_include_args,
+                label_row_initialise_labels_args=label_row_initialise_labels_args,
             )
             include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
             init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
