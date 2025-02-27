@@ -108,7 +108,7 @@ gcloud functions deploy my_agent \
     --set-secrets="ENCORD_SSH_KEY=SERVICE_ACCOUNT_KEY:latest"
 ```
 
-Notice how secrets are set (the ssh key that the agent should use).
+Notice how secrets are set (the SSH key that the agent should use).
 
 See the official [Google run function deploy docs](https://cloud.google.com/functions/docs/create-deploy-gcloud){ target="\_blank", rel="noopener noreferrer" } for more information.
 
