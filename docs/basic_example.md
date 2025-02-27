@@ -36,7 +36,7 @@ Copy the `Project ID` in the top left of the Project page.
 
 In the directory you created for your agents, create a Python file. In this example we use `agent.py`.
 
-Copy paste the following template.
+Copy paste the following template in to the Python file:
 
 ```python title="agent.py"
 from encord.objects import LabelRowV2
