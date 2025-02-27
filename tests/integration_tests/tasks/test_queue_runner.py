@@ -73,3 +73,41 @@ def test_queue_runner_e2e(ephemeral_project_hash: str, mock_agent: MagicMock) ->
     assert len(final_stage_tasks) == N_items
 
     assert mock_agent.call_count == N_items
+
+
+def test_queue_runner_passes_errors_appropriately(ephemeral_project_hash: str) -> None:
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
+
+    @queue_runner.stage(AGENT_STAGE_NAME)
+    def agent_func(agent_task: AgentTask) -> str:
+        raise Exception()
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    queue: list[str] = []
+    for stage in queue_runner.get_agent_stages():
+        for task in stage.get_tasks():
+            queue.append(task.model_dump_json())
+    assert queue_runner.project
+    N_items = len(queue_runner.project.list_label_rows_v2())
+    # Check exception not thrown fetching tasks and they are added to Queue appropriately
+    assert len(queue) == N_items
+    agent_stage = queue_runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+
+    while queue:
+        task_spec = queue.pop()
+        agent_task = AgentTask.model_validate_json(task_spec)
+        result_json = agent_func(task_spec)
+        result = TaskCompletionResult.model_validate_json(result_json)
+        assert not result.success
+        assert result.error
+        assert "Exception" in result.error
+        assert result.pathway is None
+        assert result.stage_uuid == agent_stage.uuid
+        assert result.task_uuid == agent_task.uuid
+
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    # Haven't actually moved the tasks yet
+    assert len(agent_stage_tasks) == N_items
+    final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    final_stage_tasks = list(final_stage.get_tasks())
+    assert len(final_stage_tasks) == 0
