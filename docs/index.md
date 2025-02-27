@@ -24,7 +24,8 @@
 
 Welcome to Encord Agents, where you can easily enhance your workflow automation with just a few lines of code. Encord Agents are divided into two categories: Task Agents and Editor Agents.
 
-> Agents can be hosted on GCP, your own infrastructure, or any cloud.
+!!! tip
+      Agents can be hosted on your own infrastructure or in the cloud, including platforms like GCP.
 
 
 **Choose what type of agent to use:**
@@ -39,4 +40,4 @@ Welcome to Encord Agents, where you can easily enhance your workflow automation 
 
 1. ⚡ **Easy**: Agent templates are flexible and can be adapted for various use cases. 
 2. ⏩ **Convenient**: The library loads data on-demand using the [Encord SDK][encord_sdk]{ target="_blank", rel="noopener noreferrer" }.
-3. 🤏 **Slim**: The library is lightweight at its core and will not conflict with most Encord Project dependencies.
+3. 🤏 **Slim**: The library is lightweight at its `core`.

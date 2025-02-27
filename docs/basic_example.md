@@ -32,7 +32,7 @@ Copy the `Project ID` in the top left of the Project page.
     AgentStage(title="evaluate", uuid="28d1bcc9-6a3a-4229-8c06-b498fcaf94a0")
     ```
 
-## 2. Define your agent
+## 2. Define the Agent
 
 In the directory you created for your agents, create a Python file. In this example we use `agent.py`.
 

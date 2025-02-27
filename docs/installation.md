@@ -4,39 +4,36 @@ If you just want to install `encord-agents` in your current environment, you can
 python -m pip install encord-agents
 ```
 
-> ℹ️ This project requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
+!!! warning
+    This project requires `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
 
 ---
 
-## In an isolated environment (recommended)
+## Using an Isolated Environment (Recommended)
 
-There are multiple ways of maintaining python environments.
-Below,
+We recommend installing the Encord agents library in an isolated environment. There are several options available. 
 
 ### Venv
 
-To avoid installing `encord-agents` with your global python installation, you can create a virtual environment with `venv` and install it there.
-
-First create a new virtual environment. In this example, we name it `agents-venv` but you can choose whatever.
+1. Create a new virtual environment. In this example, we name it `agents-venv` but you can choose any name you see fit.
 
 ```shell
 python -m venv agents-venv
 ```
 
-Once it's created, you can activate it.
-Activating it will make the modules that you installed in that virtual environment available in python:
+2. Next, activate your virtual environment. This ensures that any modules you install remain isolated and that all previously installed modules in the environment are available for use in Python.
 
 ```shell
 source agents-venv/bin/activate
 ```
 
-Now you should see the environment before the cursor in your terminal.
+3. Once activated, the environment name is displayed before the cursor in your terminal.
 
 ```shell title="example"
 (agents-venv) $
 ```
 
-Now install `encord-agents` as above:
+4. Install the `encord-agents` library.
 
 ```shell
 python -m pip install encord-agents
@@ -44,7 +41,7 @@ python -m pip install encord-agents
 
 ### Poetry
 
-If you already have a poetry project, you can also add `encord-agents` to that project:
+If you already have a Poetry project, you can add `encord-agents` to that project:
 
 ```shell
 poetry add encord-agents
@@ -52,25 +49,25 @@ poetry add encord-agents
 
 ### Conda
 
-If you haven't already, create a conda environment:
+1. Create a conda environment.
 
 ```
 conda create -n agents python>=3.10
 ```
 
-For conda, we suggest activating your conda environment:
+2. We suggest activating your conda environment.
 
 ```shell
 conda activate agents
 ```
 
-Now you should see the environment before the cursor in your terminal.
+3. Once activated, the environment name is displayed before the cursor in your terminal.
 
 ```shell title="example"
 (agents) $
 ```
 
-Then, install `encord-agents` within the environment:
+4. Install the `encord-agents` library.
 
 ```shell
 python -m pip install encord-agents
@@ -78,6 +75,4 @@ python -m pip install encord-agents
 
 ## Dependencies
 
-The dependencies of `encord-agents` are chosen to be lite.
-The only heavy dependencies that are somewhat heavy are `opencv-python` and `numpy`.
-To see the full list of dependencies, you can have a look [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.
+The dependencies for `encord-agents` are kept lightweight, with the only relatively large dependencies being `opencv-python` and `numpy`. To see the full list of dependencies, go [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.
