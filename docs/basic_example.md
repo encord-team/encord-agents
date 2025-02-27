@@ -66,7 +66,7 @@ def my_agent_logic(lr: LabelRowV2) -> str:
 
 > **Too simple?**  
 > If the example is too simple, see the [task examples](task_agents/index.md)
-> to find something more relevant to your use-case.
+> to find something more relevant to your use case.
 
 ## 3. Run the Agent
 
