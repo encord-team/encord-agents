@@ -1,4 +1,4 @@
-When defining your agents, you can easily inject essential dependencies such as the path to the underlying asset or frame iterators. You can also add custom dependencies if needed.  
+When defining your agents, you can easily inject essential dependencies, such as the path to the underlying asset or frame iterators. You can also add custom dependencies if needed.  
 
 To inject dependencies, simply type-annotate your agent function variables using the `Depends` class.
 
