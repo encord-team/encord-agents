@@ -1,6 +1,6 @@
 Before getting started, ensure that you have:
 
-* `python >= 3.10`. If you do not have python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
+* `python >= 3.10`. If you do not have python 3.10, we recommend using [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
 * The ability to authenticate with Encord.
 * [Installed the Encord Agents library](docs/installation.md).
 
