@@ -6,7 +6,7 @@ from encord.workflow.stages.agent import AgentTask
 
 from encord_agents.core.utils import batch_iterator
 from encord_agents.tasks import Runner
-from tests.fixtures import AGENT_STAGE_NAME, COMPLETE_STAGE_NAME
+from tests.fixtures import AGENT_STAGE_NAME, AGENT_TO_COMPLETE_PATHWAY_NAME, COMPLETE_STAGE_NAME
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> str:
         mock_agent(task)
-        return COMPLETE_STAGE_NAME
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
 
     # Run the runner
     runner(task_batch_size=11)  # 520 tasks / 11 = 47 full batches + 3 tasks in the last batch
@@ -79,7 +79,7 @@ def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str
     @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> str:
         mock_agent(task)
-        return COMPLETE_STAGE_NAME
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
 
     # Run with max_tasks_per_stage=2
     max_tasks = 2

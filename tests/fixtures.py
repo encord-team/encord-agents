@@ -27,6 +27,8 @@ AGENT_TO_COMPLETE_WORKFLOW_HASH = "a59b3190-09e2-432c-a8bb-f2925872e298"
 
 AGENT_STAGE_NAME = "Agent 1"
 COMPLETE_STAGE_NAME = "Complete"
+AGENT_TO_COMPLETE_PATHWAY_HASH = "49a786f3-5edf-4b94-aff0-3da9042d3bf0"
+AGENT_TO_COMPLETE_PATHWAY_NAME = "Complete"
 
 EPHEMERAL_PROJECT_TITLE = "encord-agents test project"
 EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"
@@ -175,4 +177,4 @@ def class_level_ephemeral_twin_project_hash(
 
 @pytest.fixture(scope="function")
 def mock_agent() -> MagicMock:
-    return MagicMock(return_value=COMPLETE_STAGE_NAME)
+    return MagicMock(return_value=AGENT_TO_COMPLETE_PATHWAY_NAME)

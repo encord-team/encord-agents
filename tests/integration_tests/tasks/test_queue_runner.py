@@ -8,7 +8,11 @@ from encord.workflow.stages.final import FinalStage
 from encord_agents.core.utils import batch_iterator
 from encord_agents.tasks import QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
-from tests.fixtures import AGENT_STAGE_NAME, COMPLETE_STAGE_NAME, IMAGES_520_DATASET_HASH, ONE_OF_EACH_DATASET_HASH
+from tests.fixtures import (
+    AGENT_STAGE_NAME,
+    AGENT_TO_COMPLETE_PATHWAY_NAME,
+    COMPLETE_STAGE_NAME,
+)
 
 
 def test_list_agent_stages(ephemeral_project_hash: str) -> None:
@@ -27,13 +31,13 @@ def test_list_agent_stages(ephemeral_project_hash: str) -> None:
         next(agent_stages_iter)
 
 
-def test_create_tasks(ephemeral_project_hash: str, mock_agent: MagicMock) -> None:
+def test_queue_runner_e2e(ephemeral_project_hash: str, mock_agent: MagicMock) -> None:
     queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
 
     @queue_runner.stage(AGENT_STAGE_NAME)
-    def agent_func() -> str:
-        mock_agent()
-        return COMPLETE_STAGE_NAME
+    def agent_func(agent_task: AgentTask) -> str:
+        mock_agent(agent_task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
 
     queue: list[str] = []
     for stage in queue_runner.get_agent_stages():
@@ -53,9 +57,14 @@ def test_create_tasks(ephemeral_project_hash: str, mock_agent: MagicMock) -> Non
 
     while queue:
         task_spec = queue.pop()
+        agent_task = AgentTask.model_validate_json(task_spec)
         result_json = agent_func(task_spec)
         result = TaskCompletionResult.model_validate_json(result_json)
         assert result.success
+        assert not result.error
+        assert result.pathway == AGENT_TO_COMPLETE_PATHWAY_NAME
+        assert result.stage_uuid == agent_stage.uuid
+        assert result.task_uuid == agent_task.uuid
 
     # Have moved the tasks
     agent_stage_tasks = list(agent_stage.get_tasks())
