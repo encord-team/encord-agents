@@ -50,7 +50,7 @@ The following example:
 1. **Creates a Docker Image** – We define a container that includes all necessary dependencies:  
    - `encord-agents`: The library for building agents
    - `modal`: For hosting the agent
-   - `libgl` (required by `opencv`)  
+   - `libgl`: Required by `opencv`
 
    Modal automatically handles setting up this container for you.  
 
