@@ -105,7 +105,7 @@ Next, you must define some logic to go into the agent.
 
 ## STEP 4: Defining the Agent
 
-The following example adds a circular bitmask in the middle of current frame.
+The following example adds a circular bitmask in the middle of the current frame.
 However, it could easily be running your own model ([even on the GPU](https://modal.com/docs/guide/gpu)).
 
 In the function definition of your route, add the following code to: 
