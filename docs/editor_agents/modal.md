@@ -112,7 +112,7 @@ In the function definition of your route, add the following code to:
 
 1. Ensure that the Project's Ontology has a bitmask object. If it does not, there's nothing to do here.
 2. Ensure that the task is a visual data unit (an image, image group, image sequence, or video).
-3. Place a bitmask with the appropriate shape and fills in a sphere.
+3. Places a bitmask with the appropriate shape and fills in a sphere.
 4. Adds the bitmask to the label row.
 5. Saves the labels.
 
