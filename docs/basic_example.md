@@ -34,7 +34,7 @@ Copy the `Project ID` in the top left of the Project page.
 
 ## 2. Define your agent
 
-In the directory you created for your agents, create a python file. In this example we use `agent.py`.
+In the directory you created for your agents, create a Python file. In this example we use `agent.py`.
 
 Copy paste the following template.
 
