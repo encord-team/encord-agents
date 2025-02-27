@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Generator
+from unittest.mock import MagicMock
 
 import pytest
 from encord.dataset import Dataset
@@ -21,7 +22,12 @@ IMAGES_520_DATASET_HASH = (
 )
 # Client metadata of the form: {"item_type": item.item_type, "a": "b"}
 
+# Workflow:
 AGENT_TO_COMPLETE_WORKFLOW_HASH = "a59b3190-09e2-432c-a8bb-f2925872e298"
+
+AGENT_STAGE_NAME = "Agent 1"
+COMPLETE_STAGE_NAME = "Complete"
+
 EPHEMERAL_PROJECT_TITLE = "encord-agents test project"
 EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"
 
@@ -98,7 +104,7 @@ def workflow_hash(
     │  start  ├───►│  Agent 1  ├─┬─►│  Complete  │
     └─────────┘    └───────────┘ │  └────────────┘
                                 │
-                            Name: "complete"
+                            Name: "Complete"
                             Uuid: "49a786f3-5edf-4b94-aff0-3da9042d3bf0"
     """
     return AGENT_TO_COMPLETE_WORKFLOW_HASH
@@ -165,3 +171,8 @@ def class_level_ephemeral_twin_project_hash(
     workflow_hash: str,
 ) -> Iterator[str]:
     yield from create_default_project(user_client, all_purpose_ontology, workflow_hash, ONE_OF_EACH_DATASET_HASH)
+
+
+@pytest.fixture(scope="function")
+def mock_agent() -> MagicMock:
+    return MagicMock(return_value=COMPLETE_STAGE_NAME)
