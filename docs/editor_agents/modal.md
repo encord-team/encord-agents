@@ -12,7 +12,7 @@ This example places a bitmask "ball" in the center of an image in the Label Edit
 This page is not intended to explain everything that [Modal][modal-docs] can do -- as it does a lot --, but it does provide a working example.
 
 !!! tip
-    For a complete code example, see [here]({{ config.repo_url }}/blob/main/docs/code_examples/modal/editor_add_bitmask.py).
+    For a complete code example, go [here]({{ config.repo_url }}/blob/main/docs/code_examples/modal/editor_add_bitmask.py).
 
 ## STEP 1: Authentication
 
