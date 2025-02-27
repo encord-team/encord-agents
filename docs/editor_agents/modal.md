@@ -164,7 +164,7 @@ Upon completion, the `encord_agents` library sends a 200 response to the Label E
 ## STEP 5: Testing the Agent
 
 To test the agent, there is a dedicated CLI tool.
-You must first run the agent locally (with your python environment sourced).
+You must first run the agent locally (with your Python environment sourced).
 Assuming that the python file you created is named `example.py`, you can run:
 
 ```shell
