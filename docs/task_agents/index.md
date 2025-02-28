@@ -28,6 +28,7 @@ Here are some common use-cases:
 - _Custom "label assertions"_ that validate, e.g., number of labels or other constraints, before sending them for review.
 - _Custom consensus computations_ by reading in labels from other Projects.
 
-Think of these agents as agents that can _automatically_ trigger when a task reaches the associated agent state in the Project Workflow.
+Task Agents must be triggered when a task reaches the associated agent state in the Project Workflow.
 
-Learning to build task agents are best done via [example](../notebooks/task_agent_set_priority.ipynb).
+!!! tip
+      Learning to build Task Agents is best done using [examples](../notebooks/task_agent_set_priority.ipynb).

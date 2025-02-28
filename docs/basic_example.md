@@ -4,11 +4,11 @@ Before getting started, ensure that you have:
 * The ability to authenticate with Encord.
 * [Installed the Encord Agents library](./installation.md).
 
-The following example shows how to create a simple [task agent](task_agents/index.md).
+The following example shows how to create a simple [Task Agent](task_agents/index.md).
 to change the priority of each task before moving it to the next stage of the Workflow.
 
 !!! tip
-    We also provide more detailed [task agent examples](notebooks/task_agent_set_priority.ipynb) and [editor agent examples](editor_agents/examples/index.md).
+    We also provide more detailed [Task Agent examples](notebooks/task_agent_set_priority.ipynb) and [editor agent examples](editor_agents/examples/index.md).
 
 
 ## 1. Create Encord Project

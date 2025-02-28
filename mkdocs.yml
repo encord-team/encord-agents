@@ -42,23 +42,23 @@ nav:
   - "Task Agents":
       - "Overview": task_agents/index.md
       - "Execution":
-          - "Execution intro": task_agents/runner_intro.md
+          - "Execution Basics": task_agents/runner_intro.md
           - "Sequential": task_agents/sequential_runner.md
-          - "Multi-processing (queues)": task_agents/queue_runner.md
+          - "Multi-Processing (Queues)": task_agents/queue_runner.md
       - "Examples":
           - "Prioritize Annotation Tasks": notebooks/task_agent_set_priority.ipynb
-          - "Transfer labels to a twin project": notebooks/twin_project_label_transfer.ipynb
-          - "Pre-label videos with bounding boxes": notebooks/prelabel_videos_with_bounding_boxes.ipynb
-          - "Pre-label videos with Mask-RCNN": notebooks/mask_rcnn_on_videos.ipynb
-          - "Use models from Hugging Face 🤗": notebooks/hugging_face_agent_example.ipynb
-          - "Use YOLO model from Ultralytics": notebooks/yolo_example.ipynb
-          - "Transcribe multi-speaker conversations": notebooks/audio_transcription_agent_multi_speaker.ipynb
-          - "Sentiment analysis": notebooks/sentiment_analysis.ipynb
+          - "Transfer Labels to a Twin Project": notebooks/twin_project_label_transfer.ipynb
+          - "Pre-Label Videos with Bounding Boxes": notebooks/prelabel_videos_with_bounding_boxes.ipynb
+          - "Pre-label Videos with Mask-RCNN": notebooks/mask_rcnn_on_videos.ipynb
+          - "Use a Hugging Face 🤗 Model": notebooks/hugging_face_agent_example.ipynb
+          - "Use the Ultralytics YOLO Model": notebooks/yolo_example.ipynb
+          - "Transcribe Multi-Speaker Conversations": notebooks/audio_transcription_agent_multi_speaker.ipynb
+          - "Sentiment Analysis": notebooks/sentiment_analysis.ipynb
           - "Multimodal LLM as a Judge": notebooks/llm_as_a_judge.ipynb
-          - "Multistage VLM video captioning": notebooks/multistage_video_summarisation.ipynb
+          - "Multistage VLM Video Captioning": notebooks/multistage_video_summarisation.ipynb
   - "Reference":
-      - "Editor agents": reference/editor_agents.md
-      - "Task agents": reference/task_agents.md
+      - "Editor Agents": reference/editor_agents.md
+      - "Task Agents": reference/task_agents.md
       - "Core": reference/core.md
 
 

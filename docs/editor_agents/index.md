@@ -18,8 +18,7 @@
   <img width="100%" src="/assets/editor-agent-banner.png" />
 </div>
 
-Editor Agents enable you to integrate your own API endpoint, such as your own model hosted on a server (or in a cloud function), with Encord to enhance your annotation processes.
-Agents can be called while annotating in the Label Editor.
+Editor Agents enable you to integrate your own API endpoint, such as your own model hosted on a server (or in a cloud function), with Encord to enhance your annotation processes. Editor Agents can be called while annotating in the Label Editor.
 
 Some common use-cases are:
 
@@ -28,14 +27,14 @@ Some common use-cases are:
 - Employ custom prompting models like [DINOv][dinov]{ target="\_blank", rel="noopener noreferrer" } or [T-Rex2][trex2]{ target="\_blank", rel="noopener noreferrer" } to speed up annotations.
 - _Trigger notifications_ internally related to the given task.
 
-Think of these agents as actions your annotators can trigger _while they are labeling_.
+Editor Agents are actions your annotators can trigger _while they are labeling_.
 
 !!! info
     Editor Agents are API endpoints triggered on individual tasks within the Label Editor. They differ from [Task Agents][task-agents], which are Workflow components that activate on all tasks passing through the Agent stage.
 
 ## General Concepts
 
-Editor agents work in the following way:
+Editor Agents work in the following way:
 
 ```mermaid
 sequenceDiagram
@@ -52,8 +51,7 @@ sequenceDiagram
     B->>A: Label editor refresh
 ```
 
-What you can use `encord-agents` for is filling in the logic that's supposed to happen in the "Editor Agent [custom API]" part of the diagram.
-That is, you will be responsible for programmatically defining what to do, when your custom api is hit with a `project_hash`, `data_hash`, and potentially a `frame` number.
+Use `encord-agents` to define the logic for the "Editor Agent [custom API]" section of the diagram. You are responsible for programmatically determining what happens when your custom API receives a `project_hash`, `data_hash`, and potentially a `frame` number.
 
 We help with two different ways of building such Custom APIs:
 
@@ -62,13 +60,11 @@ We help with two different ways of building such Custom APIs:
 3. Using [Modal][modal-docs]{ target="\_blank", rel="noopener noreferrer" } which provides a serverless cloud for engineers and researchers who want to build compute-intensive applications without thinking about infrastructure.
 
 !!! tip
-    Actually, the `encord-agents` take a lot of inspiration from [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" }. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection]{ target="\_blank", rel="noopener noreferrer" } from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
+    The `encord-agents` library takes a lot of inspiration from [FastAPI][fastapi]{ target="\_blank", rel="noopener noreferrer" }. Specifically, we have adopted the idea of [dependency injections][fastapi-dependency-injection]{ target="\_blank", rel="noopener noreferrer" } from that library. While our [injection scheme](../dependencies.md) is not as sophisticated, it should feel familiar.
 
-Google run functions are good for more light-weight operations like acting as proxies to other model inference APIs or tweaking labels.
-FastAPI and Modal apps are better suited for actually hosting your own models and running more resource-intensive operations.
+Google Cloud Run functions are ideal for lightweight operations, such as serving as proxies for model inference APIs or making minor label adjustments. In contrast, FastAPI and Modal apps are better suited for hosting your own models and handling resource-intensive tasks.
 
-In the next section, you will find a GCP example.
-If you need to build a FastAPI (or Modal) application, feel free to [skip it](./fastapi.md).
+In the next section, we include a GCP example. If you need to build a FastAPI (or Modal) application, feel free to [skip it](./fastapi.md).
 
 [task-agents]: ../task_agents/index.md
 [dinov]: https://github.com/UX-Decoder/DINOv/tree/main
