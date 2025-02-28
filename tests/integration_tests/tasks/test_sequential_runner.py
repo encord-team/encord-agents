@@ -6,12 +6,7 @@ from encord.workflow.stages.agent import AgentTask
 
 from encord_agents.core.utils import batch_iterator
 from encord_agents.tasks import Runner
-from tests.fixtures import IMAGES_520_DATASET_HASH, ONE_OF_EACH_DATASET_HASH
-
-
-@pytest.fixture
-def mock_agent() -> MagicMock:
-    return MagicMock(return_value="complete")
+from tests.fixtures import AGENT_STAGE_NAME, AGENT_TO_COMPLETE_PATHWAY_NAME, COMPLETE_STAGE_NAME
 
 
 @pytest.fixture
@@ -53,10 +48,10 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     runner = Runner(project_hash=project_hash)
 
     # Register the mock function as a stage handler
-    @runner.stage("Agent 1")
+    @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> str:
         mock_agent(task)
-        return "complete"
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
 
     # Run the runner
     runner(task_batch_size=11)  # 520 tasks / 11 = 47 full batches + 3 tasks in the last batch
@@ -65,7 +60,7 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     project = runner.project
     assert project
 
-    complete_stage = next(s for s in project.workflow.stages if s.title == "Complete")
+    complete_stage = next(s for s in project.workflow.stages if s.title == COMPLETE_STAGE_NAME)
     tasks = list(complete_stage.get_tasks())
 
     dataset_info = list(project.list_datasets())[0]
@@ -81,10 +76,10 @@ def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str
     """Test that runner respects max_tasks_per_stage parameter"""
     runner = Runner(project_hash=ephemeral_image_project_hash)
 
-    @runner.stage("Agent 1")
+    @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> str:
         mock_agent(task)
-        return "complete"
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
 
     # Run with max_tasks_per_stage=2
     max_tasks = 2
@@ -102,7 +97,7 @@ def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, moc
 
     mock_agent.return_value = None
 
-    @runner.stage("Agent 1")
+    @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> None:
         mock_agent(task)
         return None
@@ -113,7 +108,7 @@ def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, moc
     # Add null check for runner.project to satisfy mypy
     assert runner.project is not None, "Project should not be None at this point"
 
-    agent_stage = next(s for s in runner.project.workflow.stages if s.title == "Agent 1")
+    agent_stage = next(s for s in runner.project.workflow.stages if s.title == AGENT_STAGE_NAME)
     num_tasks_left_in_agent_stage = len(list(agent_stage.get_tasks()))
     num_tasks_in_the_project = len(list(runner.project.list_label_rows_v2()))
 
