@@ -2,7 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from encord.user_client import EncordUserClient
-from encord.workflow.stages.agent import AgentTask
+from encord.workflow.stages.agent import AgentStage, AgentTask
+from encord.workflow.stages.final import FinalStage
 
 from encord_agents.core.utils import batch_iterator
 from encord_agents.tasks import Runner
@@ -60,7 +61,7 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     project = runner.project
     assert project
 
-    complete_stage = next(s for s in project.workflow.stages if s.title == COMPLETE_STAGE_NAME)
+    complete_stage = project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
     tasks = list(complete_stage.get_tasks())
 
     dataset_info = list(project.list_datasets())[0]
@@ -70,6 +71,11 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     assert mock_agent.call_count == len(tasks) and mock_agent.call_count == len(
         dataset.data_rows
     ), f"Agent function should be called {len(tasks)} times, but was called {mock_agent.call_count} times"
+
+    # Check that we have no tasks at Agent stage and haven't made tasks somehow
+    agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    assert len(agent_stage_tasks) == 0
 
 
 def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str, mock_agent: MagicMock) -> None:
@@ -89,6 +95,17 @@ def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str
     assert (
         mock_agent.call_count == max_tasks
     ), f"Agent function should be called {max_tasks} times, but was called {mock_agent.call_count} times"
+
+    # Check that we've moved 2 and only 2 tasks
+    project = runner.project
+    assert project
+    N_items = len(project.list_label_rows_v2())
+    complete_stage = project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    assert len(list(complete_stage.get_tasks())) == 2
+
+    agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    assert len(agent_stage_tasks) == N_items - 2
 
 
 def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, mock_agent: MagicMock) -> None:
@@ -112,5 +129,7 @@ def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, moc
     num_tasks_left_in_agent_stage = len(list(agent_stage.get_tasks()))
     num_tasks_in_the_project = len(list(runner.project.list_label_rows_v2()))
 
+    # Verify that we haven't moved any tasks
+    assert num_tasks_left_in_agent_stage == num_tasks_in_the_project, "Should still be N tasks at the Agent stage"
     # Verify the mock was called at least once
-    assert num_tasks_left_in_agent_stage == num_tasks_in_the_project, "Agent function should be called at least once"
+    assert mock_agent.call_count == num_tasks_in_the_project
