@@ -6,6 +6,7 @@ from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
 from encord_agents.core.utils import batch_iterator
+from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import Runner
 from tests.fixtures import AGENT_STAGE_NAME, AGENT_TO_COMPLETE_PATHWAY_NAME, COMPLETE_STAGE_NAME
 
@@ -32,6 +33,20 @@ def test_batch_iterator() -> None:
     for i, batch in enumerate(batches):
         for j, s in enumerate(batch):
             assert s == f"hash_{i * batch_size + j:02d}"
+
+
+def test_define_agent(ephemeral_project_hash: str) -> None:
+    runner = Runner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_func() -> None:
+        return None
+
+    with pytest.raises(PrintableError):
+
+        @runner.stage(COMPLETE_STAGE_NAME)
+        def complete_func() -> None:
+            return None
 
 
 @pytest.mark.parametrize(
