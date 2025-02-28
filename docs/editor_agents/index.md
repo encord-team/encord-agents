@@ -18,7 +18,7 @@
   <img width="100%" src="/assets/editor-agent-banner.png" />
 </div>
 
-Editor Agents enable you to integrate your own API endpoint, such as your own model hosted on a server (or in a cloud function), with Encord to enhance your annotation processes. Editor Agents can be called while annotating in the Label Editor.
+Editor Agents allow you to integrate your own API endpoint with Encord, enhancing your annotation processes. For example, this could be a model hosted on a server or a cloud function. Annotators can trigger Editor Agents while annotating in the Label Editor.
 
 Some common use-cases are:
 
