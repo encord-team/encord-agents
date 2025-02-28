@@ -39,5 +39,10 @@ Welcome to Encord Agents, where you can easily enhance your Workflow automation 
 **Key features:**
 
 1. ⚡ **Easy**: Agent templates are flexible and can be adapted for various use cases. 
-2. ⏩ **Convenient**: The library loads data on-demand using the [Encord SDK](https://docs.encord.com/sdk-documentation/getting-started-sdk/global-us-customers).
+2. ⏩ **Convenient**: The library loads data on-demand using the [Encord SDK][encord_sdk]{ target="_blank", rel="noopener noreferrer" }.
 3. 🤏 **Slim**: The library is lightweight at its `core`.
+
+
+
+[encord_sdk]: https://docs.encord.com/sdk-documentation/getting-started-sdk/global-us-customers
+
