@@ -1,6 +1,6 @@
 ## Overview
 The `Runner` executes tasks in a sequential order.
-It is useful for debugging and testing the workflow. 
+It is useful for debugging and testing the Workflow. 
 Use this for simple workflows or for testing out functionality before you scale compute it with the [`QueueRunner`](./queue_runner.md).
 
 ## Basic Usage
@@ -8,10 +8,10 @@ Use this for simple workflows or for testing out functionality before you scale 
 The basic usage pattern of the `Runner` follows three steps:
 
 1. Initialize the runner
-2. Implement the logic for each stage in your workflow you want to capture with the runner.
+2. Implement the logic for each stage in your Workflow you want to capture with the runner.
 3. Execute the runner
 
-The following example shows how to initialize the runner and implement the logic for each stage in your workflow you want to capture with the runner.
+The following example shows how to initialize the runner and implement the logic for each stage in your Workflow you want to capture with the runner.
 
 ```python title="example_agent.py"
 from encord.objects.ontology_labels_impl import LabelRowV2

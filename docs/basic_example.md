@@ -1,6 +1,6 @@
 Before getting started, ensure that you have:
 
-* `python >= 3.10`. If you do not have python 3.10, we recommend using [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your python versions.
+* `python >= 3.10`. If you do not have Python 3.10, we recommend using [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your Python versions.
 * The ability to authenticate with Encord.
 * [Installed the Encord Agents library](docs/installation.md).
 
@@ -22,11 +22,11 @@ The purple node in the Workflow is an agent node named `pre-label`. It has a sin
 Copy the `Project ID` in the top left of the Project page.
 
 !!! tip
-    After [authenticating](./authentication.md), you can check if your existing project has any agent nodes by running this command:
+    After [authenticating](./authentication.md), you can check if your existing Project has any agent nodes by running this command:
     ```shell
     encord-agents print agent-nodes <your_project_hash>
     ```
-    If the project has agent nodes in the workflow, you should see a list similar to this:
+    If the project has agent nodes in the Workflow, you should see a list similar to this:
     ```shell
     AgentStage(title="pre-label", uuid="b9c1363c-615f-4125-ae1c-a81e19331c96")
     AgentStage(title="evaluate", uuid="28d1bcc9-6a3a-4229-8c06-b498fcaf94a0")

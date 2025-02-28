@@ -6,7 +6,7 @@ The `QueueRunner` is designed for distributed task processing and parallel execu
 The basic usage pattern of the `QueueRunner` follows these steps:
 
 1. Initialize the queue runner
-2. Implement agent logic for workflow stages
+2. Implement agent logic for Workflow stages
 3. Put tasks into a queue system
 4. Execute tasks from the queue
 

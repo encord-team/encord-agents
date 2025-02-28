@@ -423,7 +423,7 @@ class Runner(RunnerBase):
         # Verify args that don't depend on external service first
         max_tasks_per_stage = self.validate_max_tasks_per_stage(max_tasks_per_stage)
 
-        # Verify project
+        # Verify Project
         if project_hash is not None:
             project_hash = self.verify_project_hash(project_hash)
             project = self.client.get_project(project_hash)

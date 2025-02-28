@@ -40,7 +40,7 @@ pip install -r requirements.txt
 docker run -d --hostname my-rabbit --name my-rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
 ```
 
-3. Update the project hash in `queue_runner_example.py` with your Encord project hash.
+3. Update the Project hash in `queue_runner_example.py` with your Encord Project hash.
 
 ## Running the Example
 

@@ -22,7 +22,7 @@
   </div>
 </div>
 
-Welcome to Encord Agents, where you can easily enhance your workflow automation with just a few lines of code. Encord Agents are divided into two categories: Task Agents and Editor Agents.
+Welcome to Encord Agents, where you can easily enhance your Workflow automation with just a few lines of code. Encord Agents are divided into two categories: Task Agents and Editor Agents.
 
 !!! tip
       Agents can be hosted on your own infrastructure or in the cloud, including platforms like GCP.
