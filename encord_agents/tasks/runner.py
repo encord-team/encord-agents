@@ -222,7 +222,9 @@ class Runner(RunnerBase):
 
     """
 
-    def __init__(self, project_hash: str | None = None):
+    def __init__(
+        self, project_hash: str | None = None, *, validation_callback: Callable[["Runner"], None] | None = None
+    ):
         """
         Initialize the runner with an optional project hash.
 
@@ -237,6 +239,7 @@ class Runner(RunnerBase):
         super().__init__(project_hash)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
+        self.validation_callback = validation_callback
 
     def stage(
         self,
@@ -451,6 +454,8 @@ class Runner(RunnerBase):
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
+        if self.validation_callback:
+            self.validation_callback(self)
         try:
             for runner_agent in self.agents:
                 fn_name = getattr(runner_agent.callable, "__name__", "agent function")

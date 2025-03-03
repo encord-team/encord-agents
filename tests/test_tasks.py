@@ -2,6 +2,7 @@ import pytest
 
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.runner import Runner
+from tests.fixtures import ephemeral_project_hash
 
 
 def test_overrride_runner() -> None:
@@ -56,4 +57,4 @@ def test_max_tasks_per_stage_validation() -> None:
 
     with pytest.raises(PrintableError):
         runner(max_tasks_per_stage=-1)
-    # As is, can't test actually making max_tasks without major re-factor / mocking
+    # Actual behaviour checked in integration_tests/tasks/test_queue_runner via integration test

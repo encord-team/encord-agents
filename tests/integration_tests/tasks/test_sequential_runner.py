@@ -148,3 +148,61 @@ def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, moc
     assert num_tasks_left_in_agent_stage == num_tasks_in_the_project, "Should still be N tasks at the Agent stage"
     # Verify the mock was called at least once
     assert mock_agent.call_count == num_tasks_in_the_project
+
+
+def test_project_validation_callback_trivial(ephemeral_project_hash: str) -> None:
+    validation_mock = MagicMock()
+    validation_mock.return_value = None
+
+    runner = Runner(project_hash=ephemeral_project_hash, validation_callback=validation_mock)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def stage_1() -> None:
+        return None
+
+    runner()
+    validation_mock.assert_called_once_with(runner)
+
+
+def test_project_validation_callback_run_entrypoint(ephemeral_project_hash: str) -> None:
+    validation_mock = MagicMock()
+    validation_mock.return_value = None
+
+    runner = Runner(validation_callback=validation_mock)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def stage_1() -> None:
+        return None
+
+    runner(project_hash=ephemeral_project_hash)
+    validation_mock.assert_called_once_with(runner)
+
+
+def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) -> None:
+    def empty_validation_callback(runner: Runner) -> None:
+        project = runner.project
+        assert project
+        assert project.ontology_structure.objects
+        assert project.workflow.stages
+
+    runner = Runner(project_hash=ephemeral_project_hash, validation_callback=empty_validation_callback)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def stage_1() -> None:
+        return None
+
+    runner()
+
+
+def test_project_validation_callback_throws(ephemeral_project_hash: str) -> None:
+    def empty_validation_callback(runner: Runner) -> None:
+        assert False
+
+    runner = Runner(project_hash=ephemeral_project_hash, validation_callback=empty_validation_callback)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def stage_1() -> None:
+        return None
+
+    with pytest.raises(AssertionError):
+        runner()
