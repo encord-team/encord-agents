@@ -70,7 +70,7 @@ class RunnerAgent:
 
 class RunnerBase:
     @staticmethod
-    def verify_project_hash(ph: str | UUID) -> str:
+    def _verify_project_hash(ph: str | UUID) -> str:
         try:
             ph = str(UUID(str(ph)))
         except ValueError:
@@ -79,13 +79,13 @@ class RunnerBase:
         return ph
 
     @staticmethod
-    def get_stage_names(valid_stages: list[AgentStage], join_str: str = ", ") -> str:
+    def _get_stage_names(valid_stages: list[AgentStage], join_str: str = ", ") -> str:
         return join_str.join(
             [f'[magenta]AgentStage(title="{k.title}", uuid="{k.uuid}")[/magenta]' for k in valid_stages]
         )
 
     @staticmethod
-    def validate_project(project: Project | None) -> None:
+    def _validate_project(project: Project | None) -> None:
         if project is None:
             return
         PROJECT_MUSTS = "Task agents only work for workflow projects that have agent nodes in the workflow."
@@ -97,7 +97,7 @@ class RunnerBase:
         ), f"Provided project does not have any agent stages in it's workflow. {PROJECT_MUSTS}"
 
     @staticmethod
-    def validate_max_tasks_per_stage(max_tasks_per_stage: int | None) -> int | None:
+    def _validate_max_tasks_per_stage(max_tasks_per_stage: int | None) -> int | None:
         if max_tasks_per_stage is not None:
             if max_tasks_per_stage < 1:
                 raise PrintableError("We require that `max_tasks_per_stage` >= 1")
@@ -115,18 +115,18 @@ class RunnerBase:
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
         """
-        self.project_hash = self.verify_project_hash(project_hash) if project_hash else None
+        self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
 
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
-        self.validate_project(self.project)
+        self._validate_project(self.project)
 
         self.valid_stages: list[AgentStage] | None = None
         if self.project is not None:
             self.valid_stages = [s for s in self.project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         self.agents: list[RunnerAgent] = []
 
-    def validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
+    def _validate_stage(self, stage: str | UUID) -> tuple[UUID | str, str]:
         """
         Returns stage uuid and printable name.
         """
@@ -144,7 +144,7 @@ class RunnerBase:
                     selected_stage = v_stage
 
             if selected_stage is None:
-                agent_stage_names = self.get_stage_names(self.valid_stages)
+                agent_stage_names = self._get_stage_names(self.valid_stages)
                 raise PrintableError(
                     rf"Stage name [blue]`{stage}`[/blue] could not be matched against a project stage. Valid stages are \[{agent_stage_names}]."
                 )
@@ -152,7 +152,7 @@ class RunnerBase:
 
         return stage, printable_name
 
-    def check_stage_already_defined(
+    def _check_stage_already_defined(
         self, stage: UUID | str, printable_name: str, *, overwrite: bool = False
     ) -> int | None:
         if stage in [a.identity for a in self.agents]:
@@ -325,8 +325,8 @@ class Runner(RunnerBase):
         Returns:
             The decorated function.
         """
-        stage_uuid, printable_name = self.validate_stage(stage)
-        stage_insertion = self.check_stage_already_defined(stage_uuid, printable_name, overwrite=overwrite)
+        stage_uuid, printable_name = self._validate_stage(stage)
+        stage_insertion = self._check_stage_already_defined(stage_uuid, printable_name, overwrite=overwrite)
 
         def decorator(func: DecoratedCallable) -> DecoratedCallable:
             self._add_stage_agent(
@@ -421,11 +421,11 @@ class Runner(RunnerBase):
             None
         """
         # Verify args that don't depend on external service first
-        max_tasks_per_stage = self.validate_max_tasks_per_stage(max_tasks_per_stage)
+        max_tasks_per_stage = self._validate_max_tasks_per_stage(max_tasks_per_stage)
 
         # Verify Project
         if project_hash is not None:
-            project_hash = self.verify_project_hash(project_hash)
+            project_hash = self._verify_project_hash(project_hash)
             project = self.client.get_project(project_hash)
         elif self.project is not None:
             project = self.project
@@ -444,7 +444,7 @@ class Runner(RunnerBase):
 """
             )
 
-        self.validate_project(project)
+        self._validate_project(project)
         # Verify stages
         valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
         agent_stages: dict[str | UUID, AgentStage] = {
@@ -455,7 +455,7 @@ class Runner(RunnerBase):
             for runner_agent in self.agents:
                 fn_name = getattr(runner_agent.callable, "__name__", "agent function")
                 separator = f"{os.linesep}\t"
-                agent_stage_names = separator + self.get_stage_names(valid_stages, join_str=separator) + os.linesep
+                agent_stage_names = separator + self._get_stage_names(valid_stages, join_str=separator) + os.linesep
                 if runner_agent.identity not in agent_stages:
                     suggestion: str
                     if len(valid_stages) == 1:
@@ -733,7 +733,7 @@ class QueueRunner(RunnerBase):
         As the pseudo code indicates, `wrapped_function` understands how to take that string from
         the queue and resolve all your defined dependencies before calling `your_function`.
         """
-        stage_uuid, printable_name = self.validate_stage(stage)
+        stage_uuid, printable_name = self._validate_stage(stage)
 
         def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
             runner_agent = self._add_stage_agent(
