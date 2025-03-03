@@ -2,7 +2,6 @@ import pytest
 
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.runner import Runner
-from tests.fixtures import ephemeral_project_hash
 
 
 def test_overrride_runner() -> None:

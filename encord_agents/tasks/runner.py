@@ -5,7 +5,7 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Literal, Optional
+from typing import Any, Callable, Iterable, Optional
 from uuid import UUID
 
 import rich
@@ -32,7 +32,7 @@ from rich.table import Table
 from rich.text import Text
 from tqdm.auto import tqdm
 from typer import Abort, BadParameter, Option
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Self
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
@@ -103,7 +103,12 @@ class RunnerBase:
                 raise PrintableError("We require that `max_tasks_per_stage` >= 1")
         return max_tasks_per_stage
 
-    def __init__(self, project_hash: str | UUID | None = None):
+    def __init__(
+        self,
+        project_hash: str | UUID | None = None,
+        *,
+        validation_callback: Callable[[Self], None] | None = None,
+    ):
         """
         Initialize the runner with an optional project hash.
 
@@ -114,12 +119,18 @@ class RunnerBase:
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
+            validation_callback: Callable[RunnerBase, None]
+                Allows for optional additional validation e.g. Check specific Ontology form
         """
         self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
 
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
         self._validate_project(self.project)
+
+        self.validation_callback = validation_callback
+        if self.project and self.validation_callback:
+            self.validation_callback(self)
 
         self.valid_stages: list[AgentStage] | None = None
         if self.project is not None:
@@ -223,7 +234,10 @@ class Runner(RunnerBase):
     """
 
     def __init__(
-        self, project_hash: str | None = None, *, validation_callback: Callable[["Runner"], None] | None = None
+        self,
+        project_hash: str | None = None,
+        *,
+        validation_callback: Callable[[Self], None] | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -235,8 +249,11 @@ class Runner(RunnerBase):
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
+            validation_callback: Callable[RunnerBase, None]
+
+                Allows for optional additional validation e.g. Check specific Ontology form
         """
-        super().__init__(project_hash)
+        super().__init__(project_hash, validation_callback=validation_callback)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
         self.validation_callback = validation_callback
@@ -455,7 +472,7 @@ class Runner(RunnerBase):
             **{s.uuid: s for s in valid_stages},
         }
         if self.validation_callback:
-            self.validation_callback(self)
+            self.validation_callback(self)  # type: ignore  [arg-type]
         try:
             for runner_agent in self.agents:
                 fn_name = getattr(runner_agent.callable, "__name__", "agent function")
