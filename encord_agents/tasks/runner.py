@@ -119,8 +119,9 @@ class RunnerBase:
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
-            pre_execution_callback: Callable[RunnerBase, None]
+            pre_execution_callback: Callable[Self, None]
                 Allows for optional additional validation e.g. Check specific Ontology form
+                This is called just before run-time so can refer full runner details
         """
         self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
@@ -129,8 +130,6 @@ class RunnerBase:
         self._validate_project(self.project)
 
         self.pre_execution_callback = pre_execution_callback
-        if self.project and self.pre_execution_callback:
-            self.pre_execution_callback(self)
 
         self.valid_stages: list[AgentStage] | None = None
         if self.project is not None:

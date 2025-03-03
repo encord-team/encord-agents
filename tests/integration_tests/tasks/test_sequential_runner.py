@@ -150,37 +150,34 @@ def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, moc
     assert mock_agent.call_count == num_tasks_in_the_project
 
 
-def test_project_validation_callback_trivial(ephemeral_project_hash: str) -> None:
+@pytest.mark.parametrize(
+    "provide_project_hash_at_define_time",
+    [
+        True,
+        False,
+    ],
+)
+def test_project_validation_callback_trivial(
+    ephemeral_project_hash: str, provide_project_hash_at_define_time: bool
+) -> None:
     validation_mock = MagicMock()
     validation_mock.return_value = None
 
-    runner = Runner(project_hash=ephemeral_project_hash, pre_execution_callback=validation_mock)
-    # Check validated at define time
-    validation_mock.assert_called_once_with(runner)
-    validation_mock.reset_mock()
-
-    @runner.stage(AGENT_STAGE_NAME)
-    def stage_1() -> None:
-        return None
-
-    runner()
-    # Check validated at run time
-    validation_mock.assert_called_once_with(runner)
-
-
-def test_project_validation_callback_run_entrypoint(ephemeral_project_hash: str) -> None:
-    validation_mock = MagicMock()
-    validation_mock.return_value = None
-
-    runner = Runner(pre_execution_callback=validation_mock)
-    # Not called at this stage if project not present
+    runner = Runner(
+        project_hash=ephemeral_project_hash if provide_project_hash_at_define_time else None,
+        pre_execution_callback=validation_mock,
+    )
+    # Check not validated at define time
     validation_mock.assert_not_called()
 
     @runner.stage(AGENT_STAGE_NAME)
     def stage_1() -> None:
         return None
 
-    runner(project_hash=ephemeral_project_hash)
+    runner(
+        project_hash=ephemeral_project_hash if not provide_project_hash_at_define_time else None,
+    )
+    # Check validated at run time
     validation_mock.assert_called_once_with(runner)
 
 
@@ -200,23 +197,27 @@ def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) ->
     runner()
 
 
-def test_project_validation_callback_throws(ephemeral_project_hash: str) -> None:
+@pytest.mark.parametrize(
+    "provide_project_hash_at_define_time",
+    [
+        True,
+        False,
+    ],
+)
+def test_project_validation_callback_throws(
+    ephemeral_project_hash: str, provide_project_hash_at_define_time: bool
+) -> None:
     def throwing_callback(runner: Runner) -> None:
         assert False
 
-    with pytest.raises(AssertionError):
-        Runner(project_hash=ephemeral_project_hash, pre_execution_callback=throwing_callback)
-
-
-def test_project_validation_callback_throws_entrypoint(ephemeral_project_hash: str) -> None:
-    def throwing_callback(runner: Runner) -> None:
-        assert False
-
-    runner = Runner(pre_execution_callback=throwing_callback)
+    runner = Runner(
+        project_hash=ephemeral_project_hash if provide_project_hash_at_define_time else None,
+        pre_execution_callback=throwing_callback,
+    )
 
     @runner.stage(AGENT_STAGE_NAME)
     def stage_1() -> None:
         return None
 
     with pytest.raises(AssertionError):
-        runner(project_hash=ephemeral_project_hash)
+        runner(project_hash=ephemeral_project_hash if not provide_project_hash_at_define_time else None)
