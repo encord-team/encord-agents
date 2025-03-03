@@ -309,6 +309,33 @@ def my_agent(
     return "next_stage"
 ```
 
+## Optional pre-execution agent validation
+
+If you require additional validation that your runner is suitable for your project, e.g: The project has an appropriate ontology, appropriate workflow stages, you can pass an additional `pre_execution_callback` parameter when defining your Runner.
+
+```python
+
+def pre_execution_callback(runner: Runner) -> None:
+    assert runner.project
+    project = runner.project
+    # Throws if child not found
+    project.ontology_structure.get_child_by_title("Car")
+
+runner = Runner(pre_execution_callback=pre_execution_callback)
+# Won't yet validate
+
+# Define the agent
+@runner.stage("Agent stage")
+def agent_stage(task: AgentTask) -> str:
+    ...
+    return "labeled"
+
+if __name__ == "__main__":
+    runner.run()
+```
+
+Then we can execute the script by: `python agent.py --project-hash=<your-project-hash>` and then before execution, we will fetch the project and run validation. In the validation, you have access to the whole runner object and we ensure that the validation is run after the project is fetched so you can perform arbitrary validation. If instead you opt to call the runner like: `runner = Runner("<your-project-hash>", pre_execution_callback=pre_execution_callback)`, i.e: pass the project_hash at definition, we will run the validation immediately to allow you 'earlier failure'
+
 ## Running the runner
 
 There are two different types of runners with different use-cases. They also have two slightly different execution interfaces. 

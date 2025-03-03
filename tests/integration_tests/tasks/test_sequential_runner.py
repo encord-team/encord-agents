@@ -154,7 +154,7 @@ def test_project_validation_callback_trivial(ephemeral_project_hash: str) -> Non
     validation_mock = MagicMock()
     validation_mock.return_value = None
 
-    runner = Runner(project_hash=ephemeral_project_hash, validation_callback=validation_mock)
+    runner = Runner(project_hash=ephemeral_project_hash, pre_execution_callback=validation_mock)
     # Check validated at define time
     validation_mock.assert_called_once_with(runner)
     validation_mock.reset_mock()
@@ -172,7 +172,7 @@ def test_project_validation_callback_run_entrypoint(ephemeral_project_hash: str)
     validation_mock = MagicMock()
     validation_mock.return_value = None
 
-    runner = Runner(validation_callback=validation_mock)
+    runner = Runner(pre_execution_callback=validation_mock)
     # Not called at this stage if project not present
     validation_mock.assert_not_called()
 
@@ -185,13 +185,13 @@ def test_project_validation_callback_run_entrypoint(ephemeral_project_hash: str)
 
 
 def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) -> None:
-    def empty_validation_callback(runner: Runner) -> None:
+    def non_trivial_validation_callback(runner: Runner) -> None:
         project = runner.project
         assert project
         assert project.ontology_structure.objects
         assert project.workflow.stages
 
-    runner = Runner(project_hash=ephemeral_project_hash, validation_callback=empty_validation_callback)
+    runner = Runner(project_hash=ephemeral_project_hash, pre_execution_callback=non_trivial_validation_callback)
 
     @runner.stage(AGENT_STAGE_NAME)
     def stage_1() -> None:
@@ -201,18 +201,18 @@ def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) ->
 
 
 def test_project_validation_callback_throws(ephemeral_project_hash: str) -> None:
-    def empty_validation_callback(runner: Runner) -> None:
+    def throwing_callback(runner: Runner) -> None:
         assert False
 
     with pytest.raises(AssertionError):
-        Runner(project_hash=ephemeral_project_hash, validation_callback=empty_validation_callback)
+        Runner(project_hash=ephemeral_project_hash, pre_execution_callback=throwing_callback)
 
 
 def test_project_validation_callback_throws_entrypoint(ephemeral_project_hash: str) -> None:
-    def empty_validation_callback(runner: Runner) -> None:
+    def throwing_callback(runner: Runner) -> None:
         assert False
 
-    runner = Runner(validation_callback=empty_validation_callback)
+    runner = Runner(pre_execution_callback=throwing_callback)
 
     @runner.stage(AGENT_STAGE_NAME)
     def stage_1() -> None:

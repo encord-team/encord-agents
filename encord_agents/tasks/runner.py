@@ -107,7 +107,7 @@ class RunnerBase:
         self,
         project_hash: str | UUID | None = None,
         *,
-        validation_callback: Callable[[Self], None] | None = None,
+        pre_execution_callback: Callable[[Self], None] | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -119,7 +119,7 @@ class RunnerBase:
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
-            validation_callback: Callable[RunnerBase, None]
+            pre_execution_callback: Callable[RunnerBase, None]
                 Allows for optional additional validation e.g. Check specific Ontology form
         """
         self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
@@ -128,9 +128,9 @@ class RunnerBase:
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
         self._validate_project(self.project)
 
-        self.validation_callback = validation_callback
-        if self.project and self.validation_callback:
-            self.validation_callback(self)
+        self.pre_execution_callback = pre_execution_callback
+        if self.project and self.pre_execution_callback:
+            self.pre_execution_callback(self)
 
         self.valid_stages: list[AgentStage] | None = None
         if self.project is not None:
@@ -237,7 +237,7 @@ class Runner(RunnerBase):
         self,
         project_hash: str | None = None,
         *,
-        validation_callback: Callable[[Self], None] | None = None,
+        pre_execution_callback: Callable[[Self], None] | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -249,14 +249,14 @@ class Runner(RunnerBase):
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
-            validation_callback: Callable[RunnerBase, None]
+            pre_execution_callback: Callable[RunnerBase, None]
 
                 Allows for optional additional validation e.g. Check specific Ontology form
         """
-        super().__init__(project_hash, validation_callback=validation_callback)
+        super().__init__(project_hash, pre_execution_callback=pre_execution_callback)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
-        self.validation_callback = validation_callback
+        self.pre_execution_callback = pre_execution_callback
 
     def stage(
         self,
@@ -471,8 +471,8 @@ class Runner(RunnerBase):
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
-        if self.validation_callback:
-            self.validation_callback(self)  # type: ignore  [arg-type]
+        if self.pre_execution_callback:
+            self.pre_execution_callback(self)  # type: ignore  [arg-type]
         try:
             for runner_agent in self.agents:
                 fn_name = getattr(runner_agent.callable, "__name__", "agent function")
