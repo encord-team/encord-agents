@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+from uuid import UUID, uuid4
 
 import pytest
 from encord.user_client import EncordUserClient
@@ -221,3 +222,20 @@ def test_project_validation_callback_throws(
 
     with pytest.raises(AssertionError):
         runner(project_hash=ephemeral_project_hash if not provide_project_hash_at_define_time else None)
+
+
+@pytest.mark.parametrize(
+    "pathway_name", [pytest.param(True, id="Pass an incorrect name"), pytest.param(False, id="Pass an incorrect UUID")]
+)
+def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathway_name: bool) -> None:
+    runner = Runner(project_hash=ephemeral_project_hash)
+
+    wrong_pathway: str | UUID = "Not the name of the pathway" if pathway_name else uuid4()
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str | UUID:
+        return wrong_pathway
+
+    # Run the runner
+    with pytest.raises(PrintableError):
+        runner()

@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterable, Optional
 from uuid import UUID
 
 import rich
+from encord.exceptions import InvalidArgumentsError
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.project import ProjectType
@@ -40,6 +41,7 @@ from encord_agents.core.dependencies.utils import get_dependant, solve_dependenc
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
 from encord_agents.exceptions import PrintableError
+from encord_agents.utils.generic_utils import try_coerce_UUID
 
 from .models import AgentTaskConfig, TaskCompletionResult
 
@@ -358,10 +360,13 @@ class Runner(RunnerBase):
         project: Project,
         tasks: Iterable[tuple[AgentTask, LabelRowV2 | None]],
         runner_agent: RunnerAgent,
-        # num_threads: int,
+        stage: AgentStage,
         num_retries: int,
         pbar_update: Callable[[float | None], bool | None] | None = None,
     ) -> None:
+        """
+        INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
+        """
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
@@ -372,14 +377,20 @@ class Runner(RunnerBase):
                             next_stage = runner_agent.callable(**dependencies.values)
                             if next_stage is None:
                                 pass
-                            elif isinstance(next_stage, UUID):
-                                task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
+                            elif isinstance(next_stage, UUID) or try_coerce_UUID(next_stage):
+                                try:
+                                    task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
+                                except InvalidArgumentsError:
+                                    raise PrintableError(
+                                        f"No pathway with UUID: {next_stage} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
+                                    )
                             else:
                                 try:
-                                    _next_stage = UUID(next_stage)
-                                    task.proceed(pathway_uuid=str(_next_stage), bundle=bundle)
-                                except ValueError:
                                     task.proceed(pathway_name=next_stage, bundle=bundle)
+                                except InvalidArgumentsError:
+                                    raise PrintableError(
+                                        f"No pathway with name: {next_stage} found. Accepted pathway UUIDs are: {[pathway.name for pathway in stage.pathways]}"
+                                    )
 
                             if pbar_update is not None:
                                 pbar_update(1.0)
@@ -594,6 +605,7 @@ def {fn_name}(...):
                                 project,
                                 zip(batch, batch_lrs),
                                 runner_agent,
+                                stage,
                                 num_retries,
                                 pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
                             )
