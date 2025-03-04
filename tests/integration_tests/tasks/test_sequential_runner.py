@@ -9,7 +9,12 @@ from encord.workflow.stages.final import FinalStage
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import Runner
-from tests.fixtures import AGENT_STAGE_NAME, AGENT_TO_COMPLETE_PATHWAY_NAME, COMPLETE_STAGE_NAME
+from tests.fixtures import (
+    AGENT_STAGE_NAME,
+    AGENT_TO_COMPLETE_PATHWAY_HASH,
+    AGENT_TO_COMPLETE_PATHWAY_NAME,
+    COMPLETE_STAGE_NAME,
+)
 
 
 @pytest.fixture
@@ -237,5 +242,9 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
         return wrong_pathway
 
     # Run the runner
-    with pytest.raises(PrintableError):
+    with pytest.raises(PrintableError) as e:
         runner()
+    if pathway_name:
+        assert AGENT_TO_COMPLETE_PATHWAY_NAME.lower() in str(e)
+    else:
+        assert AGENT_TO_COMPLETE_PATHWAY_HASH in str(e)
