@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 from uuid import UUID
 
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -8,7 +8,13 @@ from encord.workflow.stages.agent import AgentTask
 
 from encord_agents.core.data_model import FrameData
 
-DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., str | UUID | None])
+TaskAgentReturn = str | UUID | None
+
+SyncCallable = Callable[..., TaskAgentReturn]
+AsyncCallable = Callable[..., Coroutine[None, None, TaskAgentReturn]]
+AnyCallable = Union[SyncCallable, AsyncCallable]
+
+DecoratedCallable = TypeVar("DecoratedCallable", bound=AnyCallable)
 
 
 class Depends:

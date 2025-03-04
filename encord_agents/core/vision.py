@@ -79,7 +79,7 @@ def poly_to_bbox(poly: PolygonCoordinates | NDArray[np.float32]) -> BoundingBoxC
 def rbbox_to_surrounding_bbox(rbb: RotatableBoundingBoxCoordinates, img_w: int, img_h: int) -> BoundingBoxCoordinates:
     abs_coords = rbb_to_poly(rbb, img_width=img_w, img_height=img_h)
     rel_coords = abs_coords / np.array([[img_w, img_h]], dtype=np.float32)
-    return poly_to_bbox(rel_coords)
+    return poly_to_bbox(rel_coords)  # type: ignore
 
 
 def mask_to_bbox(coords: BitmaskCoordinates) -> BoundingBoxCoordinates:

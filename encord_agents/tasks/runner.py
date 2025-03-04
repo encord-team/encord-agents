@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -5,7 +6,7 @@ import traceback
 from contextlib import ExitStack
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Literal, Optional
+from typing import Any, Callable, Coroutine, Iterable, Literal, Optional, Union, overload
 from uuid import UUID
 
 import rich
@@ -30,20 +31,25 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.text import Text
-from tqdm.auto import tqdm
 from typer import Abort, BadParameter, Option
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
+from encord_agents.core.dependencies.models import (
+    AnyCallable,
+    AsyncCallable,
+    Context,
+    DecoratedCallable,
+    Dependant,
+    SyncCallable,
+    TaskAgentReturn,
+)
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
 from encord_agents.exceptions import PrintableError
 
 from .models import AgentTaskConfig, TaskCompletionResult
-
-TaskAgentReturn = str | UUID | None
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +58,7 @@ class RunnerAgent:
     def __init__(
         self,
         identity: str | UUID,
-        callable: Callable[..., TaskAgentReturn],
+        callable: AnyCallable,
         printable_name: str | None = None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
@@ -63,6 +69,7 @@ class RunnerAgent:
         self.dependant: Dependant = get_dependant(func=callable)
         self.label_row_metadata_include_args = label_row_metadata_include_args
         self.label_row_initialise_labels_args = label_row_initialise_labels_args
+        self.is_async = asyncio.iscoroutinefunction(callable)
 
     def __repr__(self) -> str:
         return f'RunnerAgent("{self.printable_name}")'
@@ -167,7 +174,7 @@ class RunnerBase:
     def _add_stage_agent(
         self,
         identity: str | UUID,
-        func: Callable[..., TaskAgentReturn],
+        func: AnyCallable,
         *,
         stage_insertion: int | None,
         printable_name: str | None,
@@ -238,6 +245,7 @@ class Runner(RunnerBase):
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
 
+    @overload
     def stage(
         self,
         stage: str | UUID,
@@ -245,15 +253,33 @@ class Runner(RunnerBase):
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
         overwrite: bool = False,
-    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-        r"""
+    ) -> Callable[[AsyncCallable], AsyncCallable]: ...
+
+    @overload
+    def stage(
+        self,
+        stage: str | UUID,
+        *,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+        overwrite: bool = False,
+    ) -> Callable[[SyncCallable], SyncCallable]: ...
+
+    def stage(
+        self,
+        stage: str | UUID,
+        *,
+        label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
+        label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+        overwrite: bool = False,
+    ) -> Callable[[AnyCallable], AnyCallable]:
+        """
         Decorator to associate a function with an agent stage.
 
         A function decorated with a stage is added to the list of stages
         that will be handled by the runner.
         The runner will call the function for every task which is in that
         stage.
-
 
         **Example:**
 
@@ -269,11 +295,11 @@ class Runner(RunnerBase):
         The function declaration can be any function that takes parameters
         that are type annotated with the following types:
 
-        * [Project][docs-project]{ target="\_blank", rel="noopener noreferrer" }: the `encord.project.Project`
+        * [Project][docs-project]{ target="_blank", rel="noopener noreferrer" }: the `encord.project.Project`
             that the runner is operating on.
-        * [LabelRowV2][docs-label-row]{ target="\_blank", rel="noopener noreferrer" }: the `encord.objects.LabelRowV2`
+        * [LabelRowV2][docs-label-row]{ target="_blank", rel="noopener noreferrer" }: the `encord.objects.LabelRowV2`
             that the task is associated with.
-        * [AgentTask][docs-project]{ target="\_blank", rel="noopener noreferrer" }: the `encord.workflow.stages.agent.AgentTask`
+        * [AgentTask][docs-project]{ target="_blank", rel="noopener noreferrer" }: the `encord.workflow.stages.agent.AgentTask`
             that the task is associated with.
         * Any other type: which is annotated with a [dependency](/dependencies.md)
 
@@ -328,7 +354,7 @@ class Runner(RunnerBase):
         stage_uuid, printable_name = self._validate_stage(stage)
         stage_insertion = self._check_stage_already_defined(stage_uuid, printable_name, overwrite=overwrite)
 
-        def decorator(func: DecoratedCallable) -> DecoratedCallable:
+        def decorator(func: AnyCallable) -> AnyCallable:
             self._add_stage_agent(
                 stage_uuid,
                 func,
@@ -342,7 +368,7 @@ class Runner(RunnerBase):
         return decorator
 
     @staticmethod
-    def _execute_tasks(
+    async def _execute_tasks(
         project: Project,
         tasks: Iterable[tuple[AgentTask, LabelRowV2 | None]],
         runner_agent: RunnerAgent,
@@ -357,7 +383,10 @@ class Runner(RunnerBase):
                     dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
                     for attempt in range(num_retries + 1):
                         try:
-                            next_stage = runner_agent.callable(**dependencies.values)
+                            if runner_agent.is_async:
+                                next_stage = await runner_agent.callable(**dependencies.values)  # type: ignore
+                            else:
+                                next_stage = runner_agent.callable(**dependencies.values)
                             if next_stage is None:
                                 pass
                             elif isinstance(next_stage, UUID):
@@ -576,13 +605,16 @@ def {fn_name}(...):
                                         if lr:
                                             lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
 
-                            self._execute_tasks(
-                                project,
-                                zip(batch, batch_lrs),
-                                runner_agent,
-                                num_retries,
-                                pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
+                            asyncio.run(
+                                self._execute_tasks(
+                                    project,
+                                    zip(batch, batch_lrs),
+                                    runner_agent,
+                                    num_retries,
+                                    pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
+                                )
                             )
+
                             total += len(batch)
                             batch = []
                             batch_lrs = []
@@ -688,13 +720,91 @@ class QueueRunner(RunnerBase):
         super().__init__(project_hash)
         assert self.project is not None
         self._project: Project = self.project
+        self._wrapped_agents: list[tuple[RunnerAgent, Callable[[str], Union[str, Coroutine[None, None, str]]]]] = []
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        raise NotImplementedError(
-            "Calling the QueueRunner is not intended. "
-            "Prefer using wrapped functions with, e.g., modal or Celery. "
-            "For more documentation, please see the `QueueRunner.stage` documentation below."
-        )
+    async def _process_task_async(
+        self,
+        runner_agent: RunnerAgent,
+        task: AgentTask,
+        label_row: LabelRowV2 | None,
+    ) -> tuple[TaskAgentReturn, str | None]:
+        """Helper function to process a task and return the next stage and any error"""
+        try:
+            next_stage: TaskAgentReturn = None
+            with ExitStack() as stack:
+                context = Context(project=self._project, task=task, label_row=label_row)
+                dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
+                if runner_agent.is_async:
+                    next_stage = await runner_agent.callable(**dependencies.values)  # type: ignore
+                else:
+                    next_stage = runner_agent.callable(**dependencies.values)
+
+            if next_stage is None:
+                pass
+            elif isinstance(next_stage, UUID):
+                task.proceed(pathway_uuid=str(next_stage))
+            else:
+                try:
+                    _next_stage = UUID(next_stage)
+                    task.proceed(pathway_uuid=str(_next_stage))
+                except ValueError:
+                    task.proceed(pathway_name=str(next_stage))
+            return next_stage, None
+        except Exception:
+            return None, traceback.format_exc()
+
+    def _process_task_sync(
+        self,
+        runner_agent: RunnerAgent,
+        task: AgentTask,
+        label_row: LabelRowV2 | None,
+    ) -> tuple[TaskAgentReturn, None | str]:
+        """Helper function to process a task and return the next stage and any error"""
+        try:
+            next_stage: TaskAgentReturn = None
+            with ExitStack() as stack:
+                context = Context(project=self._project, task=task, label_row=label_row)
+                dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
+                next_stage = runner_agent.callable(**dependencies.values)
+
+            if next_stage is None:
+                pass
+            elif isinstance(next_stage, UUID):
+                task.proceed(pathway_uuid=str(next_stage))
+            else:
+                try:
+                    _next_stage = UUID(next_stage)
+                    task.proceed(pathway_uuid=str(_next_stage))
+                except ValueError:
+                    task.proceed(pathway_name=str(next_stage))
+            return next_stage, None
+        except Exception:
+            return None, traceback.format_exc()
+
+    def _handle_task_config(
+        self,
+        json_str: str,
+        runner_agent: RunnerAgent,
+        include_args: LabelRowMetadataIncludeArgs,
+        init_args: LabelRowInitialiseLabelsArgs,
+    ) -> tuple[AgentTask | None, AgentStage | None, str | None, LabelRowV2 | None]:
+        """Helper function to handle task configuration and return task, stage and any error"""
+        conf = AgentTaskConfig.model_validate_json(json_str)
+        try:
+            stage = self._project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
+        except ValueError as e:
+            return None, None, str(e)
+
+        task = next((s for s in stage.get_tasks(data_hash=conf.data_hash)), None)
+        if task is None:
+            return None, stage, "Failed to obtain task from Encord"
+
+        label_row: LabelRowV2 | None = None
+        if runner_agent.dependant.needs_label_row:
+            label_row = self._project.list_label_rows_v2(data_hashes=[task.data_hash], **include_args.model_dump())[0]
+            label_row.initialise_labels(**init_args.model_dump())
+
+        return task, stage, None, label_row
 
     def stage(
         self,
@@ -702,7 +812,7 @@ class QueueRunner(RunnerBase):
         *,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
-    ) -> Callable[[Callable[..., str | UUID | None]], Callable[[str], str]]:
+    ) -> Callable[[AnyCallable], Union[Callable[[str], str], Callable[[str], Coroutine[None, None, str]]]]:
         """
         Agent wrapper intended for queueing systems and distributed workloads.
 
@@ -735,7 +845,7 @@ class QueueRunner(RunnerBase):
         """
         stage_uuid, printable_name = self._validate_stage(stage)
 
-        def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
+        def decorator(func: AnyCallable) -> Union[Callable[[str], str], Callable[[str], Coroutine[None, None, str]]]:
             runner_agent = self._add_stage_agent(
                 stage_uuid,
                 func,
@@ -747,64 +857,55 @@ class QueueRunner(RunnerBase):
             include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
             init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
 
-            @wraps(func)
-            def wrapper(json_str: str) -> str:
-                conf = AgentTaskConfig.model_validate_json(json_str)
-                try:
-                    stage = self._project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
-                except ValueError as e:
-                    return TaskCompletionResult(
-                        task_uuid=conf.task_uuid,
-                        success=False,
-                        error=str(e),
-                    ).model_dump_json()
+            if runner_agent.is_async:
 
-                task = next((s for s in stage.get_tasks(data_hash=conf.data_hash)), None)
-                if task is None:
-                    # TODO logging?
+                @wraps(func)
+                async def wrapper(json_str: str) -> str:
+                    task, stage, error, label_row = self._handle_task_config(
+                        json_str, runner_agent, include_args, init_args
+                    )
+                    if task is None or stage is None or error:
+                        return TaskCompletionResult(
+                            task_uuid=AgentTaskConfig.model_validate_json(json_str).task_uuid,
+                            stage_uuid=stage.uuid if stage else None,
+                            success=False,
+                            error=error,
+                        ).model_dump_json()
+
+                    next_stage, error = await self._process_task_async(runner_agent, task, label_row)
+
                     return TaskCompletionResult(
-                        task_uuid=conf.task_uuid,
+                        task_uuid=task.uuid,
                         stage_uuid=stage.uuid,
-                        success=False,
-                        error="Failed to obtain task from Encord",
+                        success=error is None,
+                        pathway=next_stage,
+                        error=error,
                     ).model_dump_json()
+            else:
 
-                label_row: LabelRowV2 | None = None
-                try:
-                    if runner_agent.dependant.needs_label_row:
-                        label_row = self._project.list_label_rows_v2(
-                            data_hashes=[task.data_hash], **include_args.model_dump()
-                        )[0]
-                        label_row.initialise_labels(**init_args.model_dump())
+                @wraps(func)
+                def wrapper(json_str: str) -> str:
+                    task, stage, error, label_row = self._handle_task_config(
+                        json_str, runner_agent, include_args, init_args
+                    )
+                    if task is None or stage is None or error:
+                        return TaskCompletionResult(
+                            task_uuid=AgentTaskConfig.model_validate_json(json_str).task_uuid,
+                            stage_uuid=stage.uuid if stage else None,
+                            success=False,
+                            error=error,
+                        ).model_dump_json()
 
-                    next_stage: TaskAgentReturn = None
-                    with ExitStack() as stack:
-                        context = Context(project=self._project, task=task, label_row=label_row)
-                        dependencies = solve_dependencies(
-                            context=context, dependant=runner_agent.dependant, stack=stack
-                        )
-                        next_stage = runner_agent.callable(**dependencies.values)
-
-                    if next_stage is None:
-                        # TODO: Should we log that task didn't continue?
-                        pass
-                    elif isinstance(next_stage, UUID):
-                        task.proceed(pathway_uuid=str(next_stage))
-                    else:
-                        try:
-                            next_stage = UUID(next_stage)
-                            task.proceed(pathway_uuid=str(next_stage))
-                        except ValueError:
-                            task.proceed(pathway_name=str(next_stage))
+                    next_stage, error = self._process_task_sync(runner_agent, task, label_row)
                     return TaskCompletionResult(
-                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage
-                    ).model_dump_json()
-                except Exception:
-                    # TODO logging?
-                    return TaskCompletionResult(
-                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=False, error=traceback.format_exc()
+                        task_uuid=task.uuid,
+                        stage_uuid=stage.uuid,
+                        success=error is None,
+                        pathway=next_stage,
+                        error=error,
                     ).model_dump_json()
 
+            self._wrapped_agents.append((runner_agent, wrapper))
             return wrapper
 
         return decorator
@@ -843,3 +944,87 @@ class QueueRunner(RunnerBase):
             else:
                 stage = self._project.workflow.get_stage(name=str(runner_agent.identity), type_=AgentStage)
             yield stage
+
+    async def _call_async(
+        self, num_threads: int = 1, task_completion_callback: Callable[[TaskCompletionResult], None] | None = None
+    ) -> None:
+        """
+        Execute the runner with asyncio.
+        """
+        try:
+            workers: list[asyncio.Task[str]] = []
+            result_processors: list[asyncio.Task[str]] = []
+
+            for agent, wrapper in self._wrapped_agents:
+                task_queue = asyncio.Queue[str]()
+                result_queue = asyncio.Queue[str]()
+
+                async def process_task(task_queue: asyncio.Queue[str], result_queue: asyncio.Queue[str]):
+                    while True:
+                        task_json = await task_queue.get()
+                        if agent.is_async:
+                            logger.debug(f"Processing async task: {task_json}")
+                            result_json = await wrapper(task_json)
+                        else:
+                            logger.debug(f"Processing sync task: {task_json}")
+                            result_json = wrapper(task_json)
+                        await result_queue.put(result_json)
+                        task_queue.task_done()
+
+                async def process_results(result_queue: asyncio.Queue[str]):
+                    while True:
+                        result_json = await result_queue.get()
+                        logger.debug(f"Received result: {result_json}")
+                        if task_completion_callback:
+                            task_completion_callback(TaskCompletionResult.model_validate_json(result_json))
+                        result_queue.task_done()
+
+                stage = self._project.workflow.get_stage(uuid=agent.identity, type_=AgentStage)
+                for task in stage.get_tasks():
+                    await task_queue.put(task.model_dump_json())
+
+                # Create worker tasks
+                workers = [asyncio.create_task(process_task(task_queue, result_queue)) for _ in range(num_threads)]
+                # Create result processor task
+                result_processors = [asyncio.create_task(process_results(result_queue)) for _ in range(1)]
+
+                await task_queue.join()
+                await result_queue.join()
+        finally:
+            logger.debug("Cleaning up...")
+            for worker in workers:
+                worker.cancel()
+            for result_processor in result_processors:
+                result_processor.cancel()
+
+            # Wait for all tasks to finish cleanup
+            await asyncio.gather(
+                *(workers + result_processors),
+                return_exceptions=True,
+            )
+
+    def __call__(
+        self, num_threads: int = 1, task_completion_callback: Callable[[TaskCompletionResult], None] | None = None
+    ) -> None:
+        """
+        Execute the runner with asyncio.
+
+        This is only an advantage when you have more heavy compute loads.
+        If you have a light compute load, the overhead of the asyncio and
+        loading tasks one-by-one is not worth it.o
+
+        Rule of thumb: If you are on a single machine and can compute the
+        result of a task in less than 0.2 seconds, prefer using the `Runner`
+        rather than the `QueueRunner`.
+
+        Args:
+            num_threads: The number of tasks to execute in parallel.
+            task_completion_callback: A callback function that will be called
+                for every task completion. This is useful for logging and monitoring.
+        """
+        try:
+            asyncio.run(self._call_async(num_threads, task_completion_callback))
+        except KeyboardInterrupt:
+            logger.info("\nReceived keyboard interrupt, shutting down...")
+        finally:
+            logger.info("Shutdown complete")

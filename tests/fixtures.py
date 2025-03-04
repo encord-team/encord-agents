@@ -135,7 +135,6 @@ def ephemeral_project_hash_base(
     workflow_hash: str,
     dataset_hash: str,
 ) -> Iterator[str]:
-    print(f"Creating ephemeral project hash Default: {dataset_hash==ONE_OF_EACH_DATASET_HASH}")
     yield from create_default_project(user_client, all_purpose_ontology, workflow_hash, dataset_hash)
 
 

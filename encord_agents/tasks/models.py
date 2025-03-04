@@ -3,6 +3,8 @@ from uuid import UUID
 from encord.workflow.stages.agent import AgentTask
 from pydantic import BaseModel, Field
 
+from encord_agents.core.dependencies.models import TaskAgentReturn
+
 
 class AgentTaskConfig(BaseModel):
     task_uuid: UUID = Field(description="The task uuid", validation_alias="uuid")
@@ -25,7 +27,7 @@ class TaskCompletionResult(BaseModel):
     success: bool = Field(description="Agent executed without errors")
     # TODO: When we can read pathway definitions via the `encord` SDK, pathway can be typed None | UUID only.
     # Currently, pathway can also be the name of the pathway.
-    pathway: str | UUID | None = Field(
+    pathway: TaskAgentReturn = Field(
         description="The pathway that the task was passed along to. If None, either the agent succeeded but didn't return a pathway or the agent failed so the task didn't proceed.",
         default=None,
     )

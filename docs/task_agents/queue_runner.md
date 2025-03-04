@@ -12,40 +12,75 @@ The basic usage pattern of the `QueueRunner` follows these steps:
 
 Here's a basic example:
 
-```python title="queue_agent.py"
-from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents.tasks import QueueRunner
-from encord.workflow.stages.agent import AgentTask
+=== "Native `asyncio`"
+    We already implemented a simple queueing system in the `QueueRunner` class.
+    This is the most basic usage of the `QueueRunner`.
+    ```python title="queue_agent.py"
+    from encord.objects.ontology_labels_impl import LabelRowV2
+    from encord_agents.tasks import QueueRunner
+    from encord.workflow.stages.agent import AgentTask
 
-# Step 1: Initialize the queue runner
-# project_hash is required for QueueRunner
-runner = QueueRunner(project_hash="<your_project_hash>")
+    # Step 1: Initialize the queue runner
+    # project_hash is required for QueueRunner
+    runner = QueueRunner(project_hash="<your_project_hash>")
 
-# Step 2: Implement agent logic
-@runner.stage("my_stage_name")  # or stage="<stage_uuid>"
-def process_task(task: AgentTask, lr: LabelRowV2) -> str:
-    # Your agent logic here
-    lr.set_priority(0.5)
-    return "next_stage"  # or return a pathway UUID
+    # Step 2: Implement agent logic
+    @runner.stage("my_stage_name")  # or stage="<stage_uuid>"
+    async def process_task(task: AgentTask, lr: LabelRowV2) -> str:
+        # Your agent logic here
+        lr.set_priority(0.5)
+        return "next_stage"  # or return a pathway UUID
 
-# Step 3 & 4: Queue and execute tasks
-if __name__ == "__main__":
-    # Get all tasks that need processing
-    for stage in runner.get_agent_stages():
-        # Your queue implementation
-        task_queue = []
-        
-        # Populate queue with task specifications
-        for task in stage.get_tasks():
-            task_queue.append(task.model_dump_json())
-        
-        # Process tasks from queue
-        while task_queue:
-            task_spec = task_queue.pop()
-            # The wrapped function handles all dependency injection
-            result_json = process_task(task_spec)
-            # result_json contains success/failure status and next pathway
-```
+    # Step 3 & 4: Execute the runner with 10 workers running in parallel.
+    if __name__ == "__main__":
+        def callback(result: TaskCompletionResult):
+            # This will be called for every task completion.
+            print(result)
+
+        runner(
+            num_threads=10, 
+            task_completion_callback=callback
+        )
+    ```
+
+=== "Custom Queue System"
+    You can use any queue system you want.
+    Here's an example using a custom queue system:
+
+    ```python title="custom_queue_agent.py"
+    from encord.objects.ontology_labels_impl import LabelRowV2
+    from encord_agents.tasks import QueueRunner
+    from encord.workflow.stages.agent import AgentTask
+
+    # Step 1: Initialize the queue runner
+    # project_hash is required for QueueRunner
+    runner = QueueRunner(project_hash="<your_project_hash>")
+
+    # Step 2: Implement agent logic
+    @runner.stage("my_stage_name")  # or stage="<stage_uuid>"
+    def process_task(task: AgentTask, lr: LabelRowV2) -> str:
+        # Your agent logic here
+        lr.set_priority(0.5)
+        return "next_stage"  # or return a pathway UUID
+
+    # Step 3 & 4: Queue and execute tasks
+    if __name__ == "__main__":
+        # Get all tasks that need processing
+        for stage in runner.get_agent_stages():
+            # Your queue implementation
+            task_queue = []
+
+            # Populate queue with task specifications
+            for task in stage.get_tasks():
+                task_queue.append(task.model_dump_json())
+
+            # Process tasks from queue
+            while task_queue:
+                task_spec = task_queue.pop()
+                # The wrapped function handles all dependency injection
+                result_json = process_task(task_spec)
+                # result_json contains success/failure status and next pathway
+    ```
 
 !!! tip
     To avoid mixing up the agent implementations, we recommend to use a dedicated queue runner for each agent.
