@@ -49,10 +49,10 @@ nav:
           - "Prioritize Annotation Tasks": notebooks/task_agent_set_priority.ipynb
           - "Transfer Labels to a Twin Project": notebooks/twin_project_label_transfer.ipynb
           - "Pre-Label Videos with Bounding Boxes": notebooks/prelabel_videos_with_bounding_boxes.ipynb
-          - "Pre-label Videos with Mask-RCNN": notebooks/mask_rcnn_on_videos.ipynb
+          - "Pre-label Videos with Mask R-CNN": notebooks/mask_rcnn_on_videos.ipynb
           - "Use a Hugging Face 🤗 Model": notebooks/hugging_face_agent_example.ipynb
           - "Use the Ultralytics YOLO Model": notebooks/yolo_example.ipynb
-          - "Transcribe Multi-Speaker Conversations": notebooks/audio_transcription_agent_multi_speaker.ipynb
+          - "Audio Transcription": notebooks/audio_transcription_agent_multi_speaker.ipynb
           - "Sentiment Analysis": notebooks/sentiment_analysis.ipynb
           - "Multimodal LLM as a Judge": notebooks/llm_as_a_judge.ipynb
           - "Multistage VLM Video Captioning": notebooks/multistage_video_summarisation.ipynb
