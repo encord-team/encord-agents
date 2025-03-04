@@ -106,8 +106,6 @@ class RunnerBase:
     def __init__(
         self,
         project_hash: str | UUID | None = None,
-        *,
-        pre_execution_callback: Callable[[Self], None] | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -119,17 +117,12 @@ class RunnerBase:
             project_hash: The project hash that the runner applies to.
 
                 Can be left unspecified to be able to reuse same runner on multiple projects.
-            pre_execution_callback: Callable[Self, None]
-                Allows for optional additional validation e.g. Check specific Ontology form
-                This is called just before run-time so can refer full runner details
         """
         self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
         self.client = get_user_client()
 
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
         self._validate_project(self.project)
-
-        self.pre_execution_callback = pre_execution_callback
 
         self.valid_stages: list[AgentStage] | None = None
         if self.project is not None:
@@ -252,7 +245,7 @@ class Runner(RunnerBase):
 
                 Allows for optional additional validation e.g. Check specific Ontology form
         """
-        super().__init__(project_hash, pre_execution_callback=pre_execution_callback)
+        super().__init__(project_hash)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
         self.pre_execution_callback = pre_execution_callback
