@@ -378,25 +378,24 @@ class Runner(RunnerBase):
                             if next_stage is None:
                                 pass
                             elif isinstance(next_stage, UUID) or try_coerce_UUID(next_stage):
-                                try:
-                                    task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
-                                except InvalidArgumentsError:
+                                if next_stage not in [str(pathway.uuid) for pathway in stage.pathways]:
                                     raise PrintableError(
                                         f"No pathway with UUID: {next_stage} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
                                     )
+                                task.proceed(pathway_uuid=str(next_stage), bundle=bundle)
                             else:
-                                try:
-                                    task.proceed(pathway_name=next_stage, bundle=bundle)
-                                except InvalidArgumentsError:
+                                if next_stage not in [str(pathway.name) for pathway in stage.pathways]:
                                     raise PrintableError(
                                         f"No pathway with name: {next_stage} found. Accepted pathway UUIDs are: {[pathway.name for pathway in stage.pathways]}"
                                     )
-
+                                task.proceed(pathway_name=next_stage, bundle=bundle)
                             if pbar_update is not None:
                                 pbar_update(1.0)
                             break
 
                         except KeyboardInterrupt:
+                            raise
+                        except PrintableError:
                             raise
                         except Exception:
                             print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
