@@ -28,7 +28,7 @@ AGENT_TO_COMPLETE_WORKFLOW_HASH = "a59b3190-09e2-432c-a8bb-f2925872e298"
 AGENT_STAGE_NAME = "Agent 1"
 COMPLETE_STAGE_NAME = "Complete"
 AGENT_TO_COMPLETE_PATHWAY_HASH = "49a786f3-5edf-4b94-aff0-3da9042d3bf0"
-AGENT_TO_COMPLETE_PATHWAY_NAME = "Complete"
+AGENT_TO_COMPLETE_PATHWAY_NAME = "complete"
 
 EPHEMERAL_PROJECT_TITLE = "encord-agents test project"
 EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"
@@ -106,7 +106,7 @@ def workflow_hash(
     │  start  ├───►│  Agent 1  ├─┬─►│  Complete  │
     └─────────┘    └───────────┘ │  └────────────┘
                                 │
-                            Name: "Complete"
+                            Name: "complete"
                             Uuid: "49a786f3-5edf-4b94-aff0-3da9042d3bf0"
     """
     return AGENT_TO_COMPLETE_WORKFLOW_HASH

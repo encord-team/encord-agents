@@ -245,6 +245,6 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
     with pytest.raises(PrintableError) as e:
         runner()
     if pathway_name:
-        assert AGENT_TO_COMPLETE_PATHWAY_NAME.lower() in str(e)
+        assert AGENT_TO_COMPLETE_PATHWAY_NAME in str(e)
     else:
         assert AGENT_TO_COMPLETE_PATHWAY_HASH in str(e)
