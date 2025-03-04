@@ -677,13 +677,13 @@ files = [
 
 [[package]]
 name = "encord"
-version = "0.1.155"
+version = "0.1.158"
 description = "Encord Python SDK Client"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "encord-0.1.155-py3-none-any.whl", hash = "sha256:07541f1200035b20fd187c650050fa303797bc70c2067f8db05b3b9a64fb56c7"},
-    {file = "encord-0.1.155.tar.gz", hash = "sha256:c388a238b32db8e2fac9c83537630c0e368d53eb9617bee9d09155f506621ba4"},
+    {file = "encord-0.1.158-py3-none-any.whl", hash = "sha256:b13e81040cade9af21af7fa0734ce87e809096a096a981f2cad81b601f7d4ae9"},
+    {file = "encord-0.1.158.tar.gz", hash = "sha256:3a06053e05561db1976c7bacc7774dc99129206213332ee5bbc5126f405ad7ef"},
 ]
 
 [package.dependencies]
@@ -695,7 +695,7 @@ requests = ">=2.25.0,<3.0.0"
 tqdm = ">=4.32.1,<5.0.0"
 
 [package.extras]
-coco = ["pycocotools (>=2.0.7,<3.0.0)", "shapely (>=2.0.4,<3.0.0)"]
+coco = ["numpy (>=1.24,<2.0)", "numpy (>=1.26,<2.0)", "opencv-python (>=4.11.0.86,<5.0.0.0)", "pycocotools (>=2.0.7,<3.0.0)", "shapely (>=2.0.4,<3.0.0)"]
 
 [[package]]
 name = "exceptiongroup"
@@ -3736,4 +3736,4 @@ test = ["websockets"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "e84d2dd62c5402970eaf8cb95b9e1ce6d484340aee324240504a5aa9e0c27b24"
+content-hash = "c7af1cf72574d0962656bd60ab2f3c427f10fd48181b7171d733b8e89a705de5"
