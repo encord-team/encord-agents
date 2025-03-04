@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+from uuid import UUID
 
 import pytest
 from encord.user_client import EncordUserClient
@@ -10,6 +11,7 @@ from encord_agents.tasks import QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
 from tests.fixtures import (
     AGENT_STAGE_NAME,
+    AGENT_TO_COMPLETE_PATHWAY_HASH,
     AGENT_TO_COMPLETE_PATHWAY_NAME,
     COMPLETE_STAGE_NAME,
 )
@@ -62,7 +64,7 @@ def test_queue_runner_e2e(ephemeral_project_hash: str, mock_agent: MagicMock) ->
         result = TaskCompletionResult.model_validate_json(result_json)
         assert result.success
         assert not result.error
-        assert result.pathway == AGENT_TO_COMPLETE_PATHWAY_NAME
+        assert result.pathway == UUID(AGENT_TO_COMPLETE_PATHWAY_HASH)
         assert result.stage_uuid == agent_stage.uuid
         assert result.task_uuid == agent_task.uuid
 
