@@ -135,7 +135,6 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
         task_spec = queue.pop()
         with pytest.raises(PrintableError) as e:
             agent_function(task_spec)
-        # TODO: It's possible that we want to treat incorrect pathway names akin to putting None and just silently fail and record it in the TaskCompletionResult
         if pathway_name:
             assert AGENT_TO_COMPLETE_PATHWAY_NAME in str(e)
         else:

@@ -386,7 +386,7 @@ class Runner(RunnerBase):
                             else:
                                 if next_stage not in [str(pathway.name) for pathway in stage.pathways]:
                                     raise PrintableError(
-                                        f"No pathway with name: {next_stage} found. Accepted pathway UUIDs are: {[pathway.name for pathway in stage.pathways]}"
+                                        f"No pathway with name: {next_stage} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
                                     )
                                 task.proceed(pathway_name=str(next_stage), bundle=bundle)
                             if pbar_update is not None:
@@ -775,6 +775,7 @@ class QueueRunner(RunnerBase):
             try:
                 stage = self._project.workflow.get_stage(uuid=runner_agent.identity, type_=AgentStage)
             except ValueError as err:
+                # Local binding to help mypy
                 error = err
 
                 @wraps(func)
