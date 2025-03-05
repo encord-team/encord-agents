@@ -40,7 +40,6 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
         raise Exception("Error retrieving frame.")
 
     cap.release()
-
     return frame.astype(np.uint8)
 
 
