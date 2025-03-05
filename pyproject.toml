@@ -55,7 +55,14 @@ typing-extensions = ">=4.8.0"
 # No-CLI dependencies
 encord = ">=0.1.159"
 numpy = ">=1.26.4"
-opencv-python = ">=4.1"
+
+[tool.poetry.optional-dependencies]
+opencv = [
+    "opencv-python>=4.1"
+]
+headless = [
+    "opencv-python-headless>=4.1"
+]
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"

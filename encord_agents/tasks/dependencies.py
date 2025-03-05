@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Generator, Iterable, Iterator, Sequence
 
-import cv2
 import numpy as np
 from encord.exceptions import AuthenticationError, AuthorisationError, UnknownException
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -107,6 +106,12 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
         Numpy array of shape [h, w, 3] RGB colors.
 
     """
+
+    try:
+        import cv2
+    except ImportError:
+        raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
+
     with download_asset(storage_item, frame=0) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
 
