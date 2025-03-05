@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 from pathlib import Path
 from typing import Annotated
@@ -22,6 +23,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device)
 assert isinstance(model, CLIP)
 print("Model loaded")
+logger = logging.getLogger()
 
 
 def get_text_embeddings(choices: list[str]) -> torch.Tensor:
@@ -67,6 +69,14 @@ def validate_project(runner: Runner) -> None:
     classifications = project.ontology_structure.classifications
 
     assert sum(is_radio_classification(classification=classification) for classification in classifications) == 1
+
+    assert runner.valid_stages
+    if len(runner.valid_stages) > 1:
+        logger.warning("There are more than one agent stage. We will pick the first")
+
+    agent_stage = runner.valid_stages[0]
+    if len(agent_stage.pathways) > 1:
+        logger.warning("There are more than one agent pathway. We will pick the first")
 
 
 if __name__ == "__main__":
