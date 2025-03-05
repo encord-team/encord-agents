@@ -1,3 +1,5 @@
+This agent works on datasets comprised exclusively of images.
+
 This agent can be run by:
 
-docker run --env ENCORD_SSH_KEY -env OPENAI_KEY encord/encord-agents-llm-image-classification:latest --project-hash "<your_project_hash>" --agent-stage "<stage_hash>"
+ docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord-agents-llm-image-captioning --project-hash=your-project-hash

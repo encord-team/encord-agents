@@ -21,10 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
-# The SSH key will be inherited from the host environment when building or running the container
-# Example: docker run --env-file .env your-image-name --project-hash=your-hash
-# Or: docker run --env ENCORD_SSH_KEY your-image-name --project-hash=your-hash
-
 
 # Entry point to run the agent script
 ENTRYPOINT ["python", "llm-image-captioning.py"]
