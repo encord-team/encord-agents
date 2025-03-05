@@ -1,0 +1,4 @@
+encord-agents
+transformers
+torch
+pillow
