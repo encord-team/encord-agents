@@ -8,6 +8,10 @@ This agent will work on any workflow that has an agent stage and will caption th
 
 The agent is configured to require exclusively images in the project and will throw a pre-execution error if this is not the case.
 
+### Pathways
+
+The agent will use simply the first pathway on the first agent.
+
 ## Ontology
 
 The agent works with an Ontology that contains a top level text classification object. It will throw a pre-execution error if this is not the case. If there are multiple top level text classification objects, it'll choose the first such one.

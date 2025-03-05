@@ -1,4 +1,5 @@
 import argparse
+import logging
 from typing import Annotated
 
 import numpy as np
@@ -16,6 +17,7 @@ from encord_agents.tasks.dependencies import dep_single_frame
 
 # Create OpenAI client
 openai_client = OpenAI()
+logger = logging.getLogger()
 
 
 def call_openai_captioning(frame: Frame) -> str:
@@ -61,6 +63,14 @@ def validate_project(runner: Runner) -> None:
     classifications = project.ontology_structure.classifications
 
     assert any(is_text_classification(classification=classification) for classification in classifications)
+
+    assert runner.valid_stages
+    if len(runner.valid_stages) > 1:
+        logger.warning("There are more than one agent stage. We will pick the first")
+
+    agent_stage = runner.valid_stages[0]
+    if len(agent_stage.pathways) > 1:
+        logger.warning("There are more than one agent pathway. We will pick the first")
 
 
 if __name__ == "__main__":
