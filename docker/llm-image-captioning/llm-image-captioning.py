@@ -2,6 +2,7 @@ import argparse
 from typing import Annotated
 
 import numpy as np
+from encord.constants.enums import DataType
 from encord.objects.attributes import TextAttribute
 from encord.objects.classification import Classification
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -9,7 +10,7 @@ from encord.project import Project
 from numpy.typing import NDArray
 from openai import OpenAI
 
-from encord_agents.core.data_model import Frame
+from encord_agents.core.data_model import Frame, LabelRowInitialiseLabelsArgs
 from encord_agents.tasks import Depends, Runner
 from encord_agents.tasks.dependencies import dep_single_frame
 
@@ -25,7 +26,7 @@ def call_openai_captioning(frame: Frame) -> str:
     response = openai_client.chat.completions.create(
         model="gpt-4-turbo",
         messages=[
-            {  # type: ignore[misc,list-item]
+            {  # type: ignore[misc,list-item,unused-ignore]
                 "role": "user",
                 "content": [{"type": "text", "text": prompt}, frame.b64_encoding(output_format="openai")],
             }
@@ -36,11 +37,30 @@ def call_openai_captioning(frame: Frame) -> str:
 
 
 def dep_classification(project: Project) -> tuple[Classification, TextAttribute]:
-    classification = project.ontology_structure.get_child_by_title("Caption", type_=Classification)
-    assert classification.attributes
-    assert len(classification.attributes) == 1
-    text_attr = classification.get_child_by_title("Caption", type_=TextAttribute)
-    return classification, text_attr
+    for classification in project.ontology_structure.classifications:
+        if is_text_classification(classification):
+            text_attr = classification.get_child_by_title(classification.title, type_=TextAttribute)
+            return classification, text_attr
+    raise ValueError("Should be impossible")
+
+
+def is_text_classification(classification: Classification) -> bool:
+    if classification.attributes and len(classification.attributes) == 1:
+        attr = classification.attributes[0]
+        if isinstance(attr, TextAttribute):
+            return True
+    return False
+
+
+def validate_project(runner: Runner) -> None:
+    assert runner.project
+    project = runner.project
+    lrs = project.list_label_rows_v2()
+    assert all(lr.data_type == DataType.IMAGE for lr in lrs)
+    assert project.ontology_structure.classifications
+    classifications = project.ontology_structure.classifications
+
+    assert any(is_text_classification(classification=classification) for classification in classifications)
 
 
 if __name__ == "__main__":
@@ -52,12 +72,16 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
     project_hash = args.project_hash
-    runner = Runner(project_hash=project_hash)
+    runner = Runner(project_hash=project_hash, pre_execution_callback=validate_project)
+    runner.was_called_from_cli = True
     assert runner.valid_stages, "No agent stage found"
     workflow_stage = runner.valid_stages[0]
     assert workflow_stage.pathways, "Require at least one pathway (This should be impossible)"
 
-    @runner.stage("image captioning")
+    @runner.stage(
+        "image captioning",
+        label_row_initialise_labels_args=LabelRowInitialiseLabelsArgs(include_classification_feature_hashes=set()),
+    )
     def agent_image_captioning(
         lr: LabelRowV2,  # <- Automatically injected
         frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
