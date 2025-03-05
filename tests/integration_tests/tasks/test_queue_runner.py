@@ -1,12 +1,11 @@
 from unittest.mock import MagicMock
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
-from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
-from encord_agents.core.utils import batch_iterator
+from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
 from tests.fixtures import (
@@ -113,3 +112,31 @@ def test_queue_runner_passes_errors_appropriately(ephemeral_project_hash: str) -
     final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
     final_stage_tasks = list(final_stage.get_tasks())
     assert len(final_stage_tasks) == 0
+
+
+@pytest.mark.parametrize(
+    "pathway_name", [pytest.param(True, id="Pass an incorrect name"), pytest.param(False, id="Pass an incorrect UUID")]
+)
+def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathway_name: bool) -> None:
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
+
+    wrong_pathway: str | UUID = "Not the name of the pathway" if pathway_name else uuid4()
+
+    @queue_runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str | UUID:
+        return wrong_pathway
+
+    queue: list[str] = []
+    for stage in queue_runner.get_agent_stages():
+        for task in stage.get_tasks():
+            queue.append(task.model_dump_json())
+
+    while queue:
+        task_spec = queue.pop()
+        with pytest.raises(PrintableError) as e:
+            agent_function(task_spec)
+        # TODO: It's possible that we want to treat incorrect pathway names akin to putting None and just silently fail and record it in the TaskCompletionResult
+        if pathway_name:
+            assert AGENT_TO_COMPLETE_PATHWAY_NAME in str(e)
+        else:
+            assert AGENT_TO_COMPLETE_PATHWAY_HASH in str(e)

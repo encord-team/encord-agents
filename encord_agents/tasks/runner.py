@@ -832,13 +832,15 @@ class QueueRunner(RunnerBase):
                     else:
                         if next_stage not in [pathway.name for pathway in stage.pathways]:
                             raise PrintableError(
-                                f"Runner responded with pathway UUID: {next_stage}, only accept: {[pathway.uuid for pathway in stage.pathways]}"
+                                f"Runner responded with pathway name: {next_stage}, only accept: {[pathway.name for pathway in stage.pathways]}"
                             )
                         task.proceed(pathway_name=str(next_stage))
                         next_stage_uuid = name_lookup[str(next_stage)]
                     return TaskCompletionResult(
                         task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage_uuid
                     ).model_dump_json()
+                except PrintableError:
+                    raise
                 except Exception:
                     # TODO logging?
                     return TaskCompletionResult(
