@@ -5,7 +5,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Generator, Iterable, List, TypeVar, cast
 
-import cv2
 import requests
 from encord.constants.enums import DataType
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -16,6 +15,11 @@ from encord.user_client import EncordUserClient
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
+
+try:
+    import cv2
+except ImportError:
+    raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
 
 from .video import get_frame
 

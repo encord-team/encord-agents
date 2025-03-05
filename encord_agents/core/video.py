@@ -1,9 +1,14 @@
 from pathlib import Path
 from typing import Iterator
 
-import cv2
 import numpy as np
 from numpy.typing import NDArray
+
+try:
+    import cv2
+except ImportError:
+    raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
+
 
 from encord_agents.core.data_model import Frame
 
