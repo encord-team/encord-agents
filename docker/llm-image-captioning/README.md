@@ -10,11 +10,12 @@ The agent is configured to require exclusively images in the project and will th
 
 ## Ontology
 
-The agent works with an Ontology that contains a top level text classification object. It will throw a pre-execution error if this is not the case
+The agent works with an Ontology that contains a top level text classification object. It will throw a pre-execution error if this is not the case. If there are multiple top level text classification objects, it'll choose the first such one.
 
 ## Execution
+Please set the environment variables: `ENCORD_SSH_KEY` and `OPENAI_API_KEY`. Then the following command will propragate them down into the container. They will be used to authenticate with the Encord and OpenAI platform respectively
 
-docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord-agents-llm-image-captioning --project-hash=your-project-hash
+`docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord-agents-llm-image-captioning --project-hash=your-project-hash`
 
 ## Outcome
 

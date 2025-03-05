@@ -79,7 +79,7 @@ if __name__ == "__main__":
     assert workflow_stage.pathways, "Require at least one pathway (This should be impossible)"
 
     @runner.stage(
-        "image captioning",
+        workflow_stage.title,
         label_row_initialise_labels_args=LabelRowInitialiseLabelsArgs(include_classification_feature_hashes=set()),
     )
     def agent_image_captioning(
