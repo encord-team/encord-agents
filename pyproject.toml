@@ -55,14 +55,8 @@ typing-extensions = ">=4.8.0"
 # No-CLI dependencies
 encord = ">=0.1.159"
 numpy = ">=1.26.4"
-
-[tool.poetry.optional-dependencies]
-opencv = [
-    "opencv-python>=4.1"
-]
-headless = [
-    "opencv-python-headless>=4.1"
-]
+opencv-python = {optional = true, extras = ["opencv"], version = ">=4.1"}
+opencv-python-headless = {optional = true, extras = ["headless"], version = ">=4.1"}
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
@@ -86,6 +80,7 @@ mkdocs-jupyter = "^0.25.1"
 notebook = "^7.3.2"
 mkdocs-macros-plugin = "^1.3.7"
 fastapi = "^0.115.0"
+opencv-python = "^4.1"
 
 
 [tool.poetry.scripts]
