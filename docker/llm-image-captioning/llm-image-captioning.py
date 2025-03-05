@@ -1,3 +1,4 @@
+import argparse
 from typing import Annotated
 
 import numpy as np
@@ -14,8 +15,6 @@ from encord_agents.tasks.dependencies import dep_single_frame
 
 # Create OpenAI client
 openai_client = OpenAI()
-
-runner = Runner()
 
 
 def call_openai_captioning(frame: Frame) -> str:
@@ -44,22 +43,34 @@ def dep_classification(project: Project) -> tuple[Classification, TextAttribute]
     return classification, text_attr
 
 
-@runner.stage("image captioning")
-def agent_image_captioning(
-    lr: LabelRowV2,  # <- Automatically injected
-    frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
-    cls_attr_pair: Annotated[tuple[Classification, TextAttribute], Depends(dep_classification)],
-) -> str:
-    frame_obj = Frame(frame=0, content=frame)
-    modeL_response = call_openai_captioning(frame_obj)
-    text_classification_obj, text_attr = cls_attr_pair
-    cls_instance = text_classification_obj.create_instance()
-    cls_instance.set_answer(answer=modeL_response, attribute=text_attr, overwrite=True)
-    cls_instance.set_for_frames(0, overwrite=True)
-    lr.add_classification_instance(cls_instance, force=True)
-    lr.save()
-    return "captioned"
-
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process the project hash.")
+
+    # Add the project-hash argument
+    parser.add_argument("--project-hash", type=str, required=True, help="Hash value of the project")
+
+    # Parse the arguments
+    args = parser.parse_args()
+    project_hash = args.project_hash
+    runner = Runner(project_hash=project_hash)
+    assert runner.valid_stages, "No agent stage found"
+    workflow_stage = runner.valid_stages[0]
+    assert workflow_stage.pathways, "Require at least one pathway (This should be impossible)"
+
+    @runner.stage("image captioning")
+    def agent_image_captioning(
+        lr: LabelRowV2,  # <- Automatically injected
+        frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
+        cls_attr_pair: Annotated[tuple[Classification, TextAttribute], Depends(dep_classification)],
+    ) -> str:
+        frame_obj = Frame(frame=0, content=frame)
+        modeL_response = call_openai_captioning(frame_obj)
+        text_classification_obj, text_attr = cls_attr_pair
+        cls_instance = text_classification_obj.create_instance()
+        cls_instance.set_answer(answer=modeL_response, attribute=text_attr, overwrite=True)
+        cls_instance.set_for_frames(0, overwrite=True)
+        lr.add_classification_instance(cls_instance, force=True)
+        lr.save()
+        return workflow_stage.pathways[0].name
+
     runner.run()
