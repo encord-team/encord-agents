@@ -370,7 +370,7 @@ class Runner(RunnerBase):
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
-                    context = Context(project=project, task=task, label_row=label_row)
+                    context = Context(project=project, task=task, label_row=label_row, agent_stage=stage)
                     dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
                     for attempt in range(num_retries + 1):
                         try:

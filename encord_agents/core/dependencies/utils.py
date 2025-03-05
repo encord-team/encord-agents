@@ -6,7 +6,7 @@ from typing import Any, Callable, ForwardRef, Optional, cast
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
-from encord.workflow.stages.agent import AgentTask
+from encord.workflow.stages.agent import AgentStage, AgentTask
 from pydantic._internal._typing_extra import eval_type_lenient as evaluate_forwardref
 from typing_extensions import Annotated, get_args, get_origin
 
@@ -154,8 +154,10 @@ def solve_generator(*, call: Callable[..., Any], stack: ExitStack, sub_values: d
     return stack.enter_context(cm)
 
 
-def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTask | LabelRowV2 | Project | FrameData]:
-    values: dict[str, AgentTask | LabelRowV2 | Project | FrameData] = {}
+def get_field_values(
+    deps: list[_Field], context: Context
+) -> dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData]:
+    values: dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData] = {}
     for param_field in deps:
         if param_field.type_annotation is FrameData:
             if context.frame_data is None:
@@ -177,6 +179,12 @@ def get_field_values(deps: list[_Field], context: Context) -> dict[str, AgentTas
             values[param_field.name] = context.label_row
         elif param_field.type_annotation is Project:
             values[param_field.name] = context.project
+        elif param_field.type_annotation is AgentStage:
+            if context.agent_stage is None:
+                raise ValueError(
+                    "It looks like you're trying to access an agent stage from an editor agent. That is not supported, as editor agents are not associated with tasks."
+                )
+            values[param_field.name] = context.agent_stage
         else:
             raise ValueError(
                 f"Agent function is specifying a field `{param_field.name}` with type `{param_field.type_annotation}` "

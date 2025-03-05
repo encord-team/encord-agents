@@ -4,7 +4,7 @@ from uuid import UUID
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
-from encord.workflow.stages.agent import AgentTask
+from encord.workflow.stages.agent import AgentStage, AgentTask
 
 from encord_agents.core.data_model import FrameData
 
@@ -41,6 +41,7 @@ class Context:
     label_row: LabelRowV2 | None
     task: AgentTask | None = None
     frame_data: FrameData | None = None
+    agent_stage: AgentStage | None = None
 
 
 @dataclass
