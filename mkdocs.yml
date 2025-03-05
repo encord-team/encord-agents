@@ -19,6 +19,7 @@ theme:
     - content.code.copy
     - content.code.select
     - navigation.path
+    - navigation.footer
     #    - navigation.expand
     # - navigation.indexes
     - navigation.sections
