@@ -30,7 +30,6 @@ def my_agent(
 from pathlib import Path
 from typing import Callable, Generator, Iterator
 
-import cv2
 import numpy as np
 from encord.constants.enums import DataType
 from encord.objects.common import Shape
@@ -101,6 +100,11 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
         Numpy array of shape [h, w, 3] RGB colors.
 
     """
+    try:
+        import cv2
+    except ImportError:
+        raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
+
     with download_asset(lr, frame=0) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
 
