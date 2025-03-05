@@ -424,6 +424,9 @@ class Runner(RunnerBase):
                 help="Max number of tasks to try to process per stage on a given run. If `None`, will attempt all",
             ),
         ] = None,
+        *,
+        live: Live | None = None,
+        table: Table | None = None,
     ) -> None:
         """
         Run your task agent `runner(...)`.
@@ -558,7 +561,7 @@ def {fn_name}(...):
 
                 # To display two progress bars side at once, we need to create a table
                 # and add the two progress bars to it
-                progress_table = Table.grid()
+                progress_table = table or Table.grid()
                 progress_table.add_row(global_pbar)
                 progress_table.add_row(batch_pbar)
 
@@ -579,7 +582,7 @@ def {fn_name}(...):
                     tasks = stage.get_tasks()
                     bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
 
-                    with Live(progress_table, refresh_per_second=1):
+                    with live or Live(progress_table, refresh_per_second=1):
                         for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
                             # Reset the batch progress bar to display the current batch number and total tasks
                             batch_pbar.reset(
