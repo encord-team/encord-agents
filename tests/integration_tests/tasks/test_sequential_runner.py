@@ -248,3 +248,19 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
         assert AGENT_TO_COMPLETE_PATHWAY_NAME in str(e)
     else:
         assert AGENT_TO_COMPLETE_PATHWAY_HASH in str(e)
+
+
+def test_queue_runner_resolves_agent_stage(ephemeral_project_hash: str) -> None:
+    runner = Runner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_func(stage: AgentStage) -> str:
+        assert stage
+        assert stage.title == AGENT_STAGE_NAME
+        assert stage.pathways
+        pathway = stage.pathways[0]
+        assert pathway.name == AGENT_TO_COMPLETE_PATHWAY_NAME
+        assert pathway.uuid == AGENT_TO_COMPLETE_PATHWAY_HASH
+        return pathway.name
+
+    runner()
