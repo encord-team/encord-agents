@@ -41,7 +41,7 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
 
     cap.release()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    return frame.astype(np.uint8)
+    return frame.astype(np.uint8)  # type: ignore[no-any-return]
 
 
 def iter_video(video_path: Path) -> Iterator[Frame]:

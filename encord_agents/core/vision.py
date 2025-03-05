@@ -56,7 +56,7 @@ def rbb_to_poly(
         constant_values=1,
     )
     rotated_points = points @ rotation_matrix.T.astype(np.float32)
-    return rotated_points
+    return rotated_points  # type: ignore
 
 
 def crop_to_bbox(image: NDArray[np.uint8], bbox: BoundingBoxCoordinates) -> NDArray[np.uint8]:
@@ -116,4 +116,4 @@ def crop_to_object(image: NDArray[np.uint8], coordinates: CroppableCoordinates) 
 
 def b64_encode_image(img: NDArray[np.uint8], format: Base64Formats = ".jpg") -> str:
     _, encoded_image = cv2.imencode(format, img)
-    return base64.b64encode(encoded_image).decode("utf-8")  # type: ignore
+    return base64.b64encode(encoded_image).decode("utf-8")
