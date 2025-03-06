@@ -1,12 +1,11 @@
 ## Introduction
 
-When writing agents, you are often depending upon common resources, whether data for running your agent or other resources to record the output. As opposed to the large amount of boilerplate required to get these resources, we use dependency injection to **declaratively** acquire the resources and allow you to focus on developing your agent.
+When writing agents, you often rely on common resources, whether data for running your agent or for recording the output. Instead of manually setting up these resources with extensive boilerplate code, we use **dependency injection** to declaratively acquire them, allowing you to focus on developing your agent.
 
 ## What is Dependency Injection
 
 We follow dependencies as defined in: [Fastapi Dependencies](https://fastapi.tiangolo.com/tutorial/dependencies/).
 
-> ### What is "Dependency Injection"
 > "Dependency Injection" means, in programming, that there is a way for your code (in this case, your path operation functions) to declare things that it requires to work and use: "dependencies".
 > 
 > And then, that system(e.g. FastAPI or encord-agents) will take care of doing whatever is needed to provide your code with those needed dependencies ("inject" the dependencies)
@@ -35,6 +34,7 @@ The `{module}` depends on which type of agent you're building.
 Please see the [references section](reference/editor_agents.md#encord_agents.gcp.dependencies) for more details on available dependencies.
 
 ## Custom Dependencies
+
 
 Adding custom dependencies is simple. First define a function that loads them, and then use that function as a dependency.
 
