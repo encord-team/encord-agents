@@ -1,7 +1,7 @@
 import contextlib
 import threading
 import time
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from rich.live import Live
@@ -36,7 +36,7 @@ class RunnerBundle:
             if not self.stop_event.is_set():
                 print(f"Runner '{key}' completed")
 
-    def __call__(self, project_hash: str | UUID | None = None, *, no_live: bool = False, **kwargs: Any) -> None:
+    def __call__(self, project_hash: str | UUID | None = None, *, live: bool = True, **kwargs: Any) -> None:
         """
         Execute all runners in separate threads with the same arguments.
         Listen for keyboard interrupts to stop all threads.
@@ -48,10 +48,10 @@ class RunnerBundle:
         # Reset state for new run
         self.threads = []
         self.stop_event.clear()
-        tables: list[Table] | None = None
+        tables: list[Table | Literal[False]] = [False] * len(self.runners)
 
         def _execute():
-            for i, ((key, runner), table) in enumerate(zip(self.runners.items(), tables or [None] * len(self.runners))):
+            for (key, runner), table in zip(self.runners.items(), tables):
                 thread_kwargs = kwargs.copy()
                 if project_hash is not None:
                     thread_kwargs["project_hash"] = project_hash
@@ -79,7 +79,7 @@ class RunnerBundle:
 
                 print("All runners stopped")
 
-        if no_live:
+        if not live:
             _execute()
         else:
             # Create a grid layout for the panels
@@ -116,4 +116,3 @@ class RunnerBundle:
 
             with Live(grid):
                 _execute()
-
