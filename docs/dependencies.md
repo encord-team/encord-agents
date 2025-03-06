@@ -36,7 +36,9 @@ Please see the [references section](reference/editor_agents.md#encord_agents.gcp
 ## Custom Dependencies
 
 
-Adding custom dependencies is simple. First define a function that loads them, and then use that function as a dependency.
+To add a custom dependencies:
+1. Define a function to load the dependencies.
+2. Use that function as a dependency.
 
 ```python
 def my_custom_dependency(label_row: LabelRowV2) -> dict:
