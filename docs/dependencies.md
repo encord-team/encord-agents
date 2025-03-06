@@ -1,3 +1,20 @@
+## Introduction
+
+When writing agents, you are often depending upon common resources, whether data for running your agent or other resources to record the output. As opposed to the large amount of boilerplate required to get these resources, we use dependency injection to **declaratively** acquire the resources and allow you to focus on developing your agent.
+
+## What is Dependency Injection
+
+We follow dependencies as defined in: [Fastapi Dependencies](https://fastapi.tiangolo.com/tutorial/dependencies/).
+
+> ### What is "Dependency Injection"
+> "Dependency Injection" means, in programming, that there is a way for your code (in this case, your path operation functions) to declare things that it requires to work and use: "dependencies".
+> 
+> And then, that system(e.g. FastAPI or encord-agents) will take care of doing whatever is needed to provide your code with those needed dependencies ("inject" the dependencies)
+
+Please read there further for more intuition and examples of the principle and the practice.
+
+## Practice
+
 When defining your agents, you can easily inject essential dependencies, such as the path to the underlying asset or frame iterators. You can also add custom dependencies if needed.  
 
 To inject dependencies, simply type-annotate your agent function variables using the `Depends` class.
@@ -19,7 +36,7 @@ Please see the [references section](reference/editor_agents.md#encord_agents.gcp
 
 ## Custom Dependencies
 
-Adding custom dependencies is simple. Define a function that loads them, and then use that function as a dependency. The function itself can also rely on other dependencies if needed.
+Adding custom dependencies is simple. First define a function that loads them, and then use that function as a dependency.
 
 ```python
 def my_custom_dependency(label_row: LabelRowV2) -> dict:
@@ -35,3 +52,5 @@ def by_custom_data(
     # then, return name of task pathway.
 
 ```
+
+The function itself can also rely on other dependencies if needed, allowing more complicated resource acquisition. See the internals of `dep_video_iterator` for an example of this. 
