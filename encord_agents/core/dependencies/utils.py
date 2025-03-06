@@ -182,7 +182,7 @@ def get_field_values(
         elif param_field.type_annotation is AgentStage:
             if context.agent_stage is None:
                 raise ValueError(
-                    "It looks like you're trying to access an agent stage from an editor agent. That is not supported, as editor agents are not associated with tasks."
+                    "It looks like you're trying to access an agent stage from an editor agent. That is not supported, as editor agents are not associated with particular stages."
                 )
             values[param_field.name] = context.agent_stage
         else:
