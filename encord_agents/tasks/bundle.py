@@ -50,7 +50,7 @@ class RunnerBundle:
         self.stop_event.clear()
         tables: list[Table | Literal[False]] = [False] * len(self.runners)
 
-        def _execute():
+        def _execute() -> None:
             for (key, runner), table in zip(self.runners.items(), tables):
                 thread_kwargs = kwargs.copy()
                 if project_hash is not None:
@@ -99,7 +99,7 @@ class RunnerBundle:
                 panels.append(panel)
 
             # Create a grid table to organize the panels
-            grid = Table.grid(padding=(0, 2))
+            grid = Table.grid(padding=(0, 2), expand=True)
 
             # Add the appropriate number of columns to the grid
             for _ in range(num_cols):
