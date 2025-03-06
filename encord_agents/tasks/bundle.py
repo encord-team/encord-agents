@@ -1,4 +1,4 @@
-import sys
+import contextlib
 import threading
 import time
 from typing import Any
@@ -36,7 +36,7 @@ class RunnerBundle:
             if not self.stop_event.is_set():
                 print(f"Runner '{key}' completed")
 
-    def __call__(self, project_hash: str | UUID | None = None, **kwargs: Any) -> None:
+    def __call__(self, project_hash: str | UUID | None = None, *, no_live: bool = False, **kwargs: Any) -> None:
         """
         Execute all runners in separate threads with the same arguments.
         Listen for keyboard interrupts to stop all threads.
@@ -48,46 +48,14 @@ class RunnerBundle:
         # Reset state for new run
         self.threads = []
         self.stop_event.clear()
+        tables: list[Table] | None = None
 
-        # Create a grid layout for the panels
-        num_cols = min(len(self.runners), self.max_progress_cols)
-        if num_cols == 0:
-            # No runners to display
-            return
-
-        # Create a grid table to organize the panels
-        grid = Table.grid(padding=(0, 2))
-
-        # Add the appropriate number of columns to the grid
-        for _ in range(num_cols):
-            grid.add_column()
-
-        # Create panels for each runner and add them to the grid
-        tables = []
-        panels = []
-        for key, runner in self.runners.items():
-            table = Table.grid()
-            tables.append(table)
-
-            panel = Panel(table, title=f"[bold]{key}[/bold]", border_style="blue", padding=(2, 2))
-            panels.append(panel)
-
-        # Arrange panels in rows based on the number of columns
-        row = []
-        for i, panel in enumerate(panels):
-            row.append(panel)
-            if (i + 1) % num_cols == 0 or i == len(tables) - 1:
-                # Add the current row to the grid and start a new one
-                grid.add_row(*row)
-                row = []
-
-        with Live(grid, refresh_per_second=1) as live:
-            for i, (key, runner) in enumerate(self.runners.items()):
+        def _execute():
+            for i, ((key, runner), table) in enumerate(zip(self.runners.items(), tables or [None] * len(self.runners))):
                 thread_kwargs = kwargs.copy()
                 if project_hash is not None:
                     thread_kwargs["project_hash"] = project_hash
-                    thread_kwargs["live"] = live
-                    thread_kwargs["table"] = tables[i]
+                    thread_kwargs["table"] = table
 
                 thread = threading.Thread(
                     target=self._run_thread, args=(key, runner), kwargs=thread_kwargs, name=f"Runner-{key}"
@@ -95,7 +63,7 @@ class RunnerBundle:
                 self.threads.append(thread)
                 thread.start()
 
-            # Wait for all threads to complete or for keyboard interrupt
+            # Wait for all threadsjto complete or for keyboard interrupt
             try:
                 # Keep the main thread alive until all worker threads are done
                 while any(thread.is_alive() for thread in self.threads):
@@ -110,3 +78,42 @@ class RunnerBundle:
                         thread.join(timeout=5.0)
 
                 print("All runners stopped")
+
+        if no_live:
+            _execute()
+        else:
+            # Create a grid layout for the panels
+            num_cols = min(len(self.runners), self.max_progress_cols)
+            if num_cols == 0:
+                # No runners to display
+                return
+
+            # Create panels for each runner and add them to the grid
+            tables = []
+            panels = []
+            for key, runner in self.runners.items():
+                table = Table.grid()
+                tables.append(table)
+
+                panel = Panel(table, title=f"[bold]{key}[/bold]", border_style="blue", padding=(2, 2))
+                panels.append(panel)
+
+            # Create a grid table to organize the panels
+            grid = Table.grid(padding=(0, 2))
+
+            # Add the appropriate number of columns to the grid
+            for _ in range(num_cols):
+                grid.add_column()
+
+            # Arrange panels in rows based on the number of columns
+            row = []
+            for i, panel in enumerate(panels):
+                row.append(panel)
+                if (i + 1) % num_cols == 0 or i == len(panels) - 1:
+                    # Add the current row to the grid and start a new one
+                    grid.add_row(*row)
+                    row = []
+
+            with Live(grid):
+                _execute()
+

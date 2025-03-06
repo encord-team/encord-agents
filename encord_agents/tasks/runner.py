@@ -2,13 +2,14 @@ import logging
 import os
 import time
 import traceback
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional, Literal
 from uuid import UUID
 
 import rich
+from rich.progress import TaskID
 from encord.exceptions import InvalidArgumentsError
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -49,6 +50,65 @@ TaskAgentReturn = str | UUID | None
 
 logger = logging.getLogger(__name__)
 
+GLOBAL_TASK_FORMAT = "Executing agent [magenta]`{agent_name}`[/magenta] [cyan](runner total: {total})"
+BATCH_TASK_FORMAT = "Executing batch [cyan]{batch_num}[/cyan]"
+
+class ProgressContext:
+    def __init__(self, table: Table | None = None):
+        self.total = 0
+        self.agent_name = "Unset"
+
+        self.global_pbar = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TaskSpeedColumn(unit="batches"),
+            TimeElapsedColumn(),
+            transient=True,
+        )
+        self.batch_pbar = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            TaskSpeedColumn(unit="tasks"),
+            TaskProgressColumn(),
+            transient=True,
+        )
+
+        # The two tasks that will display the progress
+        self.global_task = self.global_pbar.add_task(description=GLOBAL_TASK_FORMAT.format(agent_name="", total=0))
+        self.batch_task = self.batch_pbar.add_task(description=BATCH_TASK_FORMAT.format(batch_num=""), total=0)
+
+        # To display two progress bars side at once, we need to create a table
+        # and add the two progress bars to it
+        self.progress_table = table or Table.grid()
+        self.progress_table.add_row(self.global_pbar)
+        self.progress_table.add_row(self.batch_pbar)
+
+    def set_agent_stage_name(self, agent_name: str):
+        self.agent_name = agent_name
+        self.global_pbar.reset(
+            self.global_task, total=0, description=GLOBAL_TASK_FORMAT.format(agent_name=agent_name, total=self.total)
+        )
+
+    def advance_global_progress(self):
+        self.global_pbar.update(
+            self.global_task,
+            advance=1,
+            description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total),
+        )
+
+    def reset_batch_progress(self, batch: list[AgentTask], batch_num: int):
+        self.batch_pbar.reset(
+            self.batch_task, total=len(batch), description=BATCH_TASK_FORMAT.format(batch_num=batch_num)
+        )
+
+    def advance_batch_progress(self, advance: int | None = None):
+        self.batch_pbar.update(self.batch_task, advance=advance)
+
+    def update_global_total(self, total: int | Callable[[int], int]):
+        self.total = total if isinstance(total, int) else total(self.total)
+        self.global_pbar.update(self.global_task, description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total))
 
 class RunnerAgent:
     def __init__(
@@ -367,6 +427,7 @@ class Runner(RunnerBase):
         """
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
+        print("Reached execution stage")
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
@@ -425,8 +486,7 @@ class Runner(RunnerBase):
             ),
         ] = None,
         *,
-        live: Live | None = None,
-        table: Table | None = None,
+        table: Table | None | Literal[False] = None,
     ) -> None:
         """
         Run your task agent `runner(...)`.
@@ -524,109 +584,42 @@ def {fn_name}(...):
             delta = timedelta(seconds=refresh_every) if refresh_every else None
             next_execution = None
 
+            progress_context: ProgressContext | None = None
+            if table is not False:
+                # Information to the formats will be updated in the loop below
+                progress_context = ProgressContext(table=table)
+
             while True:
                 if isinstance(next_execution, datetime):
                     if next_execution > datetime.now():
                         duration = next_execution - datetime.now()
-                        print(f"Sleeping {duration.total_seconds()} secs until next execution time.")
+                        logger.debug(f"Sleeping {duration.total_seconds()} secs until next execution time.")
                         time.sleep(duration.total_seconds())
                 elif next_execution is not None:
                     break
 
                 next_execution = datetime.now() + delta if delta else False
-                global_pbar = Progress(
-                    SpinnerColumn(),
-                    TextColumn("[progress.description]{task.description}"),
-                    TaskSpeedColumn(unit="batches"),
-                    TimeElapsedColumn(),
-                    transient=True,
-                )
-                batch_pbar = Progress(
-                    SpinnerColumn(),
-                    TextColumn("[progress.description]{task.description}"),
-                    BarColumn(),
-                    TimeElapsedColumn(),
-                    TaskSpeedColumn(unit="tasks"),
-                    TaskProgressColumn(),
-                    transient=True,
-                )
-
-                # Information to the formats will be updated in the loop below
-                global_task_format = "Executing agent [magenta]`{agent_name}`[/magenta] [cyan](total: {total})"
-                batch_task_format = "Executing batch [cyan]{batch_num}[/cyan]"
-
-                # The two tasks that will display the progress
-                global_task = global_pbar.add_task(description=global_task_format.format(agent_name="", total=0))
-                batch_task = batch_pbar.add_task(description=batch_task_format.format(batch_num=""), total=0)
-
-                # To display two progress bars side at once, we need to create a table
-                # and add the two progress bars to it
-                progress_table = table or Table.grid()
-                progress_table.add_row(global_pbar)
-                progress_table.add_row(batch_pbar)
-
                 for runner_agent in self.agents:
                     include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
                     init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
-
                     # Set the progress bar description to display the agent name and total tasks completed
-                    global_pbar.update(
-                        global_task,
-                        description=global_task_format.format(agent_name=runner_agent.printable_name, total=0),
+                    progress_context.set_agent_stage_name(runner_agent.printable_name)
+                    self._execute_agent_tasks(
+                        num_retries,
+                        max_tasks_per_stage,
+                        project,
+                        runner_agent,
+                        stage,
+                        progress_context,
+                        include_args,
+                        init_args,
+                        task_batch_size,
                     )
+            if progress_context:
+                progress_context.global_pbar.stop()
+                progress_context.batch_pbar.stop()
 
-                    batch_lrs: list[LabelRowV2 | None] = []
-
-                    total = 0
-                    tasks = stage.get_tasks()
-                    bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
-
-                    with live or Live(progress_table, refresh_per_second=1):
-                        for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
-                            # Reset the batch progress bar to display the current batch number and total tasks
-                            batch_pbar.reset(
-                                batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num)
-                            )
-                            batch_lrs = [None] * len(batch)
-
-                            if runner_agent.dependant.needs_label_row:
-                                label_rows = {
-                                    UUID(lr.data_hash): lr
-                                    for lr in project.list_label_rows_v2(
-                                        data_hashes=[t.data_hash for t in batch], **include_args.model_dump()
-                                    )
-                                }
-                                batch_lrs = [label_rows.get(t.data_hash) for t in batch]
-                                with project.create_bundle() as lr_bundle:
-                                    for lr in batch_lrs:
-                                        if lr:
-                                            lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
-
-                            self._execute_tasks(
-                                project,
-                                zip(batch, batch_lrs),
-                                runner_agent,
-                                stage,
-                                num_retries,
-                                pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
-                            )
-                            total += len(batch)
-                            batch = []
-                            batch_lrs = []
-
-                            global_pbar.update(
-                                global_task,
-                                advance=1,
-                                description=global_task_format.format(
-                                    agent_name=runner_agent.printable_name, total=total
-                                ),
-                            )
-                            if max_tasks_per_stage and total >= max_tasks_per_stage:
-                                break
-
-                    global_pbar.stop()
-                    batch_pbar.stop()
         except (PrintableError, AssertionError) as err:
             if self.was_called_from_cli:
                 panel = Panel(err.args[0], width=None)
@@ -639,6 +632,57 @@ def {fn_name}(...):
                     plain_text = Text.from_markup(err.args[0]).plain
                     err.args = (plain_text,)
                 raise
+
+    def _execute_agent_tasks(
+        self,
+        num_retries: int,
+        max_tasks_per_stage: int | None,
+        project: Project,
+        runner_agent: RunnerAgent,
+        stage: AgentStage,
+        progress_context: ProgressContext | None,
+        include_args: LabelRowMetadataIncludeArgs,
+        init_args: LabelRowInitialiseLabelsArgs,
+        task_batch_size: int,
+    ):
+        tasks = stage.get_tasks()
+        bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
+        total = 0
+        for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
+            # Reset the batch progress bar to display the current batch number and total tasks
+            if progress_context:
+                progress_context.reset_batch_progress(batch, batch_num)
+
+            batch_lrs: list[LabelRowV2 | None] = [None] * len(batch)
+            if runner_agent.dependant.needs_label_row:
+                label_rows = {
+                    UUID(lr.data_hash): lr
+                    for lr in project.list_label_rows_v2(
+                        data_hashes=[t.data_hash for t in batch], **include_args.model_dump()
+                    )
+                }
+                batch_lrs = [label_rows.get(t.data_hash) for t in batch]
+                with project.create_bundle() as lr_bundle:
+                    for lr in batch_lrs:
+                        if lr:
+                            lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
+
+            self._execute_tasks(
+                project,
+                zip(batch, batch_lrs),
+                runner_agent,
+                stage,
+                num_retries,
+                pbar_update=lambda x: progress_context.advance_batch_progress(x or 1) if progress_context else None,
+            )
+            total += len(batch)
+
+            if progress_context:
+                progress_context.update_global_total(lambda x: x + len(batch))
+                progress_context.advance_global_progress()
+
+            if max_tasks_per_stage and total >= max_tasks_per_stage:
+                break
 
     def run(self) -> None:
         """
