@@ -5,11 +5,10 @@ import traceback
 from contextlib import ExitStack, nullcontext
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Literal
+from typing import Any, Callable, Iterable, Literal, Optional
 from uuid import UUID
 
 import rich
-from rich.progress import TaskID
 from encord.exceptions import InvalidArgumentsError
 from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -26,6 +25,7 @@ from rich.progress import (
     ProgressColumn,
     SpinnerColumn,
     Task,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -52,6 +52,7 @@ logger = logging.getLogger(__name__)
 
 GLOBAL_TASK_FORMAT = "Executing agent [magenta]`{agent_name}`[/magenta] [cyan](runner total: {total})"
 BATCH_TASK_FORMAT = "Executing batch [cyan]{batch_num}[/cyan]"
+
 
 class ProgressContext:
     def __init__(self, table: Table | None = None):
@@ -108,7 +109,10 @@ class ProgressContext:
 
     def update_global_total(self, total: int | Callable[[int], int]):
         self.total = total if isinstance(total, int) else total(self.total)
-        self.global_pbar.update(self.global_task, description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total))
+        self.global_pbar.update(
+            self.global_task, description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total)
+        )
+
 
 class RunnerAgent:
     def __init__(
@@ -604,18 +608,37 @@ def {fn_name}(...):
                     init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
                     # Set the progress bar description to display the agent name and total tasks completed
-                    progress_context.set_agent_stage_name(runner_agent.printable_name)
-                    self._execute_agent_tasks(
-                        num_retries,
-                        max_tasks_per_stage,
-                        project,
-                        runner_agent,
-                        stage,
-                        progress_context,
-                        include_args,
-                        init_args,
-                        task_batch_size,
-                    )
+                    if progress_context:
+                        progress_context.set_agent_stage_name(runner_agent.printable_name)
+
+                    if table is None:
+                        from rich.live import Live
+
+                        with Live(progress_context.progress_table):
+                            self._execute_agent_tasks(
+                                num_retries,
+                                max_tasks_per_stage,
+                                project,
+                                runner_agent,
+                                stage,
+                                progress_context,
+                                include_args,
+                                init_args,
+                                task_batch_size,
+                            )
+                    else:
+                        self._execute_agent_tasks(
+                            num_retries,
+                            max_tasks_per_stage,
+                            project,
+                            runner_agent,
+                            stage,
+                            progress_context,
+                            include_args,
+                            init_args,
+                            task_batch_size,
+                        )
+
             if progress_context:
                 progress_context.global_pbar.stop()
                 progress_context.batch_pbar.stop()
