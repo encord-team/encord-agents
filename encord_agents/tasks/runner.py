@@ -86,28 +86,30 @@ class ProgressContext:
         self.progress_table.add_row(self.global_pbar)
         self.progress_table.add_row(self.batch_pbar)
 
-    def set_agent_stage_name(self, agent_name: str):
-        self.agent_name = agent_name
+    def set_agent_stage_name(self, agent_name: str | UUID) -> None:
+        self.agent_name = str(agent_name)
         self.global_pbar.reset(
-            self.global_task, total=0, description=GLOBAL_TASK_FORMAT.format(agent_name=agent_name, total=self.total)
+            self.global_task,
+            total=0,
+            description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total),
         )
 
-    def advance_global_progress(self):
+    def advance_global_progress(self) -> None:
         self.global_pbar.update(
             self.global_task,
             advance=1,
             description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total),
         )
 
-    def reset_batch_progress(self, batch: list[AgentTask], batch_num: int):
+    def reset_batch_progress(self, batch: list[AgentTask], batch_num: int) -> None:
         self.batch_pbar.reset(
             self.batch_task, total=len(batch), description=BATCH_TASK_FORMAT.format(batch_num=batch_num)
         )
 
-    def advance_batch_progress(self, advance: int | None = None):
+    def advance_batch_progress(self, advance: float | int | None = None) -> None:
         self.batch_pbar.update(self.batch_task, advance=advance)
 
-    def update_global_total(self, total: int | Callable[[int], int]):
+    def update_global_total(self, total: int | Callable[[int], int]) -> None:
         self.total = total if isinstance(total, int) else total(self.total)
         self.global_pbar.update(
             self.global_task, description=GLOBAL_TASK_FORMAT.format(agent_name=self.agent_name, total=self.total)
@@ -426,12 +428,11 @@ class Runner(RunnerBase):
         runner_agent: RunnerAgent,
         stage: AgentStage,
         num_retries: int,
-        pbar_update: Callable[[float | None], bool | None] | None = None,
+        pbar_update: Callable[[float | int | None], bool | None] | None = None,
     ) -> None:
         """
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
-        print("Reached execution stage")
         with Bundle() as bundle:
             for task, label_row in tasks:
                 with ExitStack() as stack:
@@ -611,9 +612,7 @@ def {fn_name}(...):
                     if progress_context:
                         progress_context.set_agent_stage_name(runner_agent.printable_name)
 
-                    if table is None:
-                        from rich.live import Live
-
+                    if table is None and progress_context:
                         with Live(progress_context.progress_table):
                             self._execute_agent_tasks(
                                 num_retries,
@@ -667,7 +666,7 @@ def {fn_name}(...):
         include_args: LabelRowMetadataIncludeArgs,
         init_args: LabelRowInitialiseLabelsArgs,
         task_batch_size: int,
-    ):
+    ) -> None:
         tasks = stage.get_tasks()
         bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
         total = 0
