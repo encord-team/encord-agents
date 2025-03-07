@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from encord.client import EncordClientProject
+from encord.constants.enums import DataType
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
