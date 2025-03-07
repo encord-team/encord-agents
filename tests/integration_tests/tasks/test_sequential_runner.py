@@ -75,23 +75,23 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
         mock_agent(task)
         return AGENT_TO_COMPLETE_PATHWAY_NAME
 
-    # Run the runner
-    runner(task_batch_size=11)  # 520 tasks / 11 = 47 full batches + 3 tasks in the last batch
-
     # Get the project to check number of tasks
     project = runner.project
     assert project
+    N_items = len(project.list_label_rows_v2())
+    agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    assert N_items == len(agent_stage_tasks)
+    # Run the runner
+    runner(task_batch_size=11)  # 520 tasks / 11 = 47 full batches + 3 tasks in the last batch
 
     complete_stage = project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
-    tasks = list(complete_stage.get_tasks())
-
-    dataset_info = list(project.list_datasets())[0]
-    dataset = user_client.get_dataset(dataset_info.dataset_hash)
+    complete_stage_tasks = list(complete_stage.get_tasks())
 
     # Verify the mock was called exactly once for each task
-    assert mock_agent.call_count == len(tasks) and mock_agent.call_count == len(
-        dataset.data_rows
-    ), f"Agent function should be called {len(tasks)} times, but was called {mock_agent.call_count} times"
+
+    assert mock_agent.call_count == N_items
+    assert len(complete_stage_tasks) == N_items
 
     # Check that we have no tasks at Agent stage and haven't made tasks somehow
     agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
