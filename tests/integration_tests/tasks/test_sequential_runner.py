@@ -2,12 +2,16 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
+from encord.constants.enums import DataType
+from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.objects.ontology_object import Object
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
+from encord_agents.core.dependencies.models import TaskAgentReturnStruct
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import Runner
@@ -281,3 +285,29 @@ def test_runner_storage_item_dependency_resolved_once(ephemeral_image_project_ha
             runner()
             mock_get_item.assert_not_called()
             mock_get_items.assert_called_once()
+
+
+def test_runner_return_struct_object(ephemeral_image_project_hash: str) -> None:
+    runner = Runner(project_hash=ephemeral_image_project_hash)
+
+    assert runner.project
+    bbox_object = runner.project.ontology_structure.get_child_by_hash("PXFZO2ra", type_=Object)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def update_label_row(label_row: LabelRowV2) -> TaskAgentReturnStruct:
+        obj_instance = bbox_object.create_instance()
+        obj_instance.set_for_frames(BoundingBoxCoordinates(height=0.5, width=0.5, top_left_x=0, top_left_y=0))
+        label_row.add_object_instance(obj_instance)
+        return TaskAgentReturnStruct(pathway=AGENT_TO_COMPLETE_PATHWAY_HASH, label_row=label_row)
+
+    runner()
+    lrs = runner.project.list_label_rows_v2()
+    for row in lrs:
+        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT, DataType.PDF]:
+            continue
+        row.initialise_labels()
+        assert row.get_object_instances()
+
+    agent_stage = runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    assert len(agent_stage_tasks) == 0
