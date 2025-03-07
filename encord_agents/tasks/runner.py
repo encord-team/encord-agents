@@ -15,6 +15,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.project import ProjectType
 from encord.orm.workflow import WorkflowStageType
 from encord.project import Project
+from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.workflow import WorkflowStage
 from rich.live import Live
@@ -37,6 +38,7 @@ from typing_extensions import Annotated, Self
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
+from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
@@ -356,9 +358,62 @@ class Runner(RunnerBase):
         return decorator
 
     @staticmethod
-    def _execute_tasks(
+    def _assemble_contexts(
+        task_batch: list[AgentTask],
+        runner_agent: RunnerAgent,
         project: Project,
-        tasks: Iterable[tuple[AgentTask, LabelRowV2 | None]],
+        include_args: LabelRowMetadataIncludeArgs,
+        init_args: LabelRowInitialiseLabelsArgs,
+        stage: AgentStage,
+        client: EncordUserClient,
+    ) -> list[Context]:
+        contexts = [
+            Context(
+                project=project,
+                label_row=None,
+                task=task,
+                agent_stage=stage,
+                storage_item=None,
+            )
+            for task in task_batch
+        ]
+        batch_lrs: list[LabelRowV2] = []
+
+        if runner_agent.dependant.needs_label_row:
+            label_rows = {
+                UUID(lr.data_hash): lr
+                for lr in project.list_label_rows_v2(
+                    data_hashes=[t.data_hash for t in task_batch], **include_args.model_dump()
+                )
+            }
+            for task in task_batch:
+                if task.data_hash in label_rows:
+                    raise ValueError(
+                        f"We have a task: {task}, with {task.data_hash=} but there was no such label row found for this data_hash. Should be impossible"
+                    )
+                batch_lrs.append(label_rows[task.data_hash])
+            with project.create_bundle() as lr_bundle:
+                for lr in batch_lrs:
+                    lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
+            for label_row, context in zip(batch_lrs, contexts, strict=True):
+                context.label_row = label_row
+        if runner_agent.dependant.needs_storage_item:
+            if batch_lrs:
+                storage_items = client.get_storage_items(
+                    [lr.backing_item_uuid or "" for lr in batch_lrs], sign_url=True
+                )
+            else:
+                storage_items = DataLookup.sharable(project).get_storage_items(
+                    data_hashes=[task.data_hash for task in task_batch], sign_urls=True
+                )
+            for storage_item, context in zip(storage_items, contexts, strict=True):
+                context.storage_item = storage_item
+
+        return contexts
+
+    @staticmethod
+    def _execute_tasks(
+        contexts: Iterable[Context],
         runner_agent: RunnerAgent,
         stage: AgentStage,
         num_retries: int,
@@ -368,9 +423,10 @@ class Runner(RunnerBase):
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
         with Bundle() as bundle:
-            for task, label_row in tasks:
+            for context in contexts:
+                assert context.task
                 with ExitStack() as stack:
-                    context = Context(project=project, task=task, label_row=label_row, agent_stage=stage)
+                    task = context.task
                     dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
                     for attempt in range(num_retries + 1):
                         try:
@@ -573,44 +629,35 @@ def {fn_name}(...):
                         description=global_task_format.format(agent_name=runner_agent.printable_name, total=0),
                     )
 
-                    batch_lrs: list[LabelRowV2 | None] = []
-
                     total = 0
                     tasks = stage.get_tasks()
-                    bs = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
+                    batch_size = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
 
                     with Live(progress_table, refresh_per_second=1):
-                        for batch_num, batch in enumerate(batch_iterator(tasks, bs)):
+                        for batch_num, task_batch in enumerate(batch_iterator(tasks, batch_size)):
                             # Reset the batch progress bar to display the current batch number and total tasks
                             batch_pbar.reset(
-                                batch_task, total=len(batch), description=batch_task_format.format(batch_num=batch_num)
+                                batch_task,
+                                total=len(task_batch),
+                                description=batch_task_format.format(batch_num=batch_num),
                             )
-                            batch_lrs = [None] * len(batch)
-
-                            if runner_agent.dependant.needs_label_row:
-                                label_rows = {
-                                    UUID(lr.data_hash): lr
-                                    for lr in project.list_label_rows_v2(
-                                        data_hashes=[t.data_hash for t in batch], **include_args.model_dump()
-                                    )
-                                }
-                                batch_lrs = [label_rows.get(t.data_hash) for t in batch]
-                                with project.create_bundle() as lr_bundle:
-                                    for lr in batch_lrs:
-                                        if lr:
-                                            lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
-
+                            contexts = self._assemble_contexts(
+                                task_batch=task_batch,
+                                runner_agent=runner_agent,
+                                project=project,
+                                include_args=include_args,
+                                init_args=init_args,
+                                stage=stage,
+                                client=self.client,
+                            )
                             self._execute_tasks(
-                                project,
-                                zip(batch, batch_lrs),
+                                contexts,
                                 runner_agent,
                                 stage,
                                 num_retries,
                                 pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
                             )
-                            total += len(batch)
-                            batch = []
-                            batch_lrs = []
+                            total += len(task_batch)
 
                             global_pbar.update(
                                 global_task,
