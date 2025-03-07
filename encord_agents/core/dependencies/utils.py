@@ -6,6 +6,7 @@ from typing import Any, Callable, ForwardRef, Optional, cast
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
+from encord.storage import StorageItem
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from pydantic._internal._typing_extra import eval_type_lenient as evaluate_forwardref
 from typing_extensions import Annotated, get_args, get_origin
@@ -61,9 +62,11 @@ def get_dependant(
             )
             dependant.dependencies.append(sub_dependant)
             dependant.needs_label_row |= sub_dependant.needs_label_row
+            dependant.needs_storage_item |= sub_dependant.needs_storage_item
         else:
             dependant.field_params.append(_Field(name=param_name, type_annotation=param_details.type_annotation))
             dependant.needs_label_row |= param_details.type_annotation is LabelRowV2
+            dependant.needs_storage_item |= param_details.type_annotation is StorageItem
 
     return dependant
 
@@ -117,7 +120,7 @@ def analyze_param(
 
         if isinstance(agent_annotation, Depends):
             depends = agent_annotation
-    elif annotation is LabelRowV2 or annotation is AgentTask or annotation is FrameData:
+    elif annotation is LabelRowV2 or annotation is AgentTask or annotation is FrameData or annotation is AgentTask:
         return ParamDetails(type_annotation=annotation, depends=None)
 
     # Get Depends from default value
