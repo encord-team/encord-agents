@@ -5,6 +5,7 @@ from typing import Generator, NamedTuple
 import pytest
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
+from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from typing_extensions import Annotated
 
@@ -15,6 +16,7 @@ from encord_agents.core.dependencies.utils import get_dependant, solve_dependenc
 class SharedResolutionContext(NamedTuple):
     project: Project
     first_label_row: LabelRowV2
+    storage_item: StorageItem
 
 
 # Load project info once for the class
@@ -22,12 +24,14 @@ class SharedResolutionContext(NamedTuple):
 def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: str) -> SharedResolutionContext:
     project = user_client.get_project(class_level_ephemeral_project_hash)
     first_label_row = project.list_label_rows_v2()[0]
-    return SharedResolutionContext(project=project, first_label_row=first_label_row)
+    storage_item = user_client.get_storage_item(first_label_row.backing_item_uuid or "")
+    return SharedResolutionContext(project=project, first_label_row=first_label_row, storage_item=storage_item)
 
 
 class TestDependencyResolution:
     project: Project
     first_label_row: LabelRowV2
+    storage_item: StorageItem
 
     # Set the project and first label row for the class
     @classmethod
@@ -35,6 +39,7 @@ class TestDependencyResolution:
     def setup(cls, context: SharedResolutionContext) -> None:
         cls.project = context.project
         cls.first_label_row = context.first_label_row
+        cls.storage_item = context.storage_item
 
     def test_resolve_flat(self) -> None:
         def dependency1() -> str:
@@ -202,6 +207,34 @@ class TestDependencyResolution:
 
         dependant = get_dependant(name="func3", func=func3)
         assert dependant.needs_label_row
+
+    @staticmethod
+    def test_storage_item_dependency() -> None:
+        def func1(
+            storage_item: StorageItem,
+        ) -> None:
+            assert storage_item.name is not None
+
+        dependant = get_dependant(name="func1", func=func1)
+        assert dependant.needs_storage_item
+
+        def func2(
+            project: Project,
+        ) -> None: ...
+
+        dependant = get_dependant(name="func2", func=func2)
+        assert not dependant.needs_storage_item
+
+        def dep1(storage_item: StorageItem) -> str:
+            return storage_item.name
+
+        def func3(
+            dep1: Annotated[str, Depends(dep1)],
+        ) -> None:
+            assert dep1
+
+        dependant = get_dependant(name="func3", func=func3)
+        assert dependant.needs_storage_item
 
     @staticmethod
     def test_dont_use_annotated_and_default_value_dependencies_together() -> None:
