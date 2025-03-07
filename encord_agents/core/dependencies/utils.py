@@ -159,8 +159,8 @@ def solve_generator(*, call: Callable[..., Any], stack: ExitStack, sub_values: d
 
 def get_field_values(
     deps: list[_Field], context: Context
-) -> dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData]:
-    values: dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData] = {}
+) -> dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData | StorageItem]:
+    values: dict[str, AgentTask | AgentStage | LabelRowV2 | Project | FrameData | StorageItem] = {}
     for param_field in deps:
         if param_field.type_annotation is FrameData:
             if context.frame_data is None:
@@ -180,6 +180,12 @@ def get_field_values(
                     "Failed to parse dependency tree correctly. Context should have had a label row. Please contact support@encord.com with as much detail as you can (stacktrace, dependency, function declaration)"
                 )
             values[param_field.name] = context.label_row
+        elif param_field.type_annotation is StorageItem:
+            if context.storage_item is None:
+                raise ValueError(
+                    "Failed to parse dependency tree correctly. Context should have had a storage item. Please contact support@encord.com with as much detail as you can (stacktrace, dependency, function declaration)"
+                )
+            values[param_field.name] = context.storage_item
         elif param_field.type_annotation is Project:
             values[param_field.name] = context.project
         elif param_field.type_annotation is AgentStage:
