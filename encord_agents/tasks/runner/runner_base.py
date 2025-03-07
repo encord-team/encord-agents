@@ -11,18 +11,21 @@ from encord.workflow.workflow import WorkflowStage
 from typer import Abort
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context, Dependant
+from encord_agents.core.dependencies.models import (
+    Context,
+    Dependant,
+    TaskAgentReturnType,
+)
 from encord_agents.core.dependencies.utils import get_dependant
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks.models import TaskAgentReturn
 
 
 class RunnerAgent:
     def __init__(
         self,
         identity: str | UUID,
-        callable: Callable[..., TaskAgentReturn],
+        callable: Callable[..., TaskAgentReturnType],
         printable_name: str | None = None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
@@ -213,7 +216,7 @@ class RunnerBase:
     def _add_stage_agent(
         self,
         identity: str | UUID,
-        func: Callable[..., TaskAgentReturn],
+        func: Callable[..., TaskAgentReturnType],
         *,
         stage_insertion: int | None,
         printable_name: str | None,

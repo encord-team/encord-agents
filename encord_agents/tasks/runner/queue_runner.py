@@ -4,15 +4,14 @@ from functools import wraps
 from typing import Any, Callable, Iterable
 from uuid import UUID
 
-from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
 from encord.workflow.stages.agent import AgentStage
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context
+from encord_agents.core.dependencies.models import TaskAgentReturnStruct, TaskAgentReturnType
 from encord_agents.core.dependencies.utils import solve_dependencies
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks.models import AgentTaskConfig, TaskAgentReturn, TaskCompletionResult
+from encord_agents.tasks.models import AgentTaskConfig, TaskCompletionResult
 from encord_agents.tasks.runner.runner_base import RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
@@ -163,14 +162,16 @@ class QueueRunner(RunnerBase):
                         client=self.client,
                     )
 
-                    next_stage: TaskAgentReturn = None
+                    next_stage: TaskAgentReturnType = None
                     with ExitStack() as stack:
                         dependencies = solve_dependencies(
                             context=context, dependant=runner_agent.dependant, stack=stack
                         )
                         next_stage = runner_agent.callable(**dependencies.values)
                     next_stage_uuid: UUID | None = None
-                    if next_stage is None:
+                    if isinstance(next_stage, TaskAgentReturnStruct):
+                        pass
+                    elif next_stage is None:
                         # TODO: Should we log that task didn't continue?
                         pass
                     elif next_stage_uuid := try_coerce_UUID(next_stage):
