@@ -31,13 +31,18 @@ from typer import Abort, Option
 from typing_extensions import Annotated, Self
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
+from encord_agents.core.dependencies.models import (
+    Context,
+    DecoratedCallable,
+    Dependant,
+    TaskAgentReturnStruct,
+    TaskAgentReturnType,
+)
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks.models import TaskAgentReturn
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
 logger = logging.getLogger(__name__)
@@ -47,7 +52,7 @@ class RunnerAgent:
     def __init__(
         self,
         identity: str | UUID,
-        callable: Callable[..., TaskAgentReturn],
+        callable: Callable[..., TaskAgentReturnType],
         printable_name: str | None = None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
@@ -234,7 +239,7 @@ class RunnerBase:
     def _add_stage_agent(
         self,
         identity: str | UUID,
-        func: Callable[..., TaskAgentReturn],
+        func: Callable[..., TaskAgentReturnType],
         *,
         stage_insertion: int | None,
         printable_name: str | None,
@@ -428,40 +433,49 @@ class Runner(RunnerBase):
         """
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
-        with Bundle() as bundle:
-            for context in contexts:
-                assert context.task
-                with ExitStack() as stack:
-                    task = context.task
-                    dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
-                    for attempt in range(num_retries + 1):
-                        try:
-                            next_stage = runner_agent.callable(**dependencies.values)
-                            if next_stage is None:
-                                pass
-                            elif next_stage_uuid := try_coerce_UUID(next_stage):
-                                if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
-                                    raise PrintableError(
-                                        f"No pathway with UUID: {next_stage} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
-                                    )
-                                task.proceed(pathway_uuid=str(next_stage_uuid), bundle=bundle)
-                            else:
-                                if next_stage not in [str(pathway.name) for pathway in stage.pathways]:
-                                    raise PrintableError(
-                                        f"No pathway with name: {next_stage} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
-                                    )
-                                task.proceed(pathway_name=str(next_stage), bundle=bundle)
-                            if pbar_update is not None:
-                                pbar_update(1.0)
-                            break
+        with Bundle() as task_bundle:
+            with Bundle(bundle_size=100) as label_bundle:
+                for context in contexts:
+                    assert context.task
+                    with ExitStack() as stack:
+                        task = context.task
+                        dependencies = solve_dependencies(
+                            context=context, dependant=runner_agent.dependant, stack=stack
+                        )
+                        for attempt in range(num_retries + 1):
+                            try:
+                                agent_response = runner_agent.callable(**dependencies.values)
+                                if isinstance(agent_response, TaskAgentReturnStruct):
+                                    pathway_to_follow = agent_response.pathway
+                                    if agent_response.label_row:
+                                        agent_response.label_row.save(bundle=label_bundle)
+                                else:
+                                    pathway_to_follow = agent_response
+                                if pathway_to_follow is None:
+                                    pass
+                                elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
+                                    if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
+                                        raise PrintableError(
+                                            f"No pathway with UUID: {agent_response} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
+                                        )
+                                    task.proceed(pathway_uuid=str(next_stage_uuid), bundle=task_bundle)
+                                else:
+                                    if pathway_to_follow not in [str(pathway.name) for pathway in stage.pathways]:
+                                        raise PrintableError(
+                                            f"No pathway with name: {agent_response} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
+                                        )
+                                    task.proceed(pathway_name=str(agent_response), bundle=task_bundle)
+                                if pbar_update is not None:
+                                    pbar_update(1.0)
+                                break
 
-                        except KeyboardInterrupt:
-                            raise
-                        except PrintableError:
-                            raise
-                        except Exception:
-                            print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
-                            traceback.print_exc()
+                            except KeyboardInterrupt:
+                                raise
+                            except PrintableError:
+                                raise
+                            except Exception:
+                                print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
+                                traceback.print_exc()
 
     def __call__(
         self,
