@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
+from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
@@ -264,3 +265,18 @@ def test_queue_runner_resolves_agent_stage(ephemeral_project_hash: str) -> None:
         return pathway.name
 
     runner()
+
+
+def test_runner_storage_item_dependency_resolved_once(ephemeral_project_hash: str) -> None:
+    runner = Runner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def storage_dep(storage_item: StorageItem) -> None:
+        assert storage_item
+
+    with patch.object(StorageItem, "_get_item") as mock_get_item:
+        with patch.object(StorageItem, "_get_items") as mock_get_items:
+            mock_get_items.return_value = list(range(9))
+            runner()
+            mock_get_item.assert_not_called()
+            mock_get_items.assert_called_once()
