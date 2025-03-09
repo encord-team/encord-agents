@@ -314,9 +314,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     return lookup
 
 
-def dep_storage_item(
-    user_client: Annotated[EncordUserClient, Depends(dep_client)], label_row: LabelRowV2
-) -> StorageItem:
+def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     r"""
     Get the storage item associated with the underlying agent task.
 
@@ -325,6 +323,9 @@ def dep_storage_item(
 
     * Updating client metadata
     * Reading file properties like storage location, fps, duration, DICOM tags, etc.
+
+    Note: When marking a task agent with the StorageItem dependency, we will bulk fetch the storage items for the tasks
+    and then inject them independently with each task
 
     **Example**
 
@@ -346,6 +347,4 @@ def dep_storage_item(
     Returns:
         The storage item.
     """
-    if label_row.backing_item_uuid is None:
-        raise ValueError("Label row does not have a backing item UUID")
-    return user_client.get_storage_item(label_row.backing_item_uuid)
+    return storage_item
