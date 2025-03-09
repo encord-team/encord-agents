@@ -120,7 +120,13 @@ def analyze_param(
 
         if isinstance(agent_annotation, Depends):
             depends = agent_annotation
-    elif annotation is LabelRowV2 or annotation is AgentTask or annotation is FrameData or annotation is AgentTask:
+    elif (
+        annotation is LabelRowV2
+        or annotation is AgentTask
+        or annotation is FrameData
+        or annotation is AgentStage
+        or annotation is StorageItem
+    ):
         return ParamDetails(type_annotation=annotation, depends=None)
 
     # Get Depends from default value

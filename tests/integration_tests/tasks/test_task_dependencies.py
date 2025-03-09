@@ -39,6 +39,7 @@ class SharedTaskDependencyResolutionContext(NamedTuple):
     pdf_label_row: LabelRowV2
     plain_text_label_row: LabelRowV2
     audio_label_row: LabelRowV2
+    storage_item_video: StorageItem
     # dicom_file_label_row: LabelRowV2
     # dicom_series_label_row: LabelRowV2
     # nifti_label_row: LabelRowV2
@@ -92,6 +93,7 @@ def context(
         pdf_label_row=pdf_label_row,
         plain_text_label_row=plain_text_label_row,
         audio_label_row=audio_label_row,
+        storage_item_video=user_client.get_storage_item(video_label_row.backing_item_uuid or "", sign_url=True),
     )
 
 
@@ -200,10 +202,8 @@ class TestDependencyResolution:
         with pytest.raises(PrintableError):
             dep_twin_label_row("invalid_project_hash")(context.video_label_row)
 
-    def test_dep_storage_item(
-        self, context: SharedTaskDependencyResolutionContext, user_client: EncordUserClient
-    ) -> None:
-        storage_item = dep_storage_item(user_client, context.video_label_row)
+    def test_dep_storage_item(self, context: SharedTaskDependencyResolutionContext) -> None:
+        storage_item = dep_storage_item(context.storage_item_video)
         assert isinstance(storage_item, StorageItem)
         assert storage_item.item_type == StorageItemType.VIDEO
 
