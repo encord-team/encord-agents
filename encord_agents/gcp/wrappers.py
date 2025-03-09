@@ -103,7 +103,8 @@ def editor_agent(
                 if label_row:
                     assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
                     storage_item = client.get_storage_item(label_row.backing_item_uuid)
-                storage_item = dep_storage_item(dep_data_lookup(DataLookup.sharable(project)), frame_data)
+                else:
+                    storage_item = dep_storage_item(dep_data_lookup(DataLookup.sharable(project)), frame_data)
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
             with ExitStack() as stack:
