@@ -8,10 +8,9 @@ from encord.project import Project
 from encord.workflow.stages.agent import AgentStage
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import TaskAgentReturnStruct, TaskAgentReturnType
 from encord_agents.core.dependencies.utils import solve_dependencies
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks.models import AgentTaskConfig, TaskCompletionResult
+from encord_agents.tasks.models import AgentTaskConfig, TaskAgentReturnStruct, TaskAgentReturnType, TaskCompletionResult
 from encord_agents.tasks.runner.runner_base import RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 

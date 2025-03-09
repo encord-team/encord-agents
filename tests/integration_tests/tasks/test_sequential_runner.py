@@ -12,10 +12,10 @@ from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
-from encord_agents.core.dependencies.models import TaskAgentReturnStruct
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import SequentialRunner
+from encord_agents.tasks.models import TaskAgentReturnStruct
 from tests.fixtures import (
     AGENT_STAGE_NAME,
     AGENT_TO_COMPLETE_PATHWAY_HASH,
