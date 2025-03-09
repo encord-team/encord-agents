@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+TaskAgentReturn = str | UUID | None
+
 
 class AgentTaskConfig(BaseModel):
     task_uuid: UUID = Field(description="The task uuid", validation_alias="uuid")

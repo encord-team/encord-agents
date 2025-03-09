@@ -4,6 +4,7 @@ from uuid import UUID
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
+from encord.storage import StorageItem
 from encord.workflow.stages.agent import AgentStage, AgentTask
 
 from encord_agents.core.data_model import FrameData
@@ -33,6 +34,7 @@ class Dependant:
     dependencies: list["Dependant"] = field(default_factory=list)
     field_params: list[_Field] = field(default_factory=list)
     needs_label_row: bool = False
+    needs_storage_item: bool = False
 
 
 @dataclass
@@ -42,6 +44,7 @@ class Context:
     task: AgentTask | None = None
     frame_data: FrameData | None = None
     agent_stage: AgentStage | None = None
+    storage_item: StorageItem | None = None
 
 
 @dataclass
