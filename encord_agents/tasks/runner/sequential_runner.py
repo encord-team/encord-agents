@@ -28,15 +28,13 @@ from typing_extensions import Annotated, Self
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import (
     Context,
-    DecoratedCallable,
     Dependant,
-    TaskAgentReturnStruct,
-    TaskAgentReturnType,
 )
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
+from encord_agents.tasks.models import DecoratedCallable, TaskAgentReturnStruct, TaskAgentReturnType
 from encord_agents.tasks.runner.runner_base import RunnerAgent, RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
@@ -223,7 +221,7 @@ class SequentialRunner(RunnerBase):
                         )
                         for attempt in range(num_retries + 1):
                             try:
-                                agent_response = runner_agent.callable(**dependencies.values)
+                                agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
                                 if isinstance(agent_response, TaskAgentReturnStruct):
                                     pathway_to_follow = agent_response.pathway
                                     if agent_response.label_row:

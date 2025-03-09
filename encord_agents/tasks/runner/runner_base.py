@@ -14,11 +14,11 @@ from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRow
 from encord_agents.core.dependencies.models import (
     Context,
     Dependant,
-    TaskAgentReturnType,
 )
 from encord_agents.core.dependencies.utils import get_dependant
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
+from encord_agents.tasks.models import TaskAgentReturnType
 
 
 class RunnerAgent:
