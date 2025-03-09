@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, TypeVar
-from uuid import UUID
+from typing import Any, Callable, Optional
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
@@ -8,22 +7,6 @@ from encord.storage import StorageItem
 from encord.workflow.stages.agent import AgentStage, AgentTask
 
 from encord_agents.core.data_model import FrameData
-
-TaskAgentReturnPathway = str | UUID | None
-
-
-@dataclass
-class TaskAgentReturnStruct:
-    """Return this from your agent and we will handle propagating the updates in batches"""
-
-    pathway: TaskAgentReturnPathway = None
-    storage_item: StorageItem | None = None
-    label_row: LabelRowV2 | None = None
-
-
-TaskAgentReturnType = TaskAgentReturnPathway | TaskAgentReturnStruct
-
-DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., TaskAgentReturnType])
 
 
 class Depends:

@@ -33,15 +33,13 @@ from typing_extensions import Annotated, Self
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import (
     Context,
-    DecoratedCallable,
     Dependant,
-    TaskAgentReturnStruct,
-    TaskAgentReturnType,
 )
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
 from encord_agents.exceptions import PrintableError
+from encord_agents.tasks.models import DecoratedCallable, TaskAgentReturnStruct, TaskAgentReturnType
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
 logger = logging.getLogger(__name__)
