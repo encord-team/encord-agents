@@ -13,7 +13,7 @@ The agent works with an Ontology that contains a top level radio classification 
 
 ## Execution
 
-`docker run -e ENCORD_SSH_KEY encord-agent-clip-image-classification --project-hash=your-project-hash`
+`docker run -e ENCORD_SSH_KEY encord/encord-agent-clip-image-classification:latest --project-hash=your-project-hash`
 
 ## Outcome
 

@@ -21,7 +21,7 @@ The agent works with an Ontology that contains a top level text classification o
 ## Execution
 Please set the environment variables: `ENCORD_SSH_KEY` and `OPENAI_API_KEY`. Then the following command will propragate them down into the container. They will be used to authenticate with the Encord and OpenAI platform respectively
 
-`docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord-agents-llm-image-captioning --project-hash=your-project-hash`
+`docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord/encord-agent-llm-image-captioning:latest --project-hash=your-project-hash`
 
 ## Outcome
 

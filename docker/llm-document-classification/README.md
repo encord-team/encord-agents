@@ -14,7 +14,7 @@ An alternative would be captioning as shown in the [captioning example](../llm-i
 
 ## Execution
 
-`docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord-agent-llm-document-classification --project-hash=your-project-hash`
+`docker run -e ENCORD_SSH_KEY -e OPENAI_API_KEY encord/encord-agent-llm-document-classification:latest --project-hash=your-project-hash`
 
 ## Outcome
 
