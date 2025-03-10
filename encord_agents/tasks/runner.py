@@ -143,7 +143,7 @@ class RunnerBase:
                 )
             }
             for task in task_batch:
-                if task.data_hash in label_rows:
+                if task.data_hash not in label_rows:
                     raise ValueError(
                         f"We have a task: {task}, with {task.data_hash=} but there was no such label row found for this data_hash. Should be impossible"
                     )
