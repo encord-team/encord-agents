@@ -38,6 +38,8 @@ from encord_agents.tasks.models import DecoratedCallable, TaskAgentReturnStruct,
 from encord_agents.tasks.runner.runner_base import RunnerAgent, RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
+LABEL_ROW_BATCH_SIZE = 100
+
 
 class SequentialRunner(RunnerBase):
     """
@@ -211,7 +213,7 @@ class SequentialRunner(RunnerBase):
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
         with Bundle() as task_bundle:
-            with Bundle(bundle_size=100) as label_bundle:
+            with Bundle(bundle_size=LABEL_ROW_BATCH_SIZE) as label_bundle:
                 for context in contexts:
                     assert context.task
                     with ExitStack() as stack:
@@ -253,6 +255,50 @@ class SequentialRunner(RunnerBase):
                             except Exception:
                                 print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
                                 traceback.print_exc()
+
+    def _validate_agent_stages(
+        self, valid_stages: list[AgentStage], agent_stages: dict[str | UUID, AgentStage]
+    ) -> None:
+        for runner_agent in self.agents:
+            fn_name = getattr(runner_agent.callable, "__name__", "agent function")
+            separator = f"{os.linesep}\t"
+            agent_stage_names = separator + self._get_stage_names(valid_stages, join_str=separator) + os.linesep
+            if runner_agent.identity not in agent_stages:
+                suggestion: str
+                if len(valid_stages) == 1:
+                    suggestion = f'Did you mean to wrap [blue]`{fn_name}`[/blue] with{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].title}")[/magenta]{os.linesep}or{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].uuid}")[/magenta]'
+                else:
+                    suggestion = f"""
+Please use either name annoitations: 
+[magenta]@runner.stage(stage="<exact_stage_name>")[/magenta] 
+
+or uuid annotations:
+[magenta]@runner.stage(stage="<exact_stage_uuid>")[/magenta] 
+
+For example, if we use the first agent stage listed above, we can use:
+[magenta]@runner.stage(stage="{valid_stages[0].title}")
+def {fn_name}(...):
+    ...
+[/magenta]
+# or
+[magenta]@runner.stage(stage="{valid_stages[0].uuid}")
+def {fn_name}(...):
+    ...[/magenta]"""
+                raise PrintableError(
+                    rf"""Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{runner_agent.printable_name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages:
+
+[{agent_stage_names}]
+
+{suggestion}
+                        """
+                )
+
+            stage = agent_stages[runner_agent.identity]
+            if stage.stage_type != WorkflowStageType.AGENT:
+                raise PrintableError(
+                    f"""You cannot use the stage of type `{stage.stage_type}` as an agent stage. It has to be one of the agent stages: 
+[{agent_stage_names}]."""
+                )
 
     def __call__(
         self,
@@ -326,50 +372,10 @@ class SequentialRunner(RunnerBase):
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
+        self._validate_agent_stages(valid_stages, agent_stages)
         if self.pre_execution_callback:
             self.pre_execution_callback(self)  # type: ignore  [arg-type]
         try:
-            for runner_agent in self.agents:
-                fn_name = getattr(runner_agent.callable, "__name__", "agent function")
-                separator = f"{os.linesep}\t"
-                agent_stage_names = separator + self._get_stage_names(valid_stages, join_str=separator) + os.linesep
-                if runner_agent.identity not in agent_stages:
-                    suggestion: str
-                    if len(valid_stages) == 1:
-                        suggestion = f'Did you mean to wrap [blue]`{fn_name}`[/blue] with{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].title}")[/magenta]{os.linesep}or{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].uuid}")[/magenta]'
-                    else:
-                        suggestion = f"""
-Please use either name annoitations: 
-[magenta]@runner.stage(stage="<exact_stage_name>")[/magenta] 
-
-or uuid annotations:
-[magenta]@runner.stage(stage="<exact_stage_uuid>")[/magenta] 
-
-For example, if we use the first agent stage listed above, we can use:
-[magenta]@runner.stage(stage="{valid_stages[0].title}")
-def {fn_name}(...):
-    ...
-[/magenta]
-# or
-[magenta]@runner.stage(stage="{valid_stages[0].uuid}")
-def {fn_name}(...):
-    ...[/magenta]"""
-                    raise PrintableError(
-                        rf"""Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{runner_agent.printable_name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages:
-
-[{agent_stage_names}]
-
-{suggestion}
-                        """
-                    )
-
-                stage = agent_stages[runner_agent.identity]
-                if stage.stage_type != WorkflowStageType.AGENT:
-                    raise PrintableError(
-                        f"""You cannot use the stage of type `{stage.stage_type}` as an agent stage. It has to be one of the agent stages: 
-[{agent_stage_names}]."""
-                    )
-
             # Run
             delta = timedelta(seconds=refresh_every) if refresh_every else None
             next_execution = None
