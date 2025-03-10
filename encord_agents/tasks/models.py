@@ -1,8 +1,24 @@
+from dataclasses import dataclass
+from typing import Callable, TypeVar
 from uuid import UUID
 
+from encord.objects.ontology_labels_impl import LabelRowV2
 from pydantic import BaseModel, Field
 
-TaskAgentReturn = str | UUID | None
+TaskAgentReturnPathway = str | UUID | None
+
+
+@dataclass
+class TaskAgentReturnStruct:
+    """Return this from your agent and we will handle propagating the updates in batches"""
+
+    pathway: TaskAgentReturnPathway = None
+    label_row: LabelRowV2 | None = None
+
+
+TaskAgentReturnType = TaskAgentReturnPathway | TaskAgentReturnStruct
+
+DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., TaskAgentReturnType])
 
 
 class AgentTaskConfig(BaseModel):
