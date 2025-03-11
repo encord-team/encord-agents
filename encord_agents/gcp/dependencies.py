@@ -96,7 +96,7 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
     ```
 
     Args:
-        lr: The label row. Automatically injected (see example above).
+        storage_item: The Storage item. Automatically injected (see example above).
 
     Returns:
         Numpy array of shape [h, w, 3] RGB colors.
@@ -164,7 +164,7 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
     ```
 
     Args:
-        lr: Automatically injected label row dependency.
+        storage_item: Automatically injected storage item dependency.
 
     Raises:
         NotImplementedError: Will fail for other data types than video.

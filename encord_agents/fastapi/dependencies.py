@@ -108,8 +108,8 @@ def dep_label_row_with_args(
     ```
 
     Args:
-        frame_data: the frame data from the route. This parameter is automatically injected
-            if it's a part of your route (see example above)
+        label_row_metadata_include_args:
+        label_row_initialise_labels_args:
 
 
     Returns:
@@ -210,7 +210,7 @@ def dep_single_frame(
     ```
 
     Args:
-        lr: The label row. Automatically injected (see example above).
+        storage_item: The label row. Automatically injected (see example above).
         frame_data: the frame data from the route. This parameter is automatically injected
             if it's a part of your route (see example above).
 
@@ -282,7 +282,7 @@ def dep_video_iterator(
     ```
 
     Args:
-        lr: Automatically injected label row dependency.
+        storage_item: Automatically injected storage item dependency.
 
     Raises:
         NotImplementedError: Will fail for other data types than video.
