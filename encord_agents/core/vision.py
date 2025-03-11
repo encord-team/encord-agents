@@ -121,6 +121,6 @@ def b64_encode_image(img: NDArray[np.uint8], format: Base64Formats = ".jpg") -> 
     Returns:
         The base64 encoded image.
     """
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  # type: ignore
-    _, encoded_image = cv2.imencode(format, img)
+    coerced_color_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    _, encoded_image = cv2.imencode(format, coerced_color_img)
     return base64.b64encode(encoded_image).decode("utf-8")  # type: ignore
