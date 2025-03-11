@@ -6,8 +6,8 @@ from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
 from encord_agents.exceptions import PrintableError
+from encord_agents.tasks import QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
-from encord_agents.tasks.queue_runner import QueueRunner
 from tests.fixtures import (
     AGENT_STAGE_NAME,
     AGENT_TO_COMPLETE_PATHWAY_HASH,

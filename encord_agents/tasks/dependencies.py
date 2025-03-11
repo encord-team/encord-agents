@@ -4,9 +4,9 @@ from typing import Callable, Generator, Iterator
 
 import cv2
 import numpy as np
-from encord.constants.enums import DataType
 from encord.exceptions import AuthenticationError, AuthorisationError, UnknownException
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.orm.storage import StorageItemType
 from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
@@ -46,7 +46,43 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
-def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
+def dep_storage_item(storage_item: StorageItem) -> StorageItem:
+    r"""
+    Get the storage item associated with the underlying agent task.
+
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
+    is useful for multiple things like
+
+    * Updating client metadata
+    * Reading file properties like storage location, fps, duration, DICOM tags, etc.
+
+    Note: When marking a task agent with the StorageItem dependency, we will bulk fetch the storage items for the tasks
+    and then inject them independently with each task
+
+    **Example**
+
+    ```python
+    from encord.storage import StorageItem
+    from encord_agents.tasks.dependencies import dep_storage_item
+
+    @runner.stage(stage="<my_stage_name>")
+    def my_agent(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> str:
+        print(storage_item.name)
+        print(storage_item.client_metadata)
+        ...
+    ```
+
+    Args:
+        user_client: The user client. Automatically injected.
+        label_row: The label row. Automatically injected.
+
+    Returns:
+        The storage item.
+    """
+    return storage_item
+
+
+def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
     """
     Dependency to inject the first frame of the underlying asset.
 
@@ -75,13 +111,13 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
         Numpy array of shape [h, w, 3] RGB colors.
 
     """
-    with download_asset(lr, frame=0) as asset:
+    with download_asset(storage_item, frame=0) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
 
     return np.asarray(img, dtype=np.uint8)
 
 
-def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]:
+def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
     This will use OpenCV and the local backend on your machine.
@@ -113,14 +149,14 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
         An iterator.
 
     """
-    if lr.data_type != DataType.VIDEO:
+    if storage_item.item_type != StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
-    with download_asset(lr, None) as asset:
+    with download_asset(storage_item, None) as asset:
         yield iter_video(asset)
 
 
-def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
+def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
     """
     Get a local file path to data asset temporarily stored till end of task execution.
 
@@ -150,7 +186,7 @@ def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
         ValueError: if the underlying assets are not videos, images, or audio.
         EncordException: if data type not supported by SDK yet.
     """
-    with download_asset(lr) as asset:
+    with download_asset(storage_item) as asset:
         yield asset
 
 
@@ -312,39 +348,3 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
         stacklevel=2,
     )
     return lookup
-
-
-def dep_storage_item(storage_item: StorageItem) -> StorageItem:
-    r"""
-    Get the storage item associated with the underlying agent task.
-
-    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
-    is useful for multiple things like
-
-    * Updating client metadata
-    * Reading file properties like storage location, fps, duration, DICOM tags, etc.
-
-    Note: When marking a task agent with the StorageItem dependency, we will bulk fetch the storage items for the tasks
-    and then inject them independently with each task
-
-    **Example**
-
-    ```python
-    from encord.storage import StorageItem
-    from encord_agents.tasks.dependencies import dep_storage_item
-
-    @runner.stage(stage="<my_stage_name>")
-    def my_agent(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> str:
-        print(storage_item.name)
-        print(storage_item.client_metadata)
-        ...
-    ```
-
-    Args:
-        user_client: The user client. Automatically injected.
-        label_row: The label row. Automatically injected.
-
-    Returns:
-        The storage item.
-    """
-    return storage_item

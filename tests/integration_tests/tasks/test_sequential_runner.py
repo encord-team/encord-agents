@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
+from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
@@ -267,16 +268,16 @@ def test_queue_runner_resolves_agent_stage(ephemeral_project_hash: str) -> None:
     runner()
 
 
-def test_runner_storage_item_dependency_resolved_once(ephemeral_project_hash: str) -> None:
-    runner = Runner(project_hash=ephemeral_project_hash)
+def test_runner_storage_item_dependency_resolved_once(ephemeral_image_project_hash: str) -> None:
+    runner = Runner(project_hash=ephemeral_image_project_hash)
 
     @runner.stage(AGENT_STAGE_NAME)
-    def storage_dep(storage_item: StorageItem) -> None:
+    def storage_dep(label_row: LabelRowV2, storage_item: StorageItem) -> None:
         assert storage_item
+        assert storage_item.uuid == label_row.backing_item_uuid
 
     with patch.object(StorageItem, "_get_item") as mock_get_item:
-        with patch.object(StorageItem, "_get_items") as mock_get_items:
-            mock_get_items.return_value = list(range(9))
+        with patch.object(StorageItem, "_get_items", side_effect=StorageItem._get_items) as mock_get_items:
             runner()
             mock_get_item.assert_not_called()
             mock_get_items.assert_called_once()
