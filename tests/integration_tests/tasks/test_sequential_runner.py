@@ -16,7 +16,7 @@ from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import SequentialRunner
 from encord_agents.tasks.models import TaskAgentReturnStruct
-from encord_agents.tasks.runner.sequential_runner import LABEL_ROW_BATCH_SIZE
+from encord_agents.tasks.runner.sequential_runner import MAX_LABEL_ROW_BATCH_SIZE
 from tests.fixtures import (
     AGENT_STAGE_NAME,
     AGENT_TO_COMPLETE_PATHWAY_HASH,
@@ -337,7 +337,7 @@ def test_runner_return_struct_object(ephemeral_image_project_hash: str) -> None:
         EncordClientProject, "save_label_rows", side_effect=EncordClientProject.save_label_rows, autospec=True
     ) as save_label_rows_patch:
         runner()
-        assert save_label_rows_patch.call_count <= N_items // LABEL_ROW_BATCH_SIZE + 1
+        assert save_label_rows_patch.call_count <= N_items // MAX_LABEL_ROW_BATCH_SIZE + 1
     lrs = runner.project.list_label_rows_v2()
     with runner.project.create_bundle() as bundle:
         for row in lrs:
