@@ -44,7 +44,7 @@ from encord_agents.utils.generic_utils import try_coerce_UUID
 
 logger = logging.getLogger(__name__)
 
-LABEL_ROW_BATCH_SIZE = 100
+MAX_LABEL_ROW_BATCH_SIZE = 100
 
 
 class RunnerAgent:
@@ -429,7 +429,7 @@ class Runner(RunnerBase):
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
         with Bundle() as task_bundle:
-            with Bundle(bundle_size=LABEL_ROW_BATCH_SIZE) as label_bundle:
+            with Bundle(bundle_size=min(MAX_LABEL_ROW_BATCH_SIZE, len(list(contexts)))) as label_bundle:
                 for context in contexts:
                     assert context.task
                     with ExitStack() as stack:
