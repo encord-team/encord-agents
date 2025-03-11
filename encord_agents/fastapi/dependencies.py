@@ -26,10 +26,10 @@ from typing import Annotated, Callable, Generator, Iterator
 
 import cv2
 import numpy as np
-from encord.constants.enums import DataType
 from encord.objects.common import Shape
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
+from encord.orm.storage import StorageItemType
 from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
@@ -154,7 +154,42 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
     return get_initialised_label_row(frame_data)
 
 
-def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_data: FrameData) -> NDArray[np.uint8]:
+def dep_storage_item(
+    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    user_client: Annotated[EncordUserClient, Depends(dep_client)],
+) -> StorageItem:
+    r"""
+    Get the storage item associated with the underlying agent task.
+
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
+    is useful for multiple things like
+
+    * Updating client metadata
+    * Reading file properties like storage location, fps, duration, DICOM tags, etc.
+
+    **Example**
+
+    ```python
+    from encord.storage import StorageItem
+    from encord_agents.fastapi.dependencies import dep_storage_item
+
+    @app.post("/my-agent")
+    def my_agent(
+        storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
+    ):
+        # Client will authenticated and ready to use.
+        print(storage_item.dicom_study_uid)
+        print(storage_item.client_metadata)
+    ```
+
+    """
+    assert label_row.backing_item_uuid, "All responses from BE include this field"
+    return user_client.get_storage_item(label_row.backing_item_uuid)
+
+
+def dep_single_frame(
+    storage_item: Annotated[StorageItem, Depends(dep_storage_item)], frame_data: FrameData
+) -> NDArray[np.uint8]:
     """
     Dependency to inject the underlying asset of the frame data.
 
@@ -182,19 +217,15 @@ def dep_single_frame(lr: Annotated[LabelRowV2, Depends(dep_label_row)], frame_da
     Returns: Numpy array of shape [h, w, 3] RGB colors.
 
     """
-    with download_asset(lr, frame_data.frame) as asset:
+    with download_asset(storage_item, frame_data.frame) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
     return np.asarray(img, dtype=np.uint8)
 
 
 def dep_asset(
-    lr: Annotated[
-        LabelRowV2,
-        Depends(
-            dep_label_row_with_args(
-                label_row_initialise_labels_args=LabelRowInitialiseLabelsArgs(include_signed_url=True)
-            )
-        ),
+    storage_item: Annotated[
+        StorageItem,
+        Depends(dep_storage_item),
     ],
 ) -> Generator[Path, None, None]:
     """
@@ -226,11 +257,13 @@ def dep_asset(
         ValueError: if the underlying assets are not videos, images, or audio.
         EncordException: if data type not supported by SDK yet.
     """
-    with download_asset(lr) as asset:
+    with download_asset(storage_item) as asset:
         yield asset
 
 
-def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Generator[Iterator[Frame], None, None]:
+def dep_video_iterator(
+    storage_item: Annotated[StorageItem, Depends(dep_storage_item)],
+) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
@@ -258,9 +291,9 @@ def dep_video_iterator(lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> Gen
         An iterator.
 
     """
-    if not lr.data_type == DataType.VIDEO:
+    if not storage_item.item_type == StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
-    with download_asset(lr, None) as asset:
+    with download_asset(storage_item, None) as asset:
         yield iter_video(asset)
 
 
@@ -339,38 +372,6 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
 
     """
     return lookup
-
-
-def dep_storage_item(
-    lookup: Annotated[DataLookup, Depends(dep_data_lookup)],
-    frame_data: FrameData,
-) -> StorageItem:
-    r"""
-    Get the storage item associated with the underlying agent task.
-
-    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
-    is useful for multiple things like
-
-    * Updating client metadata
-    * Reading file properties like storage location, fps, duration, DICOM tags, etc.
-
-    **Example**
-
-    ```python
-    from encord.storage import StorageItem
-    from encord_agents.fastapi.dependencies import dep_storage_item
-
-    @app.post("/my-agent")
-    def my_agent(
-        storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
-    ):
-        # Client will authenticated and ready to use.
-        print(storage_item.dicom_study_uid)
-        print(storage_item.client_metadata)
-    ```
-
-    """
-    return lookup.get_storage_item(frame_data.data_hash)
 
 
 def dep_object_crops(

@@ -92,10 +92,11 @@ _FALLBACK_MIMETYPES: dict[StorageItemType | DataType, str] = {
     StorageItemType.IMAGE: "image/png",
     StorageItemType.PDF: "application/pdf",
     StorageItemType.PLAIN_TEXT: "text/plain",
+    StorageItemType.IMAGE_GROUP: "image/png",
 }
 
 
-def _guess_file_suffix(url: str, lr: LabelRowV2, storage_item: StorageItem | None = None) -> tuple[str, str]:
+def _guess_file_suffix(url: str, storage_item: StorageItem) -> tuple[str, str]:
     """
     Best effort attempt to guess file suffix given a url and label row.
 
@@ -113,20 +114,17 @@ def _guess_file_suffix(url: str, lr: LabelRowV2, storage_item: StorageItem | Non
         A file type and suffix that can be used to store the file.
         For example, ("image", ".jpg") or ("video", ".mp4").
     """
-    fallback_mimetype = _FALLBACK_MIMETYPES.get(
-        storage_item.item_type if storage_item is not None else lr.data_type, None
-    )
+    fallback_mimetype = _FALLBACK_MIMETYPES.get(storage_item.item_type, None)
     if fallback_mimetype is None:
-        raise ValueError(f"No fallback mimetype found for data type {lr.data_type}")
+        raise ValueError(f"No fallback mimetype found for data type {storage_item.item_type}")
 
     mimetype = next(
         (
             t
             for t in (
-                storage_item.mime_type if storage_item is not None else None,
+                storage_item.mime_type,
                 mimetypes.guess_type(url)[0],
-                mimetypes.guess_type(storage_item.name)[0] if storage_item is not None else None,
-                mimetypes.guess_type(lr.data_title)[0],
+                mimetypes.guess_type(storage_item.name)[0],
                 fallback_mimetype,
             )
             if t is not None
@@ -142,7 +140,7 @@ def _guess_file_suffix(url: str, lr: LabelRowV2, storage_item: StorageItem | Non
 
 
 @contextmanager
-def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, None, None]:
+def download_asset(storage_item: StorageItem, frame: int | None = None) -> Generator[Path, None, None]:
     """
     Download the asset associated to a label row to disk.
 
@@ -169,60 +167,28 @@ def download_asset(lr: LabelRowV2, frame: int | None = None) -> Generator[Path, 
         The file path for the requested asset.
 
     """
-    user_client = get_user_client()
-    url: str | None = None
-    storage_item: StorageItem | None = None
+    url = storage_item.get_signed_url()
 
-    if lr.data_link is not None and lr.data_link[:5] == "https":
-        url = lr.data_link
-    elif lr.backing_item_uuid is not None:
-        storage_item = user_client.get_storage_item(lr.backing_item_uuid, sign_url=True)
-        url = storage_item.get_signed_url()
+    if storage_item.item_type == StorageItemType.IMAGE_GROUP:
+        if frame is None:
+            # Can only download the whole image sequences - not image groups.
+            raise NotImplementedError(DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE)
 
-    if lr.data_type == DataType.IMG_GROUP:
-        if storage_item is None:
-            """
-            Fall back to "old school data fetching" when we don't know the storage item.
-            Image groups will have: [None, list[Image]] 
-            Image sequences will have: [Video, list[Image]]
-            """
-            #
-            video_item, images_list = lr._project_client.get_data(lr.data_hash, get_signed_url=True)
-            assert images_list is not None, "Images list should not be none for image groups."
-
-            if video_item is not None and frame is None:
-                # Image Sequence (whole video)
-                url = video_item["data_link"]
-            elif frame is not None:
-                # Image Group or image sequence (single frame)
-                url = images_list[frame].file_link
-            else:
-                raise NotImplementedError(DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE)
-        else:
-            """
-            Leverage storage item to get the signed url.
-            """
-            if frame is None:
-                # Can only download the whole image sequences - not image groups.
-                if storage_item.item_type != StorageItemType.IMAGE_SEQUENCE:
-                    raise NotImplementedError(DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE)
-            else:
-                if not lr.is_labelling_initialised:
-                    lr.initialise_labels()
-                storage_item = user_client.get_storage_item(lr.get_frame_view(frame).image_hash, sign_url=True)
-                url = storage_item.get_signed_url()
+        child_storage_items = list(storage_item.get_child_items(get_signed_urls=True))
+        assert len(child_storage_items) > frame, "The requested frame in the Image Group does not exist"
+        url = child_storage_items[frame].get_signed_url()
 
     if url is None:
         raise ValueError("Failed to get a signed url for the asset")
 
-    file_type, suffix = _guess_file_suffix(url, lr, storage_item)
+    file_type, suffix = _guess_file_suffix(url, storage_item)
     response = requests.get(url)
     response.raise_for_status()
 
     with TemporaryDirectory() as dir_name:
         dir_path = Path(dir_name)
 
-        file_path = dir_path / f"{lr.data_hash}{suffix}"
+        file_path = dir_path / f"{storage_item.uuid}{suffix}"
         with open(file_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if chunk:

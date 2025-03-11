@@ -32,7 +32,6 @@ from typing_extensions import Annotated, Self
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context, DecoratedCallable, Dependant
-from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator, get_user_client
@@ -154,14 +153,10 @@ class RunnerBase:
             for label_row, context in zip(batch_lrs, contexts, strict=True):
                 context.label_row = label_row
         if runner_agent.dependant.needs_storage_item:
-            if batch_lrs:
-                storage_items = client.get_storage_items(
-                    [lr.backing_item_uuid or "" for lr in batch_lrs], sign_url=True
-                )
-            else:
-                storage_items = DataLookup.sharable(project).get_storage_items(
-                    data_hashes=[task.data_hash for task in task_batch], sign_urls=True
-                )
+            if not batch_lrs:
+                # Fetch LRs as a reference to the backing_item_uuids. Note not passing args nor passing into context.
+                batch_lrs = project.list_label_rows_v2(data_hashes=[t.data_hash for t in task_batch])
+            storage_items = client.get_storage_items([lr.backing_item_uuid or "" for lr in batch_lrs], sign_url=True)
             for storage_item, context in zip(storage_items, contexts, strict=True):
                 context.storage_item = storage_item
 
