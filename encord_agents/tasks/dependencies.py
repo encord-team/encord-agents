@@ -57,7 +57,7 @@ def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     * Reading file properties like storage location, fps, duration, DICOM tags, etc.
 
     Note: When marking a task agent with the StorageItem dependency, we will bulk fetch the storage items for the tasks
-    and then inject them independently with each task
+    and then inject them independently with each task. Trivial method for backwards compatibility. Can do: storage_item: StorageItem directly
 
     **Example**
 
@@ -73,8 +73,7 @@ def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     ```
 
     Args:
-        user_client: The user client. Automatically injected.
-        label_row: The label row. Automatically injected.
+        storage_item: StorageItem
 
     Returns:
         The storage item.
@@ -98,14 +97,13 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
 
     @runner.stage("<my_stage_name>")
     def my_agent(
-        lr: LabelRowV2,  # <- Automatically injected
         frame: Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
     ) -> str:
         assert frame.ndim == 3, "Will work"
     ```
 
     Args:
-        lr: The label row. Automatically injected (see example above).
+        storage_item: The Storage item. Automatically injected (see example above).
 
     Returns:
         Numpy array of shape [h, w, 3] RGB colors.
@@ -132,7 +130,6 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
 
     @runner.stage("<my_stage_name>")
     def my_agent(
-        lr: LabelRowV2,  # <- Automatically injected
         video_frames: Annotated[Iterator[Frame], Depends(dep_video_iterator)]
     ) -> str:
         for frame in video_frames:
@@ -140,7 +137,7 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
     ```
 
     Args:
-        lr: Automatically injected label row dependency.
+        storage_item: Automatically injected Storage item dependency.
 
     Raises:
         NotImplementedError: Will fail for other data types than video.

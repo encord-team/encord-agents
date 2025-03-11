@@ -178,7 +178,7 @@ else:
 
 ### Initialization
 
-::: encord_agents.tasks.runner.QueueRunner.__init__
+::: encord_agents.tasks.queue_runner.QueueRunner.__init__
     options:
         show_if_no_docstring: false
         show_submodules: false

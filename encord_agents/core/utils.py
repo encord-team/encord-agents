@@ -155,7 +155,7 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
         # outside, it will be cleaned up
 
     Args:
-        lr: The label row for which you want to download the associated asset.
+        storage_item: The Storage item for which you want to download the associated asset.
         frame: The frame that you need. If frame is none for a video, you will get the video path.
 
     Raises:
