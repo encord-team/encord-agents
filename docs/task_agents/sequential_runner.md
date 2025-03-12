@@ -238,7 +238,7 @@ Here's an example of how the difference manifests:
         for task in agent.get_tasks():
             your_task_queue.append(task)
 
-        for task in your_queue:
+        for task in your_task_queue:
             result = my_agent(task)
     ```
 
