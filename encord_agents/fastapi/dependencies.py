@@ -40,7 +40,7 @@ from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.vision import crop_to_object
 
 try:
-    from fastapi import Depends, Form
+    from fastapi import Depends, Form, Request
 except ModuleNotFoundError:
     print(
         'To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"'
@@ -52,11 +52,12 @@ from encord_agents.core.utils import (
     download_asset,
     get_initialised_label_row,
     get_user_client,
+    get_user_client_from_token,
 )
 from encord_agents.core.video import iter_video
 
 
-def dep_client() -> EncordUserClient:
+def dep_client(request: Request) -> EncordUserClient:
     """
     Dependency to provide an authenticated user client.
 
@@ -74,6 +75,8 @@ def dep_client() -> EncordUserClient:
     ```
 
     """
+    if auth_token := request.headers.get("Authentication"):
+        return get_user_client_from_token(auth_token.lstrip("Bearer "))
     return get_user_client()
 
 
