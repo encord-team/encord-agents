@@ -1,11 +1,12 @@
 from typing import Annotated, NamedTuple
 
 import pytest
-from encord.constants.enums import DataType
+from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
+from fastapi import HTTPException
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.fastapi.dependencies import (
@@ -25,7 +26,7 @@ except Exception:
 
 
 def test_auth_router(
-    ephermeral_project_hash: str,
+    ephemeral_project_hash: str,
     authenticated_user_token: str,
     unauthenticated_user_token: str,
 ) -> None:
@@ -35,7 +36,10 @@ def test_auth_router(
     @app.post("/client")
     def client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
         assert client
-        client.get_project(ephermeral_project_hash)
+        try:
+            client.get_project(ephemeral_project_hash)
+        except AuthorisationError:
+            raise HTTPException(status_code=403)
 
     test_client = TestClient(app)
 
@@ -43,12 +47,12 @@ def test_auth_router(
     assert resp.status_code == 200
 
     resp = test_client.post("/client", headers={"Authorization": f"Bearer {unauthenticated_user_token}"})
-    assert resp.status_code == 403
+    assert resp.status_code == 403, resp.content
 
 
 # TODO: Need a body to test against see FastAPI example
 def test_auth_router_label_row(
-    ephermeral_project_hash: str,
+    ephemeral_project_hash: str,
     authenticated_user_token: str,
     unauthenticated_user_token: str,
 ) -> None:

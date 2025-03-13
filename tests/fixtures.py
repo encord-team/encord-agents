@@ -172,3 +172,17 @@ def class_level_ephemeral_twin_project_hash(
 @pytest.fixture(scope="function")
 def mock_agent() -> MagicMock:
     return MagicMock(return_value=AGENT_TO_COMPLETE_PATHWAY_NAME)
+
+
+@pytest.fixture(scope="module")
+def authenticated_user_token() -> str:
+    with open("tests/integration_tests/user_bearer_token") as f:
+        token = f.read()
+    return token
+
+
+@pytest.fixture(scope="module")
+def unauthenticated_user_token() -> str:
+    with open("tests/integration_tests/user_bearer_token_2") as f:
+        token = f.read()
+    return token
