@@ -12,7 +12,7 @@ The agent works with an Ontology that contains a bounding box. It will throw a p
 
 ## Execution
 
-`docker run -e ENCORD_SSH_KEY encord/encord-agent-detr-video-prelabeling:latest --project-hash=your-project-hash`
+`docker run -e ENCORD_SSH_KEY encord/encord-agent-detr-video-labeling:latest --project-hash=your-project-hash`
 
 ## Outcome
 
