@@ -9,12 +9,11 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
-from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_PAYLOAD
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
-from encord_agents.fastapi.cors import TEST_REQUEST_PAYLOAD
 
 AgentFunction = Callable[..., Any]
 

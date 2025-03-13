@@ -19,13 +19,7 @@ except ModuleNotFoundError:
     )
     exit()
 
-from encord_agents.core.constants import ENCORD_DOMAIN_REGEX
-
-TEST_REQUEST_PAYLOAD: dict[str, str | int] = {
-    "projectHash": "027e0c65-c53f-426d-9f02-04fafe8bd80e",
-    "dataHash": "038ed92d-dbe8-4991-a3aa-6ede35d6e62d",
-    "frame": 10,
-}
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_PAYLOAD
 
 
 # Type checking does not work here because we do not enforce people to
