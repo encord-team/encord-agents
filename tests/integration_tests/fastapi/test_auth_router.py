@@ -44,3 +44,25 @@ def test_auth_router(
 
     resp = test_client.post("/client", headers={"Authorization": f"Bearer {unauthenticated_user_token}"})
     assert resp.status_code == 403
+
+
+# TODO: Need a body to test against see FastAPI example
+def test_auth_router_label_row(
+    ephermeral_project_hash: str,
+    authenticated_user_token: str,
+    unauthenticated_user_token: str,
+) -> None:
+    app = FastAPI()
+    # app.add_middleware(EncordAuthMiddleware)
+
+    @app.post("/label_row")
+    def client(label_row: Annotated[LabelRowV2, Depends(dep_label_row)]) -> None:
+        assert label_row
+
+    test_client = TestClient(app)
+
+    resp = test_client.post("/client", headers={"Authorization": f"Bearer {authenticated_user_token}"})
+    assert resp.status_code == 200
+
+    resp = test_client.post("/client", headers={"Authorization": f"Bearer {unauthenticated_user_token}"})
+    assert resp.status_code == 403

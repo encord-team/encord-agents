@@ -59,6 +59,7 @@ def get_user_client_from_token(token: str) -> EncordUserClient:
 
 def get_initialised_label_row(
     frame_data: FrameData,
+    user_client: EncordUserClient,
     include_args: LabelRowMetadataIncludeArgs | None = None,
     init_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> LabelRowV2:
@@ -75,7 +76,6 @@ def get_initialised_label_row(
         The initialized label row.
 
     """
-    user_client = get_user_client()
     project = user_client.get_project(str(frame_data.project_hash))
     include_args = include_args or LabelRowMetadataIncludeArgs()
     init_args = init_args or LabelRowInitialiseLabelsArgs()
