@@ -176,13 +176,15 @@ def mock_agent() -> MagicMock:
 
 @pytest.fixture(scope="module")
 def authenticated_user_token() -> str:
-    with open("tests/integration_tests/user_bearer_token") as f:
-        token = f.read()
+    token = os.getenv("AUTHENTICATED_USER_BEARER_TOKEN")
+    if not token:
+        raise ValueError
     return token
 
 
 @pytest.fixture(scope="module")
 def unauthenticated_user_token() -> str:
-    with open("tests/integration_tests/user_bearer_token_2") as f:
-        token = f.read()
+    token = os.getenv("UNAUTHENTICATED_USER_BEARER_TOKEN")
+    if not token:
+        raise ValueError
     return token
