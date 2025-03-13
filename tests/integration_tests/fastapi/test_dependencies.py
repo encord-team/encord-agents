@@ -88,9 +88,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
 
     @app.post("/label-row-with-args")
     def post_label_row_with_args(
-        label_row_with_args: Annotated[
-            LabelRowV2, Depends(dep_label_row_with_args(Depends(dep_client), include_args, init_args))
-        ],
+        label_row_with_args: Annotated[LabelRowV2, Depends(dep_label_row_with_args(include_args, init_args))],
     ) -> None:
         assert isinstance(label_row_with_args, LabelRowV2)
         assert label_row_with_args.data_hash == video_label_row.data_hash

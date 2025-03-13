@@ -1,23 +1,16 @@
-from typing import Annotated, NamedTuple
+from typing import Annotated
 
-import pytest
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord.project import Project
-from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from fastapi import HTTPException
 
-from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.utils import get_user_client_from_token
+from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
-    dep_label_row_with_args,
-    dep_project,
-    dep_storage_item,
 )
-from tests.fixtures import EPHEMERAL_PROJECT_TITLE
 
 try:
     from fastapi import Depends, FastAPI
@@ -58,7 +51,7 @@ def test_auth_router_label_row(
     unauthenticated_user_token: str,
 ) -> None:
     app = FastAPI()
-    # app.add_middleware(EncordAuthMiddleware)
+    app.add_middleware(EncordCORSMiddleware)
 
     @app.post("/label_row")
     def client(label_row: Annotated[LabelRowV2, Depends(dep_label_row)]) -> None:
