@@ -2,7 +2,7 @@ from typing import Annotated
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.core.constants import TEST_REQUEST_HEADER
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER
 from encord_agents.core.data_model import FrameData
 from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
@@ -32,7 +32,7 @@ def test_fastapi_can_handle_placeholder_payload() -> None:
     client = TestClient(app)
     resp = client.post(
         "/test",
-        headers={TEST_REQUEST_HEADER: "test-content"},
+        headers={EDITOR_TEST_REQUEST_HEADER: "test-content"},
         json={
             "projectHash": "00000000-0000-0000-0000-000000000000",
             "dataHash": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",

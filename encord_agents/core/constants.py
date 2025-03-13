@@ -4,4 +4,4 @@ ENCORD_DOMAIN_REGEX = (
 
 EDITOR_URL_PARTS_REGEX = r"(?P<domain>https:\/\/app.(us\.)?encord.com)\/label_editor\/(?P<projectHash>.*?)\/(?P<dataHash>[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12})(\/(?P<frame>\d+))?\??"
 
-TEST_REQUEST_HEADER = "X-Encord-Task-Agent"
+EDITOR_TEST_REQUEST_HEADER = "X-Encord-Editor-Agent"
