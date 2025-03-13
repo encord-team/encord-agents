@@ -1,4 +1,5 @@
 import mimetypes
+import re
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
@@ -42,6 +43,15 @@ def get_user_client_from_settings(settings: Settings) -> EncordUserClient:
     if settings.domain:
         kwargs["domain"] = settings.domain
     return EncordUserClient.create_with_ssh_private_key(ssh_private_key=settings.ssh_key, **kwargs)
+
+
+def get_user_client_from_token(token: str) -> EncordUserClient:
+    settings = Settings()
+    kwargs: dict[str, Any] = {"user_agent_suffix": f"encord-agents/{__version__}"}
+
+    if settings.domain:
+        kwargs["domain"] = settings.domain
+    return EncordUserClient.create_with_bearer_token(token, **kwargs)
 
 
 def get_initialised_label_row(
