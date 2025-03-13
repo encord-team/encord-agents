@@ -7,7 +7,8 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.fastapi.cors import TEST_REQUEST_PAYLOAD, EncordCORSMiddleware, EncordCORSMiddlewarePure
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
@@ -26,6 +27,7 @@ except Exception:
 
 def build_app(ephermeral_project: Project, video_label_row: LabelRowV2) -> FastAPI:
     app = FastAPI()
+    app.add_middleware(EncordCORSMiddleware)
 
     @app.post("/client")
     def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
@@ -129,3 +131,22 @@ class TestDependencyResolutionFastapi:
             },
         )
         assert resp.status_code == 200, resp.content
+
+
+def test_fastapi_can_handle_placeholder_payload() -> None:
+    app = FastAPI()
+    app.add_middleware(EncordCORSMiddleware)
+    counter = 0
+
+    @app.post("/test")
+    def frame_data(
+        frame_data: FrameData,
+        label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    ) -> None:
+        nonlocal counter
+        counter += 1
+
+    client = TestClient(app)
+    resp = client.post("/test", json=TEST_REQUEST_PAYLOAD)
+    assert resp.status_code == 200, resp.content
+    assert counter == 0

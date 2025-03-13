@@ -14,6 +14,7 @@ from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRow
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
+from encord_agents.fastapi.cors import TEST_REQUEST_PAYLOAD
 
 AgentFunction = Callable[..., Any]
 
@@ -76,7 +77,10 @@ def editor_agent(
             # TODO: We'll remove FF from FE on Jan. 31 2025.
             #   At that point, only the if statement applies and the else should be removed.
             if request.is_json:
-                frame_data = FrameData.model_validate(request.get_json())
+                request_json = request.get_json()
+                if request_json == TEST_REQUEST_PAYLOAD:
+                    return generate_response()
+                frame_data = FrameData.model_validate(request_json)
             else:
                 frame_data = FrameData.model_validate_json(request.get_data())
             logging.info(f"Request: {frame_data}")
