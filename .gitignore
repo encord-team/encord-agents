@@ -1,7 +1,6 @@
 # Integration Testing files
 **/get_secrets.sh
 **/private_key_integration_testing
-**/user_bearer_token*
 scratches/
 
 dist/
