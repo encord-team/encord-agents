@@ -75,8 +75,8 @@ def dep_client(request: Request) -> EncordUserClient:
     ```
 
     """
-    if auth_token := request.headers.get("Authentication"):
-        return get_user_client_from_token(auth_token.lstrip("Bearer "))
+    if auth_token := request.headers.get("Authorization"):
+        return get_user_client_from_token(auth_token[len("Bearer ") :])
     return get_user_client()
 
 
