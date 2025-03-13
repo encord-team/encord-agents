@@ -9,7 +9,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
-from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_PAYLOAD
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_HEADER
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
@@ -75,10 +75,10 @@ def editor_agent(
 
             # TODO: We'll remove FF from FE on Jan. 31 2025.
             #   At that point, only the if statement applies and the else should be removed.
+            if request.headers.get(TEST_REQUEST_HEADER):
+                return generate_response()
             if request.is_json:
                 request_json = request.get_json()
-                if request_json == TEST_REQUEST_PAYLOAD:
-                    return generate_response()
                 frame_data = FrameData.model_validate(request_json)
             else:
                 frame_data = FrameData.model_validate_json(request.get_data())

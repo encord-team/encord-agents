@@ -19,7 +19,7 @@ except ModuleNotFoundError:
     )
     exit()
 
-from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_PAYLOAD
+from encord_agents.core.constants import ENCORD_DOMAIN_REGEX, TEST_REQUEST_HEADER
 
 
 # Type checking does not work here because we do not enforce people to
@@ -67,20 +67,7 @@ class EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-ig
 class EncordCORSMiddleware(BaseHTTPMiddleware, EncordCORSMiddlewarePure):  # type: ignore [misc, unused-ignore]
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if request.method == "POST":
-            body_bytes = await request.body()
-
-            if not body_bytes:
-                return await call_next(request)
-            try:
-                payload = json.loads(body_bytes)
-
-                if payload == TEST_REQUEST_PAYLOAD:
-                    return JSONResponse(
-                        content=None,
-                        status_code=200,
-                    )
-
-            except json.JSONDecodeError:
-                pass
+            if request.headers.get(TEST_REQUEST_HEADER):
+                return JSONResponse(content=None, status_code=200)
 
         return await call_next(request)
