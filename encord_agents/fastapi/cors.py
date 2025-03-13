@@ -24,23 +24,7 @@ from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMA
 
 # Type checking does not work here because we do not enforce people to
 # install fastapi as they can use package for, e.g., task runner wo fastapi.
-class EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-ignore]
-    """
-    Like a regular `fastapi.midleware.cors.CORSMiddleware` but matches against
-    the Encord origin by default.
-
-    **Example:**
-    ```python
-    from fastapi import FastAPI
-    from encord_agents.fastapi.cors import EncordCORSMiddleware
-
-    app = FastAPI()
-    app.add_middleware(EncordCORSMiddleware)
-    ```
-
-    The CORS middleware will allow POST requests from the Encord domain.
-    """
-
+class _EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-ignore]
     def __init__(
         self,
         app: ASGIApp,
@@ -64,7 +48,23 @@ class EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-ig
         )
 
 
-class EncordCORSMiddleware(BaseHTTPMiddleware, EncordCORSMiddlewarePure):  # type: ignore [misc, unused-ignore]
+class EncordCORSMiddleware(BaseHTTPMiddleware, _EncordCORSMiddlewarePure):  # type: ignore [misc, unused-ignore]
+    """
+    Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
+    the Encord origin by default and handles X-Encord-Editor-Agent test header
+
+    **Example:**
+    ```python
+    from fastapi import FastAPI
+    from encord_agents.fastapi.cors import EncordCORSMiddleware
+
+    app = FastAPI()
+    app.add_middleware(EncordCORSMiddleware)
+    ```
+
+    The CORS middleware will allow POST requests from the Encord domain.
+    """
+
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if request.method == "POST":
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
