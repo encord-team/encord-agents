@@ -81,6 +81,7 @@ def dep_client(request: Request) -> EncordUserClient:
 
 
 def dep_label_row_with_args(
+    user_client: Annotated[EncordUserClient, Depends(dep_client)],
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
     label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> Callable[[FrameData], LabelRowV2]:
@@ -122,13 +123,19 @@ def dep_label_row_with_args(
 
     def wrapper(frame_data: FrameData) -> LabelRowV2:
         return get_initialised_label_row(
-            frame_data, include_args=label_row_metadata_include_args, init_args=label_row_initialise_labels_args
+            frame_data,
+            user_client,
+            include_args=label_row_metadata_include_args,
+            init_args=label_row_initialise_labels_args,
         )
 
     return wrapper
 
 
-def dep_label_row(frame_data: FrameData) -> LabelRowV2:
+def dep_label_row(
+    frame_data: FrameData,
+    user_client: Annotated[EncordUserClient, Depends(dep_client)],
+) -> LabelRowV2:
     """
     Dependency to provide an initialized label row.
 
@@ -154,7 +161,7 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
         The initialized label row.
 
     """
-    return get_initialised_label_row(frame_data)
+    return get_initialised_label_row(frame_data, user_client)
 
 
 def dep_storage_item(
