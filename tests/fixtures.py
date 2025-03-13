@@ -6,7 +6,6 @@ from typing import Generator
 from unittest.mock import MagicMock
 
 import pytest
-from encord.dataset import Dataset
 from encord.ontology import Ontology
 from encord.project import Project
 from encord.user_client import EncordUserClient
@@ -83,13 +82,6 @@ def user_client() -> EncordUserClient:
 @pytest.fixture(scope="module")
 def all_purpose_ontology(user_client: EncordUserClient) -> Generator[Ontology, None, None]:
     yield user_client.get_ontology(ONTOLOGY_HASH)
-
-
-@pytest.fixture(scope="module")
-def dataset(
-    user_client: EncordUserClient,
-) -> Dataset:
-    return user_client.get_dataset(ONE_OF_EACH_DATASET_HASH)
 
 
 @pytest.fixture(scope="module")
