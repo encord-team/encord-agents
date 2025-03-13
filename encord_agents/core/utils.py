@@ -8,10 +8,12 @@ from typing import Any, Generator, Iterable, List, TypeVar, cast
 
 import requests
 from encord.constants.enums import DataType
+from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.storage import StorageItemType
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
+from fastapi import HTTPException
 
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
@@ -73,18 +75,21 @@ def get_initialised_label_row(
         The initialized label row.
 
     """
-    project = user_client.get_project(str(frame_data.project_hash))
-    include_args = include_args or LabelRowMetadataIncludeArgs()
-    init_args = init_args or LabelRowInitialiseLabelsArgs()
-    matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash], **include_args.model_dump())
-    num_matches = len(matched_lrs)
-    if num_matches > 1:
-        raise Exception(f"Non unique match: matched {num_matches} label rows!")
-    elif num_matches == 0:
-        raise Exception("No label rows were matched!")
-    lr = matched_lrs.pop()
-    lr.initialise_labels(**init_args.model_dump())
-    return lr
+    try:
+        project = user_client.get_project(str(frame_data.project_hash))
+        include_args = include_args or LabelRowMetadataIncludeArgs()
+        init_args = init_args or LabelRowInitialiseLabelsArgs()
+        matched_lrs = project.list_label_rows_v2(data_hashes=[frame_data.data_hash], **include_args.model_dump())
+        num_matches = len(matched_lrs)
+        if num_matches > 1:
+            raise Exception(f"Non unique match: matched {num_matches} label rows!")
+        elif num_matches == 0:
+            raise Exception("No label rows were matched!")
+        lr = matched_lrs.pop()
+        lr.initialise_labels(**init_args.model_dump())
+        return lr
+    except AuthorisationError:
+        raise HTTPException(status_code=403)
 
 
 def translate_suffixes_to_filesystem_suffixes(suffix: str) -> str:
