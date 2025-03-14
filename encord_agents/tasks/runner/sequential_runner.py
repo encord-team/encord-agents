@@ -235,15 +235,15 @@ class SequentialRunner(RunnerBase):
                                 elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
                                     if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
                                         raise PrintableError(
-                                            f"No pathway with UUID: {agent_response} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
+                                            f"No pathway with UUID: {next_stage_uuid} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
                                         )
                                     task.proceed(pathway_uuid=str(next_stage_uuid), bundle=task_bundle)
                                 else:
                                     if pathway_to_follow not in [str(pathway.name) for pathway in stage.pathways]:
                                         raise PrintableError(
-                                            f"No pathway with name: {agent_response} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
+                                            f"No pathway with name: {pathway_to_follow} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
                                         )
-                                    task.proceed(pathway_name=str(agent_response), bundle=task_bundle)
+                                    task.proceed(pathway_name=str(pathway_to_follow), bundle=task_bundle)
                                 if pbar_update is not None:
                                     pbar_update(1.0)
                                 break
