@@ -4,16 +4,18 @@ from contextlib import ExitStack
 from functools import wraps
 from typing import Any, Callable
 
-import orjson
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.storage import StorageItem
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
+from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
+from encord_agents.gcp.dependencies import dep_data_lookup, dep_storage_item
 
 AgentFunction = Callable[..., Any]
 
@@ -96,7 +98,14 @@ def editor_agent(
                 )[0]
                 label_row.initialise_labels(**init_args.model_dump())
 
-            context = Context(project=project, label_row=label_row, frame_data=frame_data)
+            storage_item: StorageItem | None = None
+            if dependant.needs_storage_item:
+                if label_row is None:
+                    label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
+                assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
+                storage_item = client.get_storage_item(label_row.backing_item_uuid)
+
+            context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
             with ExitStack() as stack:
                 dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
                 func(**dependencies.values)

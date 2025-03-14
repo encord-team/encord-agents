@@ -2,6 +2,7 @@ import os
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Iterator, NamedTuple
+from uuid import UUID
 
 import numpy as np
 import pytest
@@ -39,6 +40,13 @@ class SharedTaskDependencyResolutionContext(NamedTuple):
     pdf_label_row: LabelRowV2
     plain_text_label_row: LabelRowV2
     audio_label_row: LabelRowV2
+    video_storage_item: StorageItem
+    image_storage_item: StorageItem
+    image_group_storage_item: StorageItem
+    image_sequence_storage_item: StorageItem
+    plain_text_storage_item: StorageItem
+    pdf_storage_item: StorageItem
+    audio_storage_item: StorageItem
     # dicom_file_label_row: LabelRowV2
     # dicom_series_label_row: LabelRowV2
     # nifti_label_row: LabelRowV2
@@ -58,7 +66,7 @@ def context(
     storage_items = {
         si.uuid: si
         for si in user_client.get_storage_items(
-            item_uuids=[lr.backing_item_uuid for lr in label_rows if lr.backing_item_uuid is not None]
+            item_uuids=[lr.backing_item_uuid for lr in label_rows if lr.backing_item_uuid is not None], sign_url=True
         )
     }
 
@@ -92,6 +100,13 @@ def context(
         pdf_label_row=pdf_label_row,
         plain_text_label_row=plain_text_label_row,
         audio_label_row=audio_label_row,
+        video_storage_item=storage_items[video_label_row.backing_item_uuid or UUID(int=0)],
+        image_storage_item=storage_items[image_label_row.backing_item_uuid or UUID(int=0)],
+        image_group_storage_item=storage_items[image_group_label_row.backing_item_uuid or UUID(int=0)],
+        image_sequence_storage_item=storage_items[image_sequence_label_row.backing_item_uuid or UUID(int=0)],
+        pdf_storage_item=storage_items[pdf_label_row.backing_item_uuid or UUID(int=0)],
+        plain_text_storage_item=storage_items[plain_text_label_row.backing_item_uuid or UUID(int=0)],
+        audio_storage_item=storage_items[audio_label_row.backing_item_uuid or UUID(int=0)],
     )
 
 
@@ -110,33 +125,34 @@ class TestDependencyResolution:
         client = dep_client()
         assert isinstance(client, EncordUserClient)
 
-    def test_dep_single_frame(self, user_client: EncordUserClient) -> None:
-        def _test_dep_single_frame(label_row: LabelRowV2) -> None:
-            frame = dep_single_frame(label_row)
+    def test_dep_single_frame(self) -> None:
+        def _test_dep_single_frame(storage_item: StorageItem) -> None:
+            frame = dep_single_frame(storage_item)
             assert isinstance(frame, np.ndarray)
             assert frame.ndim == 3  # Height, width, channels
             assert frame.dtype == np.uint8
 
-            height, width = label_row.height, label_row.width
-            if label_row.data_type == DataType.IMG_GROUP:
-                storage_item = user_client.get_storage_items([label_row.get_frame_view(0).image_hash])[0]
+            if storage_item.item_type == StorageItemType.IMAGE_GROUP:
+                first_frame = next(iter(storage_item.get_child_items()))
+                height, width = first_frame.height, first_frame.width
+            else:
                 height, width = storage_item.height, storage_item.width
             assert frame.shape == (height, width, 3)
 
-        _test_dep_single_frame(self.context.video_label_row)
-        _test_dep_single_frame(self.context.image_label_row)
-        _test_dep_single_frame(self.context.image_group_label_row)
-        _test_dep_single_frame(self.context.image_sequence_label_row)
+        _test_dep_single_frame(self.context.video_storage_item)
+        _test_dep_single_frame(self.context.image_storage_item)
+        _test_dep_single_frame(self.context.image_group_storage_item)
+        _test_dep_single_frame(self.context.image_sequence_storage_item)
 
     def test_dep_video_iterator(self) -> None:
         # Test that the error is raised for non-video label rows
-        assert self.context.image_label_row.data_type != DataType.VIDEO
+        assert self.context.image_storage_item.item_type != StorageItemType.VIDEO
         with pytest.raises(NotImplementedError) as e:
-            next(dep_video_iterator(self.context.image_label_row))
+            next(dep_video_iterator(self.context.image_storage_item))
         assert str(e.value) == "`dep_video_iterator` only supported for video label rows"
 
         # Test that the iterator is returned for video label rows
-        video_gen = dep_video_iterator(self.context.video_label_row)
+        video_gen = dep_video_iterator(self.context.video_storage_item)
         video_iter = next(video_gen)
         assert isinstance(video_iter, Iterator)
 
@@ -159,20 +175,20 @@ class TestDependencyResolution:
         """
         with ExitStack() as stack:
 
-            def _test_dep_asset(label_row: LabelRowV2, suffix: str) -> Path:
-                cm = contextmanager(dep_asset)(label_row)
+            def _test_dep_asset(storage_item: StorageItem, suffix: str) -> Path:
+                cm = contextmanager(dep_asset)(storage_item)
                 asset_path = stack.enter_context(cm)
                 assert isinstance(asset_path, Path)
                 assert asset_path.suffix == suffix, f"{asset_path.suffix=} != {suffix=}"
                 assert asset_path.exists()
                 return asset_path
 
-            pdf_path = _test_dep_asset(self.context.pdf_label_row, ".pdf")
-            plain_text_path = _test_dep_asset(self.context.plain_text_label_row, ".txt")
-            audio_path = _test_dep_asset(self.context.audio_label_row, ".mp3")
-            video_path = _test_dep_asset(self.context.video_label_row, ".mp4")
-            image_path = _test_dep_asset(self.context.image_label_row, ".jpeg")
-            image_sequence_path = _test_dep_asset(self.context.image_sequence_label_row, ".mp4")
+            pdf_path = _test_dep_asset(self.context.pdf_storage_item, ".pdf")
+            plain_text_path = _test_dep_asset(self.context.plain_text_storage_item, ".txt")
+            audio_path = _test_dep_asset(self.context.audio_storage_item, ".mp3")
+            video_path = _test_dep_asset(self.context.video_storage_item, ".mp4")
+            image_path = _test_dep_asset(self.context.image_storage_item, ".jpeg")
+            image_sequence_path = _test_dep_asset(self.context.image_sequence_storage_item, ".mp4")
 
         assert not pdf_path.exists()
         assert not plain_text_path.exists()
@@ -183,7 +199,7 @@ class TestDependencyResolution:
 
         # Image group is not supported currently
         with pytest.raises(NotImplementedError) as e:
-            next(dep_asset(self.context.image_group_label_row))
+            next(dep_asset(self.context.image_group_storage_item))
         assert str(e.value) == DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE
 
     def test_dep_twin_label_row(
@@ -200,10 +216,8 @@ class TestDependencyResolution:
         with pytest.raises(PrintableError):
             dep_twin_label_row("invalid_project_hash")(context.video_label_row)
 
-    def test_dep_storage_item(
-        self, context: SharedTaskDependencyResolutionContext, user_client: EncordUserClient
-    ) -> None:
-        storage_item = dep_storage_item(user_client, context.video_label_row)
+    def test_dep_storage_item(self, context: SharedTaskDependencyResolutionContext) -> None:
+        storage_item = dep_storage_item(context.video_storage_item)
         assert isinstance(storage_item, StorageItem)
         assert storage_item.item_type == StorageItemType.VIDEO
 

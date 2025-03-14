@@ -36,6 +36,7 @@ from encord.constants.enums import DataType
 from encord.objects.common import Shape
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
+from encord.orm.storage import StorageItemType
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
@@ -72,7 +73,7 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
-def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
+def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
     """
     Dependency to inject the first frame of the underlying asset.
 
@@ -95,19 +96,19 @@ def dep_single_frame(lr: LabelRowV2) -> NDArray[np.uint8]:
     ```
 
     Args:
-        lr: The label row. Automatically injected (see example above).
+        storage_item: The Storage item. Automatically injected (see example above).
 
     Returns:
         Numpy array of shape [h, w, 3] RGB colors.
 
     """
-    with download_asset(lr, frame=0) as asset:
+    with download_asset(storage_item, frame=0) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
 
     return np.asarray(img, dtype=np.uint8)
 
 
-def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
+def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
     """
     Get a local file path to data asset temporarily stored till end of agent execution.
 
@@ -138,11 +139,11 @@ def dep_asset(lr: LabelRowV2) -> Generator[Path, None, None]:
         ValueError: if the underlying assets are not videos, images, or audio.
         EncordException: if data type not supported by SDK yet.
     """
-    with download_asset(lr) as asset:
+    with download_asset(storage_item) as asset:
         yield asset
 
 
-def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]:
+def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
 
@@ -163,7 +164,7 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
     ```
 
     Args:
-        lr: Automatically injected label row dependency.
+        storage_item: Automatically injected storage item dependency.
 
     Raises:
         NotImplementedError: Will fail for other data types than video.
@@ -172,10 +173,10 @@ def dep_video_iterator(lr: LabelRowV2) -> Generator[Iterator[Frame], None, None]
         An iterator.
 
     """
-    if not lr.data_type == DataType.VIDEO:
+    if not storage_item.item_type == StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
-    with download_asset(lr, None) as asset:
+    with download_asset(storage_item, None) as asset:
         yield iter_video(asset)
 
 
@@ -225,10 +226,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     return lookup
 
 
-def dep_storage_item(
-    lookup: Annotated[DataLookup, Depends(dep_data_lookup)],
-    frame_data: FrameData,
-) -> StorageItem:
+def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     r"""
     Get the storage item associated with the underlying agent task.
 
@@ -255,7 +253,7 @@ def dep_storage_item(
     ```
 
     """
-    return lookup.get_storage_item(frame_data.data_hash)
+    return storage_item
 
 
 def dep_object_crops(
