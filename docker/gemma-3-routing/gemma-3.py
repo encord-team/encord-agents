@@ -25,9 +25,6 @@ model = Gemma3ForConditionalGeneration.from_pretrained(model_id, device_map="aut
 processor = AutoProcessor.from_pretrained(model_id)
 
 
-# url = "https://media.istockphoto.com/id/1192867753/photo/cow-in-berchida-beach-siniscola.jpg?s=612x612&w=0&k=20&c=v0hjjniwsMNfJSuKWZuIn8pssmD5h5bSN1peBd1CmH4="
-
-
 def call_gemma_text_reasoning(text_body: str, choices: list[str]) -> str:
     messages = [
         {

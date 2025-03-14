@@ -12,8 +12,8 @@ The agent is Ontology agnostic
 
 ## Execution
 
-`docker run -e ENCORD_SSH_KEY -e HUGGINGFACE_API_KEY encord/encord-agent-gemma-3-routing-container:latest --project-hash=your-project-hash`
+`docker run --gpus all -e ENCORD_SSH_KEY -e HUGGINGFACE_API_KEY encord/encord-agent-gemma-3-routing-container:latest --project-hash=your-project-hash`
+Note you may need to follow: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ## Outcome
-
-TODO
+The model will route the tasks sitting at the first stage to the various pathways. It will download the checkpoint and perform inference.
