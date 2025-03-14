@@ -134,7 +134,7 @@ def call_gemma_reasoning(storage_item: StorageItem, label_row: LabelRowV2, choic
         assert url
         return call_gemma_image_reasoning(url, choices)
     elif storage_item.item_type == StorageItemType.VIDEO:
-        with download_asset(label_row, None) as asset:
+        with download_asset(storage_item, None) as asset:
             first_frame = next(iter_video(asset))
             url_repr = first_frame.b64_encoding(output_format="url")
             return call_gemma_image_reasoning(url_repr, choices)
