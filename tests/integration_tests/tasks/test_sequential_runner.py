@@ -10,7 +10,7 @@ from encord.workflow.stages.final import FinalStage
 
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks import Runner
+from encord_agents.tasks import SequentialRunner
 from tests.fixtures import (
     AGENT_STAGE_NAME,
     AGENT_TO_COMPLETE_PATHWAY_HASH,
@@ -44,7 +44,7 @@ def test_batch_iterator() -> None:
 
 
 def test_define_agent(ephemeral_project_hash: str) -> None:
-    runner = Runner(project_hash=ephemeral_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
 
     @runner.stage(AGENT_STAGE_NAME)
     def agent_func() -> None:
@@ -69,7 +69,7 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
     """Test that runner stage functions are called once for each task in the stage"""
     # Create runner instance
     print(f"project_hash: {project_hash}")
-    runner = Runner(project_hash=project_hash)
+    runner = SequentialRunner(project_hash=project_hash)
 
     # Register the mock function as a stage handler
     @runner.stage(AGENT_STAGE_NAME)
@@ -103,7 +103,7 @@ def test_runner_stage_execution_count(user_client: EncordUserClient, mock_agent:
 
 def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str, mock_agent: MagicMock) -> None:
     """Test that runner respects max_tasks_per_stage parameter"""
-    runner = Runner(project_hash=ephemeral_image_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
 
     @runner.stage(AGENT_STAGE_NAME)
     def agent_function(task: AgentTask) -> str:
@@ -133,7 +133,7 @@ def test_runner_stage_execution_with_max_tasks(ephemeral_image_project_hash: str
 
 def test_runner_stage_execution_without_pathway(ephemeral_project_hash: str, mock_agent: MagicMock) -> None:
     """Test that runner handles None return value from stage function"""
-    runner = Runner(project_hash=ephemeral_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
 
     mock_agent.return_value = None
 
@@ -171,7 +171,7 @@ def test_project_validation_callback_trivial(
     validation_mock = MagicMock()
     validation_mock.return_value = None
 
-    runner = Runner(
+    runner = SequentialRunner(
         project_hash=ephemeral_project_hash if provide_project_hash_at_define_time else None,
         pre_execution_callback=validation_mock,
     )
@@ -190,13 +190,15 @@ def test_project_validation_callback_trivial(
 
 
 def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) -> None:
-    def non_trivial_validation_callback(runner: Runner) -> None:
+    def non_trivial_validation_callback(runner: SequentialRunner) -> None:
         project = runner.project
         assert project
         assert project.ontology_structure.objects
         assert project.workflow.stages
 
-    runner = Runner(project_hash=ephemeral_project_hash, pre_execution_callback=non_trivial_validation_callback)
+    runner = SequentialRunner(
+        project_hash=ephemeral_project_hash, pre_execution_callback=non_trivial_validation_callback
+    )
 
     @runner.stage(AGENT_STAGE_NAME)
     def stage_1() -> None:
@@ -215,10 +217,10 @@ def test_project_validation_callback_non_trivial(ephemeral_project_hash: str) ->
 def test_project_validation_callback_throws(
     ephemeral_project_hash: str, provide_project_hash_at_define_time: bool
 ) -> None:
-    def throwing_callback(runner: Runner) -> None:
+    def throwing_callback(runner: SequentialRunner) -> None:
         assert False
 
-    runner = Runner(
+    runner = SequentialRunner(
         project_hash=ephemeral_project_hash if provide_project_hash_at_define_time else None,
         pre_execution_callback=throwing_callback,
     )
@@ -235,7 +237,7 @@ def test_project_validation_callback_throws(
     "pathway_name", [pytest.param(True, id="Pass an incorrect name"), pytest.param(False, id="Pass an incorrect UUID")]
 )
 def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathway_name: bool) -> None:
-    runner = Runner(project_hash=ephemeral_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
 
     wrong_pathway: str | UUID = "Not the name of the pathway" if pathway_name else uuid4()
 
@@ -253,7 +255,7 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
 
 
 def test_queue_runner_resolves_agent_stage(ephemeral_project_hash: str) -> None:
-    runner = Runner(project_hash=ephemeral_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
 
     @runner.stage(AGENT_STAGE_NAME)
     def agent_func(stage: AgentStage) -> str:
@@ -269,7 +271,7 @@ def test_queue_runner_resolves_agent_stage(ephemeral_project_hash: str) -> None:
 
 
 def test_runner_storage_item_dependency_resolved_once(ephemeral_image_project_hash: str) -> None:
-    runner = Runner(project_hash=ephemeral_image_project_hash)
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
 
     @runner.stage(AGENT_STAGE_NAME)
     def storage_dep(label_row: LabelRowV2, storage_item: StorageItem) -> None:

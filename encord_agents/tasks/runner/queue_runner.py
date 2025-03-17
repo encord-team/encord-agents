@@ -13,7 +13,7 @@ from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import solve_dependencies
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import AgentTaskConfig, TaskAgentReturn, TaskCompletionResult
-from encord_agents.tasks.runner import RunnerBase
+from encord_agents.tasks.runner.runner_base import RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
 

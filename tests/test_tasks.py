@@ -1,11 +1,11 @@
 import pytest
 
 from encord_agents.exceptions import PrintableError
-from encord_agents.tasks.runner import Runner
+from encord_agents.tasks.runner import SequentialRunner
 
 
 def test_overrride_runner() -> None:
-    runner = Runner()
+    runner = SequentialRunner()
 
     @runner.stage(stage="Yep")
     def method_1() -> str:
@@ -27,7 +27,7 @@ def test_overrride_runner() -> None:
 
 
 def test_override_runner_preserves_order() -> None:
-    runner = Runner()
+    runner = SequentialRunner()
 
     @runner.stage(stage="Stage1")
     def method_1() -> str:
@@ -52,7 +52,7 @@ def test_override_runner_preserves_order() -> None:
 
 
 def test_max_tasks_per_stage_validation() -> None:
-    runner = Runner()
+    runner = SequentialRunner()
 
     with pytest.raises(PrintableError):
         runner(max_tasks_per_stage=-1)

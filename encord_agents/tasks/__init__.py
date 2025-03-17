@@ -1,6 +1,5 @@
 from encord_agents.core.dependencies import Depends
 
-from .queue_runner import QueueRunner
-from .runner import Runner
+from .runner import QueueRunner, Runner, SequentialRunner
 
-__all__ = ["Runner", "QueueRunner", "Depends"]
+__all__ = ["Runner", "QueueRunner", "Depends", "SequentialRunner"]

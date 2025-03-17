@@ -148,7 +148,7 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
 
     Example usage:
 
-        with download_asset(lr, 10) as asset_path:
+        with download_asset(storage_item, 10) as asset_path:
             # In here the file exists
             pixel_values = np.asarray(Image.open(asset_path))
 
