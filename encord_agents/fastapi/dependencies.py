@@ -108,8 +108,8 @@ def dep_label_row_with_args(
     ```
 
     Args:
-        label_row_metadata_include_args:
-        label_row_initialise_labels_args:
+        label_row_metadata_include_args: What arguments to include on the metadata front
+        label_row_initialise_labels_args: How and whether to initialise the label rows
 
 
     Returns:
