@@ -36,6 +36,7 @@ nav:
       - "Dependencies": dependencies.md
   - "Editor Agents":
       - "Overview": editor_agents/index.md
+      - "Spec": editor_agents/spec.md
       - "GCP Cloud Functions": editor_agents/gcp.md
       - "FastAPI": editor_agents/fastapi.md
       - "Hosting with Modal": editor_agents/modal.md

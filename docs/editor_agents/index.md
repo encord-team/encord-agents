@@ -51,7 +51,7 @@ sequenceDiagram
     B->>A: Label editor refresh
 ```
 
-Use `encord-agents` to define the logic for the "Editor Agent [custom API]" section of the diagram. You are responsible for programmatically determining what happens when your custom API receives a `project_hash`, `data_hash`, and potentially a `frame` number.
+Use `encord-agents` to define the logic for the "Editor Agent [custom API]" section of the diagram. You are responsible for programmatically determining what happens when your custom API receives a `project_hash`, `data_hash`, and potentially a `frame` number and `objectHashes`.
 
 We help with two different ways of building such Custom APIs:
 

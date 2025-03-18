@@ -165,3 +165,5 @@ class TestDependencyResolutionFastapi:
             },
         )
         assert resp.status_code == 200, resp.content
+
+    # TODO: Write a test of dep_objects

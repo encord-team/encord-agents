@@ -29,6 +29,7 @@ import numpy as np
 from encord.objects.common import Shape
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
+from encord.objects.ontology_object_instance import ObjectInstance
 from encord.orm.storage import StorageItemType
 from encord.project import Project
 from encord.storage import StorageItem
@@ -430,3 +431,16 @@ def dep_object_crops(
         ]
 
     return _dep_object_crops
+
+
+def dep_objects(frame_data: FrameData, lr: Annotated[LabelRowV2, Depends(dep_label_row)]) -> list[ObjectInstance]:
+    if not frame_data.object_hashes:
+        # TODO: Is iterable and exception appropriate
+        raise Exception
+    object_instances: list[ObjectInstance] = []
+    for i, object_hash in enumerate(frame_data.object_hashes):
+        object_instance = lr._objects_map.get(object_hash)
+        if not object_instance:
+            raise Exception(f"Object with {object_hash=} at index {i} not found in label_row")
+        object_instances.append(object_instance)
+    return object_instances
