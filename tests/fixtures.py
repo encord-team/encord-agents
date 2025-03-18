@@ -33,6 +33,8 @@ AGENT_TO_COMPLETE_PATHWAY_NAME = "complete"
 EPHEMERAL_PROJECT_TITLE = "encord-agents test project"
 EPHEMERAL_PROJECT_DESCRIPTION = "encord-agents test project description"
 
+# Ontology
+BBOX_ONTOLOGY_HASH = "PXFZO2ra"
 """
 === HACK being ===
 Hack to enable the tests to run with the key file as well as the key content.
