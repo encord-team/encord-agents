@@ -57,6 +57,10 @@ class FrameData(BaseModel):
     """
     The frame number. If single image, it's default 0.
     """
+    object_hashes: list[str] | None = Field(alias="objectHashes", default=None)
+    """
+    Object hashes if the request was made on particular objects. Allows acting directly on a 
+    """
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
     dep_client,
@@ -23,6 +23,8 @@ try:
     from fastapi.testclient import TestClient
 except Exception:
     exit()
+
+OBJECT_HASH = "MAGICAL"
 
 
 def build_app(ephermeral_project: Project, video_label_row: LabelRowV2) -> FastAPI:
@@ -73,6 +75,17 @@ def build_app(ephermeral_project: Project, video_label_row: LabelRowV2) -> FastA
         assert label_row_with_args.client_metadata == {"a": "b", "item_type": "video"}
         assert label_row_with_args.workflow_graph_node is not None
         assert label_row_with_args.data_link is not None
+
+    @app.post("/frame-data-without-object-hash")
+    def post_frame_data_without_object_hash(frame_data: FrameData) -> None:
+        assert frame_data
+        assert str(frame_data.project_hash) == ephermeral_project.project_hash
+        assert frame_data.object_hashes is None
+
+    @app.post("/frame-data-with-object-hash")
+    def post_frame_data_with_object_hash(frame_data: FrameData) -> None:
+        assert frame_data
+        assert frame_data.object_hashes == [OBJECT_HASH]
 
     return app
 
@@ -128,6 +141,27 @@ class TestDependencyResolutionFastapi:
                 "projectHash": self.project.project_hash,
                 "dataHash": self.first_label_row.data_hash,
                 "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+
+    def test_objectHash_populated_correctly(self) -> None:
+        resp = self.client.post(
+            "/frame-data-without-object-hash",
+            json={
+                "projectHash": self.project.project_hash,
+                "dataHash": self.first_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+        resp = self.client.post(
+            "/frame-data-with-object-hash",
+            json={
+                "projectHash": self.project.project_hash,
+                "dataHash": self.first_label_row.data_hash,
+                "frame": 0,
+                "objectHashes": [OBJECT_HASH],
             },
         )
         assert resp.status_code == 200, resp.content
