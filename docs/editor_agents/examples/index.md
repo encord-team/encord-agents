@@ -970,7 +970,6 @@ from encord_agents.core.data_model import Frame
 from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
     FrameData,
-    dep_client,
     dep_objects
 )
 

@@ -311,8 +311,7 @@ def dep_object_crops(
 
 def dep_objects(frame_data: FrameData, lr: LabelRowV2) -> list[ObjectInstance]:
     if not frame_data.object_hashes:
-        # TODO: Is iterable and exception appropriate
-        raise Exception
+        return []
     object_instances: list[ObjectInstance] = []
     for i, object_hash in enumerate(frame_data.object_hashes):
         object_instance = lr._objects_map.get(object_hash)
