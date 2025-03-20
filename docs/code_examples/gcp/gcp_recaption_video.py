@@ -69,15 +69,9 @@ from fastapi import FastAPI, Depends, Form
 
 # The response model for the agent to follow.
 class AgentCaptionResponse(BaseModel):
-    rephrase_1: str = Field(
-        description="A diverse rephrase of the caption, using different adjectives, object relations, and object positions."
-    )
-    rephrase_2: str = Field(
-        description="A rephrase of the caption that sounds natural and is consistent with the scene."
-    )
-    rephrase_3: str = Field(
-        description="A short and concise rephrase of the caption, within one sentence."
-    )
+    rephrase_1: str
+    rephrase_2: str
+    rephrase_3: str
 
 
 # System prompt for the LLM to follow. 
