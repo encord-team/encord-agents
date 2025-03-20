@@ -5,7 +5,7 @@ from typing import Any, Callable, Iterable
 from uuid import UUID
 
 from encord.project import Project
-from encord.workflow.stages.agent import AgentStage
+from encord.workflow.stages.agent import AgentStage, AgentTask
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.utils import solve_dependencies
@@ -13,6 +13,33 @@ from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import AgentTaskConfig, TaskAgentReturnStruct, TaskAgentReturnType, TaskCompletionResult
 from encord_agents.tasks.runner.runner_base import RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
+
+
+def handle_pathway(
+    task: AgentTask,
+    pathway_to_follow: UUID | str | None,
+    pathway_lookup: dict[UUID, str],
+    name_lookup: dict[str, UUID],
+    stage: AgentStage,
+) -> UUID | None:
+    next_stage_uuid: UUID | None = None
+    if pathway_to_follow is None:
+        # TODO: Should we log that task didn't continue?
+        pass
+    elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
+        if next_stage_uuid not in pathway_lookup.keys():
+            raise PrintableError(
+                f"Runner responded with pathway UUID: {next_stage_uuid}, only accept: {[pathway.uuid for pathway in stage.pathways]}"
+            )
+        task.proceed(pathway_uuid=str(next_stage_uuid))
+    else:
+        if pathway_to_follow not in [pathway.name for pathway in stage.pathways]:
+            raise PrintableError(
+                f"Runner responded with pathway name: {pathway_to_follow}, only accept: {[pathway.name for pathway in stage.pathways]}"
+            )
+        task.proceed(pathway_name=str(pathway_to_follow))
+        next_stage_uuid = name_lookup[str(pathway_to_follow)]
+    return next_stage_uuid
 
 
 class QueueRunner(RunnerBase):
@@ -161,31 +188,22 @@ class QueueRunner(RunnerBase):
                         client=self.client,
                     )
 
-                    next_stage: TaskAgentReturnType = None
                     with ExitStack() as stack:
                         dependencies = solve_dependencies(
                             context=context, dependant=runner_agent.dependant, stack=stack
                         )
-                        next_stage = runner_agent.callable(**dependencies.values)
-                    next_stage_uuid: UUID | None = None
-                    if isinstance(next_stage, TaskAgentReturnStruct):
-                        pass
-                    elif next_stage is None:
-                        # TODO: Should we log that task didn't continue?
-                        pass
-                    elif next_stage_uuid := try_coerce_UUID(next_stage):
-                        if next_stage_uuid not in pathway_lookup.keys():
-                            raise PrintableError(
-                                f"Runner responded with pathway UUID: {next_stage}, only accept: {[pathway.uuid for pathway in stage.pathways]}"
-                            )
-                        task.proceed(pathway_uuid=str(next_stage_uuid))
+                        agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
+                    pathway_to_follow: UUID | str | None = None
+                    if isinstance(agent_response, TaskAgentReturnStruct):
+                        # Can't batch handle updates for Queue Runner
+                        if agent_response.label_row:
+                            # If the user has returned a struct, we should save in case they haven't actually updated
+                            agent_response.label_row.save()
+                        if agent_response.pathway:
+                            pathway_to_follow = agent_response.pathway
                     else:
-                        if next_stage not in [pathway.name for pathway in stage.pathways]:
-                            raise PrintableError(
-                                f"Runner responded with pathway name: {next_stage}, only accept: {[pathway.name for pathway in stage.pathways]}"
-                            )
-                        task.proceed(pathway_name=str(next_stage))
-                        next_stage_uuid = name_lookup[str(next_stage)]
+                        pathway_to_follow = agent_response
+                    next_stage_uuid = handle_pathway(task, pathway_to_follow, pathway_lookup, name_lookup, stage=stage)
                     return TaskCompletionResult(
                         task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage_uuid
                     ).model_dump_json()
