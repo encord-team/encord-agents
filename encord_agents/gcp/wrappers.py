@@ -12,10 +12,8 @@ from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
-from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
-from encord_agents.gcp.dependencies import dep_data_lookup, dep_storage_item
 
 AgentFunction = Callable[..., Any]
 
