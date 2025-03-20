@@ -10,10 +10,18 @@ TaskAgentReturnPathway = str | UUID | None
 
 @dataclass
 class TaskAgentReturnStruct:
-    """Return this from your agent and we will handle propagating the updates in batches"""
+    """
+    Return this from your agent and we will handle propagating the updates in batches
+    """
 
     pathway: TaskAgentReturnPathway = None
+    """
+    The pathway that the task will follow on task completion
+    """
     label_row: LabelRowV2 | None = None
+    """
+    The label to be saved (if present)
+    """
 
 
 TaskAgentReturnType = TaskAgentReturnPathway | TaskAgentReturnStruct
