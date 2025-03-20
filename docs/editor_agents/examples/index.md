@@ -1,5 +1,36 @@
 ## GCP Examples
 
+### Basic Geometric example using objectHashes
+
+A simple example of how you might utilise the objectHashes can be done via:
+
+```python
+
+from typing import Annotated
+
+from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.objects.ontology_object_instance import ObjectInstance
+
+from encord_agents.core.data_model import FrameData
+from encord_agents.core.dependencies import Depends
+from encord_agents.gcp.dependencies import dep_objects
+from encord_agents.gcp.wrappers import editor_agent
+
+
+@editor_agent
+def handle_object_hashes(
+    frame_data: FrameData,
+    lr: LabelRowV2,
+    object_instances: Annotated[list[ObjectInstance], Depends(dep_objects)],
+) -> None:
+    for object_inst in object_instances:
+        print(object_inst)
+
+```
+
+An example use case of the above: Suppose that I have my own OCR model and I want to selectively run OCR on objects I've selected from the Encord app. You can then trigger your agent from the app and it'll appropriately send a list of objectHashes to your agent. Then via the dep_objects method above, it gives the agent immediate access to the object instance making it easier to integrate your OCR model.
+
+
 ### Nested Classification using Claude 3.5 Sonnet
 
 The goals of this example are:
@@ -961,32 +992,36 @@ If successful, the old generic object can be removed and the newly classified ob
 A simple example of how you might utilise the objectHashes can be done via:
 
 ```python
-import os
+from typing import Annotated
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object_instance import ObjectInstance
 from fastapi import Depends, FastAPI
-from encord_agents.core.data_model import Frame
+
 from encord_agents.fastapi.cors import EncordCORSMiddleware
 from encord_agents.fastapi.dependencies import (
     FrameData,
-    dep_objects
+    dep_label_row,
+    dep_objects,
 )
-
 
 # Initialize FastAPI app
 app = FastAPI()
 app.add_middleware(EncordCORSMiddleware)
 
+
 @app.post("/handle-object-hashes")
 def handle_object_hashes(
-  frame_data: FrameData,
-  lr: Annotated[LabelRowV2, Depends(dep_label_row)],
-  object_instances: Annotated[list[ObjectInstance], Depends(dep_objects)],
+    frame_data: FrameData,
+    lr: Annotated[LabelRowV2, Depends(dep_label_row)],
+    object_instances: Annotated[list[ObjectInstance], Depends(dep_objects)],
 ) -> None:
-  for object_inst in object_instance:
-    print(object_instances)
+    for object_inst in object_instances:
+        print(object_inst)
 ```
+
+An example use case of the above: Suppose that I have my own OCR model and I want to selectively run OCR on objects I've selected from the Encord app. You can then trigger your agent from the app and it'll appropriately send a list of objectHashes to your agent. Then via the dep_objects method above, it gives the agent immediate access to the object instance making it easier to integrate your OCR model.
+
 <!-- TODO: Could we make a better example -->
 ### Nested Classification using Claude 3.5 Sonnet
 
