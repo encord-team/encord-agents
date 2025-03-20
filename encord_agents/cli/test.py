@@ -5,6 +5,7 @@ CLI utilities for testing agents.
 import os
 import re
 import sys
+from urllib.parse import parse_qs
 
 import requests
 import rich
@@ -40,8 +41,12 @@ def parse_editor_url(editor_url: str) -> tuple[FrameData, str]:
         if match is None:
             raise typer.Abort()
         payload = match.groupdict()
+        print(payload)
         domain = payload.pop("domain")
         payload["frame"] = payload["frame"] or 0
+        queries = parse_qs(payload.get("query"))
+        objectHash = queries.get("objectHash")
+        payload["objectHashes"] = objectHash
         return FrameData.model_validate(payload), domain
     except Exception:
         rich.print(
