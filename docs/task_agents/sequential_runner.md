@@ -129,7 +129,7 @@ The runner:
 
 ### Initialization
 
-::: encord_agents.tasks.runner.Runner.__init__
+::: encord_agents.tasks.runner.sequential_runner.SequentialRunner.__init__
     options:
         show_if_no_docstring: false
         show_subodules: false
