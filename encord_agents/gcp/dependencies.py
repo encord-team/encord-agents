@@ -304,6 +304,7 @@ def dep_object_crops(
             for o in lr.get_object_instances(filter_frames=frame_data.frame)
             if o.ontology_item.shape in legal_shapes
             and (not legal_feature_hashes or o.feature_hash in legal_feature_hashes)
+            and (not frame_data.object_hashes or o.object_hash in frame_data.object_hashes)
         ]
 
     return _dep_object_crops
