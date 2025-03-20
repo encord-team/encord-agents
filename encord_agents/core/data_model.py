@@ -59,7 +59,7 @@ class FrameData(BaseModel):
     """
     object_hashes: list[str] | None = Field(alias="objectHashes", default=None)
     """
-    Object hashes if the request was made on particular objects. Allows acting directly on a 
+    Object hashes if the request was made on particular objects from the App
     """
 
 

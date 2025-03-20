@@ -12,7 +12,7 @@ type EditorAgentPayload = {
 };
 ```
 
-This aligns with the [FrameData](../reference/core.md#encord_agents.core.data_model.FrameData). Notably we use the `objectHashes: string[]` type to represent that the type is either **not present** or **present and a list of strings**.
+This aligns with the [FrameData](../reference/core.md#encord_agents.core.data_model.FrameData). Notably we use the `objectHashes: string[]` type to represent that the field is either **not present** or **present and a list of strings**.
 
 ### Test Payload
 
