@@ -38,7 +38,21 @@ jobs:
         with:
           extra_args: "--all-files --hook-stage=push"
         timeout-minutes: 10
-      
+
+  check-docs:
+    needs: [setup-venv]
+    name: Check docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup root poetry environment
+        uses: ./.github/actions/setup-root-poetry-environment
+
+      - name: Build Docs
+        run: |
+          poetry run mkdocs build
+
   tests:
     needs: [setup-venv]
     name: Run tests
@@ -70,7 +84,7 @@ jobs:
     if: ${{ !cancelled() }}
 
     steps:
-      - name: Download report 
+      - name: Download report
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.TEST_REPORT }}
