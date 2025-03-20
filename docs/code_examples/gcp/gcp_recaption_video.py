@@ -16,7 +16,7 @@ The workflow for this agent is as follows:
 
 Please see [TODO]() for a concrete Vision Language Action model use-case.
 
-This exmaple has the following dependencies:
+This example has the following dependencies:
 
 ```file=requirements.txt
 encord-agents
@@ -53,18 +53,17 @@ from typing import Annotated
 
 import numpy as np
 from encord.exceptions import LabelRowError
-from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.classification_instance import ClassificationInstance
-from encord_agents import FrameData
-from encord_agents.fastapi import Depends, editor_agent
-from encord_agents.fastapi.dependencies import Frame, dep_single_frame, dep_label_row
+from encord.objects.ontology_labels_impl import LabelRowV2
+from fastapi import Depends, FastAPI, Form
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 
+from encord_agents import FrameData
+from encord_agents.fastapi import Depends, editor_agent
 from encord_agents.fastapi.cors import EncordCORSMiddleware
-
-from fastapi import FastAPI, Depends, Form
+from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
 
 
 # The response model for the agent to follow.
@@ -74,9 +73,9 @@ class AgentCaptionResponse(BaseModel):
     rephrase_3: str
 
 
-# System prompt for the LLM to follow. 
+# System prompt for the LLM to follow.
 # You should tailor this to your needs.
-SYSTEM_PROMPT = f"""
+SYSTEM_PROMPT = """
 You are a helpful assistant that rephrases captions.
 
 I will provide you with a video caption and an image of the scene of the video. 
@@ -103,10 +102,9 @@ You will rephrase the caption in three different ways, as above, the rephrases s
 """
 
 # Make an llm instance that follows structured outputs.
-llm = ChatOpenAI(
-    model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"]
-)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"])
 llm_structured = llm.with_structured_output(AgentCaptionResponse)
+
 
 def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     prompt = [
@@ -122,31 +120,35 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     return llm_structured.invoke(prompt)
 
 
-# Define the FastAPI app to host the agent. This is the function 
-# that will be running as an API endpoint. 
+# Define the FastAPI app to host the agent. This is the function
+# that will be running as an API endpoint.
 app = FastAPI()
 app.add_middleware(EncordCORSMiddleware)
 
+
 @app.post("/my_agent")
 def my_agent(
-    frame_data: FrameData, 
+    frame_data: FrameData,
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
     # Get the relevant ontology information
-    # Recall that we expect 
+    # Recall that we expect
     # [human annotation, llm recaption 1, llm recaption 2, llm recaption 3]
     # in the ontology
     cap, *rs = label_row.ontology_structure.classifications
 
-    # Read the existing human caption if there are more captions, 
-    # we'll take the one from the current frame if it exists 
+    # Read the existing human caption if there are more captions,
+    # we'll take the one from the current frame if it exists
     # otherwise the one from frame zero or any caption, in said order.
-    instances = label_row.get_classification_instances(filter_ontology_classification=cap, filter_frames=[0, frame_data.frame])
+    instances = label_row.get_classification_instances(
+        filter_ontology_classification=cap, filter_frames=[0, frame_data.frame]
+    )
     if not instances:
         # nothing to do if there are no human labels
         return
     elif len(instances) > 1:
+
         def order_by_current_frame_else_frame_0(instance: ClassificationInstance) -> bool:
             try:
                 instance.get_annotation(frame_data.frame)
@@ -172,9 +174,7 @@ def my_agent(
     response = prompt_gpt(caption, frame)
 
     # Upsert the new captions
-    for r, t in zip(
-        rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]
-    ):
+    for r, t in zip(rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]):
         # Overwrite any existing re-captions
         existing_instances = label_row.get_classification_instances(filter_ontology_classification=r)
         for existing_instance in existing_instances:
