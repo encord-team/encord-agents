@@ -180,169 +180,169 @@ Here is the full code, but a section-by-section explanation follows.
     <!--/codeinclude-->
 
 
-      ??? "See the result of `data_model.model_json_schema_str` for the given example"
-          ```json
-          {
-            "$defs": {
-              "IsThereAPersonInTheFrameRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "k3EVexk7",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "k3EVexk7"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "choice": {
-                    "description": "Choose exactly one answer from the given options.",
-                    "discriminator": {
-                      "mapping": {
-                        "37rMLC/v": "#/$defs/NoNestedRadioModel",
-                        "EkGwhcO4": "#/$defs/YesNestedRadioModel"
-                      },
-                      "propertyName": "feature_node_hash"
+    ??? "See the result of `data_model.model_json_schema_str` for the given example"
+        ```json
+        {
+          "$defs": {
+            "IsThereAPersonInTheFrameRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "k3EVexk7",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "k3EVexk7"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "choice": {
+                  "description": "Choose exactly one answer from the given options.",
+                  "discriminator": {
+                    "mapping": {
+                      "37rMLC/v": "#/$defs/NoNestedRadioModel",
+                      "EkGwhcO4": "#/$defs/YesNestedRadioModel"
                     },
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/YesNestedRadioModel"
-                      },
-                      {
-                        "$ref": "#/$defs/NoNestedRadioModel"
-                      }
-                    ],
-                    "title": "Choice"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "choice"
-                ],
-                "title": "IsThereAPersonInTheFrameRadioModel",
-                "type": "object"
-              },
-              "NoNestedRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "37rMLC/v",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "37rMLC/v"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
+                    "propertyName": "feature_node_hash"
                   },
-                  "title": {
-                    "const": "no",
-                    "default": "Constant value - should be included as-is.",
-                    "enum": [
-                      "no"
-                    ],
-                    "title": "Title",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash"
-                ],
-                "title": "NoNestedRadioModel",
-                "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/YesNestedRadioModel"
+                    },
+                    {
+                      "$ref": "#/$defs/NoNestedRadioModel"
+                    }
+                  ],
+                  "title": "Choice"
+                }
               },
-              "SceneSummaryTextModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "+1g9I9Sg",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "+1g9I9Sg"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Please describe the image as accurate as possible focusing on 'scene summary'",
-                    "maxLength": 1000,
-                    "minLength": 0,
-                    "title": "Value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "value"
-                ],
-                "title": "SceneSummaryTextModel",
-                "type": "object"
-              },
-              "WhatIsThePersonDoingTextModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "mj9QCDY4",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "mj9QCDY4"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Please describe the image as accurate as possible focusing on 'What is the person doing?'",
-                    "maxLength": 1000,
-                    "minLength": 0,
-                    "title": "Value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "value"
-                ],
-                "title": "WhatIsThePersonDoingTextModel",
-                "type": "object"
-              },
-              "YesNestedRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "EkGwhcO4",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "EkGwhcO4"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "what_is_the_person_doing": {
-                    "$ref": "#/$defs/WhatIsThePersonDoingTextModel",
-                    "description": "A text attribute with carefully crafted text to describe the property."
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "what_is_the_person_doing"
-                ],
-                "title": "YesNestedRadioModel",
-                "type": "object"
-              }
+              "required": [
+                "feature_node_hash",
+                "choice"
+              ],
+              "title": "IsThereAPersonInTheFrameRadioModel",
+              "type": "object"
             },
-            "properties": {
-              "scene_summary": {
-                "$ref": "#/$defs/SceneSummaryTextModel",
-                "description": "A text attribute with carefully crafted text to describe the property."
+            "NoNestedRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "37rMLC/v",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "37rMLC/v"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "title": {
+                  "const": "no",
+                  "default": "Constant value - should be included as-is.",
+                  "enum": [
+                    "no"
+                  ],
+                  "title": "Title",
+                  "type": "string"
+                }
               },
-              "is_there_a_person_in_the_frame": {
-                "$ref": "#/$defs/IsThereAPersonInTheFrameRadioModel",
-                "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
-              }
+              "required": [
+                "feature_node_hash"
+              ],
+              "title": "NoNestedRadioModel",
+              "type": "object"
             },
-            "required": [
-              "scene_summary",
-              "is_there_a_person_in_the_frame"
-            ],
-            "title": "ClassificationModel",
-            "type": "object"
-          }
-          ```
+            "SceneSummaryTextModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "+1g9I9Sg",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "+1g9I9Sg"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Please describe the image as accurate as possible focusing on 'scene summary'",
+                  "maxLength": 1000,
+                  "minLength": 0,
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "value"
+              ],
+              "title": "SceneSummaryTextModel",
+              "type": "object"
+            },
+            "WhatIsThePersonDoingTextModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "mj9QCDY4",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "mj9QCDY4"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Please describe the image as accurate as possible focusing on 'What is the person doing?'",
+                  "maxLength": 1000,
+                  "minLength": 0,
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "value"
+              ],
+              "title": "WhatIsThePersonDoingTextModel",
+              "type": "object"
+            },
+            "YesNestedRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "EkGwhcO4",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "EkGwhcO4"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "what_is_the_person_doing": {
+                  "$ref": "#/$defs/WhatIsThePersonDoingTextModel",
+                  "description": "A text attribute with carefully crafted text to describe the property."
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "what_is_the_person_doing"
+              ],
+              "title": "YesNestedRadioModel",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "scene_summary": {
+              "$ref": "#/$defs/SceneSummaryTextModel",
+              "description": "A text attribute with carefully crafted text to describe the property."
+            },
+            "is_there_a_person_in_the_frame": {
+              "$ref": "#/$defs/IsThereAPersonInTheFrameRadioModel",
+              "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
+            }
+          },
+          "required": [
+            "scene_summary",
+            "is_there_a_person_in_the_frame"
+          ],
+          "title": "ClassificationModel",
+          "type": "object"
+        }
+        ```
 
 3. Create an Anthropic API client to communicate with Claude.
 
