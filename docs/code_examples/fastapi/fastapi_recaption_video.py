@@ -16,12 +16,12 @@ The workflow for this agent is as follows:
 
 Please see [TODO]() for a concrete Vision Language Action model use-case.
 
-This exmaple has the following dependencies:
+This example has the following dependencies:
 
 ```file=requirements.txt
 encord-agents
 langchain-openai
-functions-framework
+fastapi[standard]
 openai
 ```
 
@@ -35,7 +35,7 @@ python -m pip install -r requirements.txt
 
 ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
 OPENAI_API_KEY=<your-api-key> \
-functions-framework --target=my_agent --debug --source main.py
+fastapi dev main.py
 ```
 
 In a separate terminal, you can test the agent by running the following command:
@@ -45,7 +45,7 @@ source venv/bin/activate
 encord-agents test local my_agent <url_from_the_label_editor>
 ```
 
-Find more instructions on, e.g., hosting the agent see [here](https://agents-docs.encord.com/editor_agents/gcp/).
+Find more instructions [here](https://agents-docs.encord.com/editor_agents/fastapi/).
 """
 
 import os
@@ -56,15 +56,11 @@ from encord.exceptions import LabelRowError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.classification_instance import ClassificationInstance
 from encord_agents import FrameData
-from encord_agents.fastapi import Depends, editor_agent
-from encord_agents.fastapi.dependencies import Frame, dep_single_frame, dep_label_row
+from encord_agents.gcp import Depends, editor_agent
+from encord_agents.gcp.dependencies import Frame, dep_single_frame
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel, Field
-
-from encord_agents.fastapi.cors import EncordCORSMiddleware
-
-from fastapi import FastAPI, Depends, Form
 
 
 # The response model for the agent to follow.
@@ -128,15 +124,13 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     return llm_structured.invoke(prompt)
 
 
-# Define the FastAPI app to host the agent. This is the function 
-# that will be running as an API endpoint. 
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
-
-@app.post("/my_agent")
+# Define the agent. This is the function that will be running
+# as an API endpoint on GCP. Notice the name which is the 
+# name that we use in the `functions-framework ...` command above.
+@editor_agent()
 def my_agent(
     frame_data: FrameData, 
-    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    label_row: LabelRowV2,
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
     # Get the relevant ontology information
@@ -185,7 +179,7 @@ def my_agent(
         existing_instances = label_row.get_classification_instances(filter_ontology_classification=r)
         for existing_instance in existing_instances:
             label_row.remove_classification(existing_instance)
-
+        
         # Create new instances
         ins = r.create_instance()
         ins.set_answer(t, attribute=r.attributes[0])
