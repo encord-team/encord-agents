@@ -1,6 +1,7 @@
 name: Encord Agents Update Docs
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 env:
