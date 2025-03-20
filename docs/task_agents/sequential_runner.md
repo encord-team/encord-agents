@@ -133,6 +133,7 @@ The runner:
     options:
         show_if_no_docstring: false
         show_subodules: false
+        show_root_toc_entry: false
 
 ### Runtime Configuration
 

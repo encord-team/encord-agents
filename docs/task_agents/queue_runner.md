@@ -182,6 +182,7 @@ else:
     options:
         show_if_no_docstring: false
         show_submodules: false
+        show_root_toc_entry: false
 
 ### Stage Configuration
 
