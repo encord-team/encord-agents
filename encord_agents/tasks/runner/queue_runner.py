@@ -49,6 +49,14 @@ class QueueRunner(RunnerBase):
     """
 
     def __init__(self, project_hash: str | UUID):
+        """
+        Initialize the QueueRunner with a project hash.
+
+        This is the hash of the project that you want to run the tasks on.
+
+        Args:
+            project_hash: The hash of the project to run the tasks on.
+        """
         super().__init__(project_hash)
         assert self.project is not None
         self._project: Project = self.project
