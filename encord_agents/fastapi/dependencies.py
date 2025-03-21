@@ -21,11 +21,13 @@ def my_agent(
 
 """
 
+from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Callable, Generator, Iterator
 
 import cv2
 import numpy as np
+from encord.exceptions import AuthorisationError
 from encord.objects.common import Shape
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
@@ -34,6 +36,8 @@ from encord.orm.storage import StorageItemType
 from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from numpy.typing import NDArray
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
