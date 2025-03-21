@@ -105,6 +105,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert frame_data.object_hashes == [object_hash]
         assert len(object_instances) == 1
         assert object_instances[0].object_hash == object_hash
+        assert isinstance(object_instances[0], ObjectInstance)
 
     return app
 
