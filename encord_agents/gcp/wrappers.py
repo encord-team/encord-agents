@@ -2,10 +2,13 @@ import logging
 import re
 from contextlib import ExitStack
 from functools import wraps
+from http import HTTPStatus
 from typing import Any, Callable
 
+from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
+from fastapi import HTTPException
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
@@ -81,7 +84,12 @@ def editor_agent(
             logging.info(f"Request: {frame_data}")
 
             client = get_user_client()
-            project = client.get_project(str(frame_data.project_hash))
+            try:
+                project = client.get_project(frame_data.project_hash)
+            except AuthorisationError:
+                response = make_response()
+                response.status_code = HTTPStatus.FORBIDDEN
+                return response
 
             label_row: LabelRowV2 | None = None
             if dependant.needs_label_row:
