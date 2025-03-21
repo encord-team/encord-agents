@@ -17,3 +17,15 @@ This aligns with the [FrameData](../reference/core.md#encord_agents.core.data_mo
 ### Test Payload
 
 Additionally when registering your editor agent in the platform at: [Editor Agents](https://app.encord.com/agents/editor-agents?limit=10){ target="\_blank", rel="noopener noreferrer" }, you can test your agent via a test payload. We will appropriately check that your agent has access to the associated project, data item if you modify the payload, otherwise we will send a distinguished Header: `X-Encord-Editor-Agent` which will automatically respond appropriately. This allows you to test that you have deployed your agent appropriately and that your session can see the Agent (all requests to your agent are made from your browser session rather than the Encord backend) and additionally, you can test that it works on particular projects.
+
+### Error handling
+
+Additionally if you make use of the AuthorisationError handler, then we will raise appropriate errors depending on issues with the Agent. Most notably, in the event of an Authorisation issue with the Encord platform e.g: A request attempting to access a project that the agent doesn't have access too, then we will additionally include message in the body of the response:
+i.e: The response type is:
+```typescript
+type EditorAgentErrorResponse = {
+  message?: string;
+}
+```
+
+We will display this in the platform to allow intuitive usage of your agent.

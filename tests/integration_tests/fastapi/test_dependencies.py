@@ -1,7 +1,10 @@
+from http import HTTPStatus
 from typing import Annotated, NamedTuple
+from uuid import uuid4
 
 import pytest
 from encord.constants.enums import DataType
+from encord.exceptions import AuthorisationError
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
@@ -11,7 +14,7 @@ from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import EncordCORSMiddleware, authorization_error_exception_handler
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
@@ -41,6 +44,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
     object_hash = context.object_hash
     app = FastAPI()
     app.add_middleware(EncordCORSMiddleware)
+    app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
 
     @app.post("/client")
     def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
@@ -101,6 +105,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert frame_data.object_hashes == [object_hash]
         assert len(object_instances) == 1
         assert object_instances[0].object_hash == object_hash
+        assert isinstance(object_instances[0], ObjectInstance)
 
     return app
 
@@ -181,3 +186,26 @@ class TestDependencyResolutionFastapi:
             },
         )
         assert resp.status_code == 200, resp.content
+
+    @pytest.mark.parametrize(
+        "router_path",
+        [
+            "/project",
+            "/label-row",
+            "/storage-item",
+            "/label-row-with-args",
+        ],
+    )
+    def test_httpError_raised_appropriately(self, router_path: str) -> None:
+        resp = self.client.post(
+            router_path,
+            json={
+                "projectHash": str(uuid4()),
+                "dataHash": self.context.video_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == HTTPStatus.FORBIDDEN, resp.content
+        json_resp = resp.json()
+        assert json_resp
+        assert json_resp["message"]
