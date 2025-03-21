@@ -26,13 +26,19 @@ from typer import Abort, Option
 from typing_extensions import Annotated, Self
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.dependencies.models import Context, DecoratedCallable
-from encord_agents.core.dependencies.utils import solve_dependencies
+from encord_agents.core.dependencies.models import (
+    Context,
+    Dependant,
+)
+from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
+from encord_agents.tasks.models import DecoratedCallable, TaskAgentReturnStruct, TaskAgentReturnType
 from encord_agents.tasks.runner.runner_base import RunnerAgent, RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
+
+MAX_LABEL_ROW_BATCH_SIZE = 100
 
 
 class SequentialRunner(RunnerBase):
@@ -206,40 +212,93 @@ class SequentialRunner(RunnerBase):
         """
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
-        with Bundle() as bundle:
-            for context in contexts:
-                assert context.task
-                with ExitStack() as stack:
-                    task = context.task
-                    dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
-                    for attempt in range(num_retries + 1):
-                        try:
-                            next_stage = runner_agent.callable(**dependencies.values)
-                            if next_stage is None:
-                                pass
-                            elif next_stage_uuid := try_coerce_UUID(next_stage):
-                                if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
-                                    raise PrintableError(
-                                        f"No pathway with UUID: {next_stage} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
-                                    )
-                                task.proceed(pathway_uuid=str(next_stage_uuid), bundle=bundle)
-                            else:
-                                if next_stage not in [str(pathway.name) for pathway in stage.pathways]:
-                                    raise PrintableError(
-                                        f"No pathway with name: {next_stage} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
-                                    )
-                                task.proceed(pathway_name=str(next_stage), bundle=bundle)
-                            if pbar_update is not None:
-                                pbar_update(1.0)
-                            break
+        with Bundle() as task_bundle:
+            with Bundle(bundle_size=min(MAX_LABEL_ROW_BATCH_SIZE, len(list(contexts)))) as label_bundle:
+                for context in contexts:
+                    assert context.task
+                    with ExitStack() as stack:
+                        task = context.task
+                        dependencies = solve_dependencies(
+                            context=context, dependant=runner_agent.dependant, stack=stack
+                        )
+                        for attempt in range(num_retries + 1):
+                            try:
+                                agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
+                                if isinstance(agent_response, TaskAgentReturnStruct):
+                                    pathway_to_follow = agent_response.pathway
+                                    if agent_response.label_row:
+                                        agent_response.label_row.save(bundle=label_bundle)
+                                else:
+                                    pathway_to_follow = agent_response
+                                if pathway_to_follow is None:
+                                    pass
+                                elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
+                                    if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
+                                        raise PrintableError(
+                                            f"No pathway with UUID: {next_stage_uuid} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
+                                        )
+                                    task.proceed(pathway_uuid=str(next_stage_uuid), bundle=task_bundle)
+                                else:
+                                    if pathway_to_follow not in [str(pathway.name) for pathway in stage.pathways]:
+                                        raise PrintableError(
+                                            f"No pathway with name: {pathway_to_follow} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
+                                        )
+                                    task.proceed(pathway_name=str(pathway_to_follow), bundle=task_bundle)
+                                if pbar_update is not None:
+                                    pbar_update(1.0)
+                                break
 
-                        except KeyboardInterrupt:
-                            raise
-                        except PrintableError:
-                            raise
-                        except Exception:
-                            print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
-                            traceback.print_exc()
+                            except KeyboardInterrupt:
+                                raise
+                            except PrintableError:
+                                raise
+                            except Exception:
+                                print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
+                                traceback.print_exc()
+
+    def _validate_agent_stages(
+        self, valid_stages: list[AgentStage], agent_stages: dict[str | UUID, AgentStage]
+    ) -> None:
+        for runner_agent in self.agents:
+            fn_name = getattr(runner_agent.callable, "__name__", "agent function")
+            separator = f"{os.linesep}\t"
+            agent_stage_names = separator + self._get_stage_names(valid_stages, join_str=separator) + os.linesep
+            if runner_agent.identity not in agent_stages:
+                suggestion: str
+                if len(valid_stages) == 1:
+                    suggestion = f'Did you mean to wrap [blue]`{fn_name}`[/blue] with{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].title}")[/magenta]{os.linesep}or{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].uuid}")[/magenta]'
+                else:
+                    suggestion = f"""
+Please use either name annoitations: 
+[magenta]@runner.stage(stage="<exact_stage_name>")[/magenta] 
+
+or uuid annotations:
+[magenta]@runner.stage(stage="<exact_stage_uuid>")[/magenta] 
+
+For example, if we use the first agent stage listed above, we can use:
+[magenta]@runner.stage(stage="{valid_stages[0].title}")
+def {fn_name}(...):
+    ...
+[/magenta]
+# or
+[magenta]@runner.stage(stage="{valid_stages[0].uuid}")
+def {fn_name}(...):
+    ...[/magenta]"""
+                raise PrintableError(
+                    rf"""Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{runner_agent.printable_name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages:
+
+[{agent_stage_names}]
+
+{suggestion}
+                        """
+                )
+
+            stage = agent_stages[runner_agent.identity]
+            if stage.stage_type != WorkflowStageType.AGENT:
+                raise PrintableError(
+                    f"""You cannot use the stage of type `{stage.stage_type}` as an agent stage. It has to be one of the agent stages: 
+[{agent_stage_names}]."""
+                )
 
     def __call__(
         self,
@@ -313,50 +372,10 @@ class SequentialRunner(RunnerBase):
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
+        self._validate_agent_stages(valid_stages, agent_stages)
         if self.pre_execution_callback:
             self.pre_execution_callback(self)  # type: ignore  [arg-type]
         try:
-            for runner_agent in self.agents:
-                fn_name = getattr(runner_agent.callable, "__name__", "agent function")
-                separator = f"{os.linesep}\t"
-                agent_stage_names = separator + self._get_stage_names(valid_stages, join_str=separator) + os.linesep
-                if runner_agent.identity not in agent_stages:
-                    suggestion: str
-                    if len(valid_stages) == 1:
-                        suggestion = f'Did you mean to wrap [blue]`{fn_name}`[/blue] with{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].title}")[/magenta]{os.linesep}or{os.linesep}[magenta]@runner.stage(stage="{valid_stages[0].uuid}")[/magenta]'
-                    else:
-                        suggestion = f"""
-Please use either name annoitations: 
-[magenta]@runner.stage(stage="<exact_stage_name>")[/magenta] 
-
-or uuid annotations:
-[magenta]@runner.stage(stage="<exact_stage_uuid>")[/magenta] 
-
-For example, if we use the first agent stage listed above, we can use:
-[magenta]@runner.stage(stage="{valid_stages[0].title}")
-def {fn_name}(...):
-    ...
-[/magenta]
-# or
-[magenta]@runner.stage(stage="{valid_stages[0].uuid}")
-def {fn_name}(...):
-    ...[/magenta]"""
-                    raise PrintableError(
-                        rf"""Your function [blue]`{fn_name}`[/blue] was annotated to match agent stage [blue]`{runner_agent.printable_name}`[/blue] but that stage is not present as an agent stage in your project workflow. The workflow has following agent stages:
-
-[{agent_stage_names}]
-
-{suggestion}
-                        """
-                    )
-
-                stage = agent_stages[runner_agent.identity]
-                if stage.stage_type != WorkflowStageType.AGENT:
-                    raise PrintableError(
-                        f"""You cannot use the stage of type `{stage.stage_type}` as an agent stage. It has to be one of the agent stages: 
-[{agent_stage_names}]."""
-                    )
-
             # Run
             delta = timedelta(seconds=refresh_every) if refresh_every else None
             next_execution = None

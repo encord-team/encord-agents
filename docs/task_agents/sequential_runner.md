@@ -202,6 +202,21 @@ Or in code
 runner(task_batch_size=1)
 ```
 
+Additionally to speed up your label row updates to the encord platform, we allow you to return a struct object and we then handle batch saving the results to ensure that you spend as time as possible running your agent and minimising time spent writing results. To use this speed up, please instead write:
+
+```python
+from encord_agents.tasks.models import TaskAgentReturnStruct
+
+@runner.stage("Agent Stage")
+def agent_stage(label_row: LabelRowV2, storage_item: StorageItem) -> TaskAgentReturnStruct:
+    # Modify the label row in any manner
+    # ...
+    return TaskAgentReturnStruct(pathway="Modified label", label_row=label_row)
+
+```
+
+We make use of the [bundle method](https://docs.encord.com/sdk-documentation/general-sdk/sdk-bulk-action-best-practices){target="_blank", rel="noopener"} as in our SDK to batch the label row updates, allowing for >10x speedups.
+
 ## Scaling with the `QueueRunner`
 
 The [`QueueRunner`](./queue_runner.md) is a more advanced runner that will allow you to process multiple tasks in parallel.
