@@ -55,14 +55,14 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents import FrameData
-from encord_agents.fastapi.cors import EncordCORSMiddleware
-from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
+from fastapi import Depends, FastAPI
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
-from fastapi import Depends, FastAPI
+from encord_agents import FrameData
+from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
 
 
 # The response model for the agent to follow.
@@ -101,9 +101,7 @@ You will rephrase the caption in three different ways, as above, the rephrases s
 """
 
 # Make an llm instance that follows structured outputs.
-llm = ChatOpenAI(
-    model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"]
-)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"])
 llm_structured = llm.with_structured_output(AgentCaptionResponse)
 
 
@@ -177,13 +175,9 @@ def my_agent(
     response = prompt_gpt(caption, frame)
 
     # Upsert the new captions
-    for r, t in zip(
-        rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]
-    ):
+    for r, t in zip(rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]):
         # Overwrite any existing re-captions
-        existing_instances = label_row.get_classification_instances(
-            filter_ontology_classification=r
-        )
+        existing_instances = label_row.get_classification_instances(filter_ontology_classification=r)
         for existing_instance in existing_instances:
             label_row.remove_classification(existing_instance)
 

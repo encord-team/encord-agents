@@ -1148,25 +1148,25 @@ Here is the full code, but a section-by-section explanation follows.
 2. Next, we create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:72-99
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:73-99
     <!--/codeinclude-->
 
 3. We configure our LLM to use structured outputs based on our model:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:100-105
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:101-104
     <!--/codeinclude-->
 
 4. We create a helper function to prompt the model with both text and image:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:107-119
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:106-118
     <!--/codeinclude-->
 
 5. Finally, we define the main agent function:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:121-191
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:120-186
     <!--/codeinclude-->
 
 The agent follows these steps:
@@ -1634,25 +1634,25 @@ Here is the full code, but a section-by-section explanation follows.
 3. We configure our LLM to use structured outputs based on our model:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:102-107
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:102-105
     <!--/codeinclude-->
 
 4. We create a helper function to prompt the model with both text and image:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:109-121
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:107-119
     <!--/codeinclude-->
 
 5. We initialize the FastAPI app with the required CORS middleware:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:123-127
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:121-125
     <!--/codeinclude-->
 
 6. Finally, we define the endpoint that will handle the recaptioning:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:129-196
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:127-190
     <!--/codeinclude-->
 
 The endpoint follows these steps:
