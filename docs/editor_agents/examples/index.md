@@ -180,169 +180,169 @@ Here is the full code, but a section-by-section explanation follows.
     <!--/codeinclude-->
 
 
-      ??? "See the result of `data_model.model_json_schema_str` for the given example"
-          ```json
-          {
-            "$defs": {
-              "IsThereAPersonInTheFrameRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "k3EVexk7",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "k3EVexk7"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "choice": {
-                    "description": "Choose exactly one answer from the given options.",
-                    "discriminator": {
-                      "mapping": {
-                        "37rMLC/v": "#/$defs/NoNestedRadioModel",
-                        "EkGwhcO4": "#/$defs/YesNestedRadioModel"
-                      },
-                      "propertyName": "feature_node_hash"
+    ??? "See the result of `data_model.model_json_schema_str` for the given example"
+        ```json
+        {
+          "$defs": {
+            "IsThereAPersonInTheFrameRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "k3EVexk7",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "k3EVexk7"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "choice": {
+                  "description": "Choose exactly one answer from the given options.",
+                  "discriminator": {
+                    "mapping": {
+                      "37rMLC/v": "#/$defs/NoNestedRadioModel",
+                      "EkGwhcO4": "#/$defs/YesNestedRadioModel"
                     },
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/YesNestedRadioModel"
-                      },
-                      {
-                        "$ref": "#/$defs/NoNestedRadioModel"
-                      }
-                    ],
-                    "title": "Choice"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "choice"
-                ],
-                "title": "IsThereAPersonInTheFrameRadioModel",
-                "type": "object"
-              },
-              "NoNestedRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "37rMLC/v",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "37rMLC/v"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
+                    "propertyName": "feature_node_hash"
                   },
-                  "title": {
-                    "const": "no",
-                    "default": "Constant value - should be included as-is.",
-                    "enum": [
-                      "no"
-                    ],
-                    "title": "Title",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash"
-                ],
-                "title": "NoNestedRadioModel",
-                "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/YesNestedRadioModel"
+                    },
+                    {
+                      "$ref": "#/$defs/NoNestedRadioModel"
+                    }
+                  ],
+                  "title": "Choice"
+                }
               },
-              "SceneSummaryTextModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "+1g9I9Sg",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "+1g9I9Sg"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Please describe the image as accurate as possible focusing on 'scene summary'",
-                    "maxLength": 1000,
-                    "minLength": 0,
-                    "title": "Value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "value"
-                ],
-                "title": "SceneSummaryTextModel",
-                "type": "object"
-              },
-              "WhatIsThePersonDoingTextModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "mj9QCDY4",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "mj9QCDY4"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "value": {
-                    "description": "Please describe the image as accurate as possible focusing on 'What is the person doing?'",
-                    "maxLength": 1000,
-                    "minLength": 0,
-                    "title": "Value",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "value"
-                ],
-                "title": "WhatIsThePersonDoingTextModel",
-                "type": "object"
-              },
-              "YesNestedRadioModel": {
-                "properties": {
-                  "feature_node_hash": {
-                    "const": "EkGwhcO4",
-                    "description": "UUID for discrimination. Must be included in json as is.",
-                    "enum": [
-                      "EkGwhcO4"
-                    ],
-                    "title": "Feature Node Hash",
-                    "type": "string"
-                  },
-                  "what_is_the_person_doing": {
-                    "$ref": "#/$defs/WhatIsThePersonDoingTextModel",
-                    "description": "A text attribute with carefully crafted text to describe the property."
-                  }
-                },
-                "required": [
-                  "feature_node_hash",
-                  "what_is_the_person_doing"
-                ],
-                "title": "YesNestedRadioModel",
-                "type": "object"
-              }
+              "required": [
+                "feature_node_hash",
+                "choice"
+              ],
+              "title": "IsThereAPersonInTheFrameRadioModel",
+              "type": "object"
             },
-            "properties": {
-              "scene_summary": {
-                "$ref": "#/$defs/SceneSummaryTextModel",
-                "description": "A text attribute with carefully crafted text to describe the property."
+            "NoNestedRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "37rMLC/v",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "37rMLC/v"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "title": {
+                  "const": "no",
+                  "default": "Constant value - should be included as-is.",
+                  "enum": [
+                    "no"
+                  ],
+                  "title": "Title",
+                  "type": "string"
+                }
               },
-              "is_there_a_person_in_the_frame": {
-                "$ref": "#/$defs/IsThereAPersonInTheFrameRadioModel",
-                "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
-              }
+              "required": [
+                "feature_node_hash"
+              ],
+              "title": "NoNestedRadioModel",
+              "type": "object"
             },
-            "required": [
-              "scene_summary",
-              "is_there_a_person_in_the_frame"
-            ],
-            "title": "ClassificationModel",
-            "type": "object"
-          }
-          ```
+            "SceneSummaryTextModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "+1g9I9Sg",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "+1g9I9Sg"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Please describe the image as accurate as possible focusing on 'scene summary'",
+                  "maxLength": 1000,
+                  "minLength": 0,
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "value"
+              ],
+              "title": "SceneSummaryTextModel",
+              "type": "object"
+            },
+            "WhatIsThePersonDoingTextModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "mj9QCDY4",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "mj9QCDY4"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Please describe the image as accurate as possible focusing on 'What is the person doing?'",
+                  "maxLength": 1000,
+                  "minLength": 0,
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "value"
+              ],
+              "title": "WhatIsThePersonDoingTextModel",
+              "type": "object"
+            },
+            "YesNestedRadioModel": {
+              "properties": {
+                "feature_node_hash": {
+                  "const": "EkGwhcO4",
+                  "description": "UUID for discrimination. Must be included in json as is.",
+                  "enum": [
+                    "EkGwhcO4"
+                  ],
+                  "title": "Feature Node Hash",
+                  "type": "string"
+                },
+                "what_is_the_person_doing": {
+                  "$ref": "#/$defs/WhatIsThePersonDoingTextModel",
+                  "description": "A text attribute with carefully crafted text to describe the property."
+                }
+              },
+              "required": [
+                "feature_node_hash",
+                "what_is_the_person_doing"
+              ],
+              "title": "YesNestedRadioModel",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "scene_summary": {
+              "$ref": "#/$defs/SceneSummaryTextModel",
+              "description": "A text attribute with carefully crafted text to describe the property."
+            },
+            "is_there_a_person_in_the_frame": {
+              "$ref": "#/$defs/IsThereAPersonInTheFrameRadioModel",
+              "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
+            }
+          },
+          "required": [
+            "scene_summary",
+            "is_there_a_person_in_the_frame"
+          ],
+          "title": "ClassificationModel",
+          "type": "object"
+        }
+        ```
 
 3. Create an Anthropic API client to communicate with Claude.
 
@@ -985,6 +985,218 @@ If successful, the old generic object can be removed and the newly classified ob
 
 4. To see if the test is successful, refresh your browser to view the classifications generated by Claude. Once the test runs successfully, you are ready to deploy your agent. Visit the deployment documentation to learn more.
 
+### Video Recaptioning using GPT-4o-mini
+
+The goals of this example are:
+
+1. Create an editor agent that automatically generates multiple variations of video captions.
+2. Demonstrate how to use OpenAI's GPT-4o-mini model to enhance human-created video captions.
+
+**Prerequisites**
+
+Before you begin, ensure you have:
+
+- Created a virtual Python environment.
+- Installed all necessary dependencies.
+- Have an [OpenAI API key](https://platform.openai.com/api-keys){ target="\_blank", rel="noopener noreferrer" }.
+- Are able to [authenticate with Encord](../../authentication.md).
+
+Run the following commands to set up your environment:
+
+```shell
+python -m venv venv                 # Create a virtual Python environment  
+source venv/bin/activate            # Activate the virtual environment  
+python -m pip install encord-agents langchain-openai functions-framework openai  # Install required dependencies  
+export OPENAI_API_KEY="<your-api-key>"     # Set your OpenAI API key  
+export ENCORD_SSH_KEY_FILE="/path/to/your/private/key"  # Define your Encord SSH key  
+```
+
+**Project Setup**
+
+Create a Project with video content in Encord. 
+
+This example requires an ontology with four text classifications as demonstrated in the figure below:
+
+* 1) A text classification for human-created summaries of what's happening in the video.
+* 2-4) Three text classifications that will be automatically filled by the LLM.
+
+<figure style="text-align: center; justify-items: center; flex: 1; margin: 1em 0; width: 100%;">
+  <img src="/assets/examples/editor_agents/recaptioning_ontology.png" width="200"/>
+  <strong>Ontology</strong> 
+</figure>
+
+??? "Expand to see ontology JSON"
+    ```json
+    {
+      "objects": [],
+      "classifications": [
+        {
+          "id": "1",
+          "featureNodeHash": "GCH8VHIK",
+          "attributes": [
+            {
+              "id": "1.1",
+              "name": "Caption",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "Yg7xXEfC"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "featureNodeHash": "PwQAwYid",
+          "attributes": [
+            {
+              "id": "2.1",
+              "name": "Caption Rephrased 1",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "aQdXJwbG"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "featureNodeHash": "3a/aSnHO",
+          "attributes": [
+            {
+              "id": "3.1",
+              "name": "Caption Rephrased 2",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "8zY6H62x"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "featureNodeHash": "FNjXp5TU",
+          "attributes": [
+            {
+              "id": "4.1",
+              "name": "Caption Rephrased 3",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "sKg1Kq/m"
+            }
+          ]
+        }
+      ]
+    }
+    ```
+
+
+??? "Code for generating a compatible ontology"
+    ```python
+    import json
+    from encord.objects.ontology_structure import OntologyStructure
+    from encord.objects.attributes import TextAttribute
+
+    structure = OntologyStructure()
+    caption = structure.add_classification()
+    caption.add_attribute(TextAttribute, "Caption")
+    re1 = structure.add_classification()
+    re1.add_attribute(TextAttribute, "Recaption 1")
+    re2 = structure.add_classification()
+    re2.add_attribute(TextAttribute, "Recaption 2")
+    re3 = structure.add_classification()
+    re3.add_attribute(TextAttribute, "Recaption 3")
+
+    print(json.dumps(structure.to_dict(), indent=2))
+
+    create_ontology = False
+    if create_ontology:
+        from encord.user_client import EncordUserClient
+        client = EncordUserClient.create_with_ssh_private_key()  # Look in auth section for authentication
+        client.create_ontology("title", "description", structure)
+    ```
+
+
+As the figure below depicts, the workflow for this agent is:
+
+1. A human views the video and enters a caption in the first text field.
+2. The agent is triggered, which fills the three other caption fields with variations for the human to review and potentially correct.
+
+Every video is being annotated with a caption by a human (the pink node).
+Successively, a data agent produces multiple new captions automatically (the purple node).
+Finally, a humans reviews all four captions (the yellow node) before the item is complete.
+If there are no human captions when the task reaches the data agent, it'll send it back for annotation.
+Similarly, if the task is rejected during review, it's also sent back for another round of annotation.
+
+<figure style="text-align: center; flex: 1; margin: 1em 0;">
+  <img src="/assets/examples/editor_agents/recaptioning_workflow.png" width="100%"/>
+  <strong>Workflow</strong> 
+</figure>
+
+
+**Create the Agent**
+
+Here is the full code, but a section-by-section explanation follows.
+
+??? "The full code for `main.py`"
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) linenums:1
+    <!--/codeinclude-->
+
+1. First, we define our imports and create a Pydantic model for our LLM's structured output:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:50-70
+    <!--/codeinclude-->
+
+2. Next, we create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:73-99
+    <!--/codeinclude-->
+
+3. We configure our LLM to use structured outputs based on our model:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:101-104
+    <!--/codeinclude-->
+
+4. We create a helper function to prompt the model with both text and image:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:106-118
+    <!--/codeinclude-->
+
+5. Finally, we define the main agent function:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:120-186
+    <!--/codeinclude-->
+
+The agent follows these steps:
+
+1. It retrieves the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.
+2. It sends the first frame of the video along with the human caption to the LLM.
+3. It processes the LLM's response, which contains three different rephrasings of the original caption.
+4. It updates the label row with the new captions, replacing any existing ones.
+
+**Test the Agent**
+
+1. In your current terminal, run the following command to run the agent in debug mode:
+
+    ```shell
+    ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
+    OPENAI_API_KEY=<your-api-key> \
+    functions-framework --target=my_agent --debug --source main.py
+    ```
+
+2. Open your Project in the Encord platform, navigate to a video frame, and add your initial caption. Copy the URL from your browser.
+
+3. In another shell operating from the same working directory, source your virtual environment and test the agent:
+
+    ```shell
+    source venv/bin/activate
+    encord-agents test local my_agent '<your_url>'
+    ```
+
+4. Refresh your browser to view the three AI-generated caption variations. Once the test runs successfully, you are ready to deploy your agent. Visit [the deployment documentation](../gcp.md#step-4-deployment) to learn more.
+
 ## FastAPI Examples
 
 ### Basic Geometric example using objectHashes
@@ -1252,6 +1464,224 @@ The endpoint:
     ```
 
 4. To see if the test is successful, refresh your browser to view the classifications generated by Claude. Once the test runs successfully, you are ready to deploy your agent. Visit the deployment documentation to learn more.
+
+
+### Video Recaptioning using GPT-4o-mini
+
+The goals of this example are:
+
+1. Create an editor agent that automatically generates multiple variations of video captions.
+2. Demonstrate how to use OpenAI's GPT-4o-mini model to enhance human-created video captions with a FastAPI-based agent.
+
+**Prerequisites**
+
+Before you begin, ensure you have:
+
+- Created a virtual Python environment.
+- Installed all necessary dependencies.
+- Have an [OpenAI API key](https://platform.openai.com/api-keys){ target="\_blank", rel="noopener noreferrer" }.
+- Are able to [authenticate with Encord](../../authentication.md).
+
+Run the following commands to set up your environment:
+
+```shell
+python -m venv venv                 # Create a virtual Python environment  
+source venv/bin/activate            # Activate the virtual environment  
+python -m pip install encord-agents langchain-openai "fastapi[standard]" openai  # Install required dependencies  
+export OPENAI_API_KEY="<your-api-key>"     # Set your OpenAI API key  
+export ENCORD_SSH_KEY_FILE="/path/to/your/private/key"  # Define your Encord SSH key  
+```
+
+**Project Setup**
+
+Create a Project with video content in Encord. 
+
+This example requires an ontology with four text classifications as demonstrated in the figure below:
+
+* 1) A text classification for human-created summaries of what's happening in the video.
+* 2-4) Three text classifications that will be automatically filled by the LLM.
+
+<figure style="text-align: center; justify-items: center; flex: 1; margin: 1em 0; width: 100%;">
+  <img src="/assets/examples/editor_agents/recaptioning_ontology.png" width="200"/>
+  <strong>Ontology</strong> 
+</figure>
+
+??? "Expand to see ontology JSON"
+    ```json
+    {
+      "objects": [],
+      "classifications": [
+        {
+          "id": "1",
+          "featureNodeHash": "GCH8VHIK",
+          "attributes": [
+            {
+              "id": "1.1",
+              "name": "Caption",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "Yg7xXEfC"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "featureNodeHash": "PwQAwYid",
+          "attributes": [
+            {
+              "id": "2.1",
+              "name": "Caption Rephrased 1",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "aQdXJwbG"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "featureNodeHash": "3a/aSnHO",
+          "attributes": [
+            {
+              "id": "3.1",
+              "name": "Caption Rephrased 2",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "8zY6H62x"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "featureNodeHash": "FNjXp5TU",
+          "attributes": [
+            {
+              "id": "4.1",
+              "name": "Caption Rephrased 3",
+              "type": "text",
+              "required": false,
+              "featureNodeHash": "sKg1Kq/m"
+            }
+          ]
+        }
+      ]
+    }
+    ```
+
+
+??? "Code for generating a compatible ontology"
+    ```python
+    import json
+    from encord.objects.ontology_structure import OntologyStructure
+    from encord.objects.attributes import TextAttribute
+
+    structure = OntologyStructure()
+    caption = structure.add_classification()
+    caption.add_attribute(TextAttribute, "Caption")
+    re1 = structure.add_classification()
+    re1.add_attribute(TextAttribute, "Recaption 1")
+    re2 = structure.add_classification()
+    re2.add_attribute(TextAttribute, "Recaption 2")
+    re3 = structure.add_classification()
+    re3.add_attribute(TextAttribute, "Recaption 3")
+
+    print(json.dumps(structure.to_dict(), indent=2))
+
+    create_ontology = False
+    if create_ontology:
+        from encord.user_client import EncordUserClient
+        client = EncordUserClient.create_with_ssh_private_key()  # Look in auth section for authentication
+        client.create_ontology("title", "description", structure)
+    ```
+
+
+As the figure below depicts, the workflow for this agent is:
+
+1. A human views the video and enters a caption in the first text field.
+2. The agent is triggered, which fills the three other caption fields with variations for the human to review and potentially correct.
+
+Every video is being annotated with a caption by a human (the pink node).
+Successively, a data agent produces multiple new captions automatically (the purple node).
+Finally, a humans reviews all four captions (the yellow node) before the item is complete.
+If there are no human captions when the task reaches the data agent, it'll send it back for annotation.
+Similarly, if the task is rejected during review, it's also sent back for another round of annotation.
+
+<figure style="text-align: center; flex: 1; margin: 1em 0;">
+  <img src="/assets/examples/editor_agents/recaptioning_workflow.png" width="100%"/>
+  <strong>Workflow</strong> 
+</figure>
+
+**Create the Agent**
+
+Here is the full code, but a section-by-section explanation follows.
+
+??? "The full code for `main.py`"
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) linenums:1
+    <!--/codeinclude-->
+
+1. First, we set up our imports and create a Pydantic model for our LLM's structured output:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:50-72
+    <!--/codeinclude-->
+
+2. Next, we create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:74-101
+    <!--/codeinclude-->
+
+3. We configure our LLM to use structured outputs based on our model:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:102-105
+    <!--/codeinclude-->
+
+4. We create a helper function to prompt the model with both text and image:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:107-119
+    <!--/codeinclude-->
+
+5. We initialize the FastAPI app with the required CORS middleware:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:121-125
+    <!--/codeinclude-->
+
+6. Finally, we define the endpoint that will handle the recaptioning:
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:127-190
+    <!--/codeinclude-->
+
+The endpoint follows these steps:
+
+1. It retrieves the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.
+2. It sends the first frame of the video along with the human caption to the LLM.
+3. It processes the LLM's response, which contains three different rephrasings of the original caption.
+4. It updates the label row with the new captions, replacing any existing ones.
+
+**Test the Agent**
+
+1. In your current terminal, run the following command to run the FastAPI server:
+
+    ```shell
+    ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
+    OPENAI_API_KEY=<your-api-key> \
+    fastapi dev main.py
+    ```
+
+2. Open your Project in the Encord platform, navigate to a video frame, and add your initial caption. Copy the URL from your browser.
+
+3. In another shell operating from the same working directory, source your virtual environment and test the agent:
+
+    ```shell
+    source venv/bin/activate
+    encord-agents test local my_agent '<your_url>'
+    ```
+
+4. Refresh your browser to view the three AI-generated caption variations. Once the test runs successfully, you are ready to deploy your agent. Visit [the deployment documentation](../fastapi.md) to learn more.
 
 
 ## Agent Examples in the Making
