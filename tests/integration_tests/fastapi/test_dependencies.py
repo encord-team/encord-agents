@@ -206,3 +206,6 @@ class TestDependencyResolutionFastapi:
             },
         )
         assert resp.status_code == HTTPStatus.FORBIDDEN, resp.content
+        json_resp = resp.json()
+        assert json_resp
+        assert json_resp["message"]
