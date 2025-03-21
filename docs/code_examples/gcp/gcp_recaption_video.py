@@ -14,21 +14,21 @@ The workflow for this agent is as follows:
 2. Then, the agent is triggered and the three other captions will be 
     filled in for the human to review and potentially correct.
 
-Please see [TODO]() for a concrete Vision Language Action model use-case.
+Please see [here](https://agents-docs.encord.com/notebooks/recaption_video/) for a concrete Vision Language Action model use-case.
 
 This example has the following dependencies:
 
-```file=requirements.txt
+'''file=requirements.txt
 encord-agents
 langchain-openai
 functions-framework
 openai
-```
+'''
 
 You can copy the above requirements to a requirements.txt file
 and run the following commands to test it.
 
-```shell
+'''shell
 python -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
@@ -36,14 +36,14 @@ python -m pip install -r requirements.txt
 ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
 OPENAI_API_KEY=<your-api-key> \
 functions-framework --target=my_agent --debug --source main.py
-```
+'''
 
 In a separate terminal, you can test the agent by running the following command:
 
-```shell
+'''shell
 source venv/bin/activate
 encord-agents test local my_agent <url_from_the_label_editor>
-```
+'''
 
 Find more instructions on, e.g., hosting the agent see [here](https://agents-docs.encord.com/editor_agents/gcp/).
 """
@@ -55,15 +55,12 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends, FastAPI, Form
+from encord_agents import FrameData
+from encord_agents.gcp import Depends, editor_agent
+from encord_agents.gcp.dependencies import Frame, dep_single_frame
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field
-
-from encord_agents import FrameData
-from encord_agents.fastapi import Depends, editor_agent
-from encord_agents.fastapi.cors import EncordCORSMiddleware
-from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
+from pydantic import BaseModel
 
 
 # The response model for the agent to follow.
@@ -102,7 +99,9 @@ You will rephrase the caption in three different ways, as above, the rephrases s
 """
 
 # Make an llm instance that follows structured outputs.
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"])
+llm = ChatOpenAI(
+    model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"]
+)
 llm_structured = llm.with_structured_output(AgentCaptionResponse)
 
 
@@ -120,16 +119,13 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     return llm_structured.invoke(prompt)
 
 
-# Define the FastAPI app to host the agent. This is the function
-# that will be running as an API endpoint.
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
-
-
-@app.post("/my_agent")
+# Define the agent. This is the function that will be running
+# as an API endpoint on GCP. Notice the name which is the
+# name that we use in the `functions-framework ...` command above.
+@editor_agent()
 def my_agent(
     frame_data: FrameData,
-    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    label_row: LabelRowV2,
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
     # Get the relevant ontology information
@@ -149,7 +145,9 @@ def my_agent(
         return
     elif len(instances) > 1:
 
-        def order_by_current_frame_else_frame_0(instance: ClassificationInstance) -> bool:
+        def order_by_current_frame_else_frame_0(
+            instance: ClassificationInstance,
+        ) -> bool:
             try:
                 instance.get_annotation(frame_data.frame)
                 return 2  # The best option
@@ -174,9 +172,13 @@ def my_agent(
     response = prompt_gpt(caption, frame)
 
     # Upsert the new captions
-    for r, t in zip(rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]):
+    for r, t in zip(
+        rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]
+    ):
         # Overwrite any existing re-captions
-        existing_instances = label_row.get_classification_instances(filter_ontology_classification=r)
+        existing_instances = label_row.get_classification_instances(
+            filter_ontology_classification=r
+        )
         for existing_instance in existing_instances:
             label_row.remove_classification(existing_instance)
 
