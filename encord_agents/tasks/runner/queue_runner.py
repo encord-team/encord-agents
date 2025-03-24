@@ -99,7 +99,7 @@ class QueueRunner(RunnerBase):
         *,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
-    ) -> Callable[[Callable[..., str | UUID | None]], Callable[[str], str]]:
+    ) -> Callable[[Callable[..., TaskAgentReturnType]], Callable[[str], str]]:
         """
         Agent wrapper intended for queueing systems and distributed workloads.
 
@@ -132,7 +132,7 @@ class QueueRunner(RunnerBase):
         """
         stage_uuid, printable_name = self._validate_stage(stage)
 
-        def decorator(func: Callable[..., str | UUID | None]) -> Callable[[str], str]:
+        def decorator(func: Callable[..., TaskAgentReturnType]) -> Callable[[str], str]:
             runner_agent = self._add_stage_agent(
                 stage_uuid,
                 func,
