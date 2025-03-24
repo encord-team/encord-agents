@@ -1,7 +1,7 @@
-## GCP Examples
 
 ### Basic Geometric example using objectHashes
 
+## GCP Examples
 A simple example of how you might utilise the objectHashes can be done via:
 
 ```python
@@ -29,6 +29,34 @@ def handle_object_hashes(
 ```
 
 An example use case of the above: Suppose that I have my own OCR model and I want to selectively run OCR on objects I've selected from the Encord app. You can then trigger your agent from the app and it'll appropriately send a list of objectHashes to your agent. Then via the dep_objects method above, it gives the agent immediate access to the object instance making it easier to integrate your OCR model.
+
+**Test the Agent**
+
+1. Save the above code as `agent.py`.
+2. Then in your current terminal, run the following command to run the agent in debug mode.
+
+```shell
+functions-framework --target=handle_object_hashes --debug --source agent.py
+```
+
+3. Open your Project in [the Encord platform](https://app.encord.com/projects){ target="_blank", rel="noopener noreferrer" } and navigate to a frame with an object that you want to act on. Choose an object from the bottom left sider and click `Copy URL` as shown:
+<div align="center">
+  <img src ="../../assets/examples/editor_agents/copy_url_example.png" alt="Copy URL from left sider" width="350" height="350">
+</div>
+
+
+!!! tip
+    The url should have roughly this format: `"https://app.encord.com/label_editor/{project_hash}/{data_hash}/{frame}/0?other_query_params&objectHash={objectHash}"`.
+
+
+4. In another shell operating from the same working directory, source your virtual environment and test the agent.
+
+    ```shell
+    source venv/bin/activate
+    encord-agents test local agent '<your_url>'
+    ```
+
+5. To see if the test is successful, refresh your browser to see the action taken by the Agent. Once the test runs successfully, you are ready to deploy your agent. Visit [the deployment documentation](../gcp.md#step-4-deployment) to learn more.
 
 
 ### Nested Classification using Claude 3.5 Sonnet
@@ -1023,6 +1051,33 @@ def handle_object_hashes(
 An example use case of the above: Suppose that I have my own OCR model and I want to selectively run OCR on objects I've selected from the Encord app. You can then trigger your agent from the app and it'll appropriately send a list of objectHashes to your agent. Then via the dep_objects method above, it gives the agent immediate access to the object instance making it easier to integrate your OCR model.
 
 <!-- TODO: Could we make a better example -->
+
+**Test the Agent**
+
+1. First save the above code as main.py then in your current terminal run the following command to runFastAPI server in development mode with auto-reload enabled.
+
+    ```shell
+    uvicorn main:app --reload --port 8080
+    ```
+
+2. Open your Project in [the Encord platform](https://app.encord.com/projects){ target="_blank", rel="noopener noreferrer" } and navigate to a frame with an object that you want to act on. Choose an object from the bottom left sider and click `Copy URL` as shown:
+<div align="center">
+  <img src ="../../assets/examples/editor_agents/copy_url_example.png" alt="Copy URL from left sider" width="350" height="350">
+</div>
+
+
+  !!! tip
+      The url should have roughly this format: `"https://app.encord.com/label_editor/{project_hash}/{data_hash}/{frame}/0?other_query_params&objectHash={objectHash}"`.
+
+
+3. In another shell operating from the same working directory, source your virtual environment and test the agent.
+
+    ```shell
+    source venv/bin/activate
+    encord-agents test local agent '<your_url>'
+    ```
+
+4. To see if the test is successful, refresh your browser to see the action taken by the Agent. Once the test runs successfully, you are ready to deploy your agent. Visit [the deployment documentation](../gcp.md#step-4-deployment) to learn more.
 ### Nested Classification using Claude 3.5 Sonnet
 
 The goals of this example is to:
