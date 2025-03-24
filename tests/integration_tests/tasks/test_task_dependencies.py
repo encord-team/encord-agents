@@ -191,7 +191,15 @@ class TestDependencyResolution:
         # Call with list
         frames = video_sampler([1, 2, 3])
         assert isinstance(frames, Iterator)
-        assert len(list(frames)) == 3
+        frames_list = list(frames)
+        assert len(frames_list) == 3
+        assert [frame.frame for frame in frames_list] == [1, 2, 3]
+
+        video_iter_gen = dep_video_iterator(self.context.video_storage_item)
+        video_frames = next(video_iter_gen)
+        for sampler_frame, video_frame in zip(video_sampler([0, 1, 2]), video_frames, strict=False):
+            assert sampler_frame.frame == video_frame.frame
+            assert np.equal(sampler_frame.content, video_frame.content).all()
 
     def test_dep_asset(self) -> None:
         """
