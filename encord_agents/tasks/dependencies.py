@@ -155,7 +155,28 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[i
     """
     Dependency to inject a video sampler for doing things over many frames.
     This will use OpenCV and the local backend on your machine.
-    Decoding support may vary dependant on the video format, codec and your local configuration
+    Decoding support may vary dependant on the video format, codec and your local configuration.
+
+    Args:
+        storage_item: Automatically injected Storage item dependency.
+
+    **Example:**
+
+    ```python
+    from encord_agents.tasks.dependencies import dep_video_sampler
+    ...
+    runner = Runner(project_hash="<project_hash_a>")
+
+    @runner.stage("<stage_name_or_uuid>")
+    def my_agent(
+        video_sampler: Annotated[Callable[[float | Iterable[int]], Iterable[Frame]], Depends(dep_video_sampler)],
+    ) -> str | None:
+        for frame in video_sampler(0.5):
+            # Get every 2nd frame
+        for frame in video_sampler([1, 2, 3]):
+            # Get frames 1, 2, 3
+        ...
+    ```
 
     """
     if storage_item.item_type != StorageItemType.VIDEO:
@@ -164,11 +185,23 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[i
     def video_sampler(
         frame_indexer: int | float | Iterable[int],
     ) -> Iterable[Frame]:
+        """
+
+        Args:
+            frame_indexer (int | float | Iterable[int]):
+                * If int or float, the frame indexer is the frame sampling rate, e.g., 0.5 will return every 2nd frame.
+                * If Iterable[int], the frame indexer is the list of frames to return.
+
+        Returns:
+            Iterable[Frame]: Iterates over the frames as described by the frame_indexer.
+        """
         if isinstance(frame_indexer, (int, float)):
+            # If frame_indexer is a float / int, it is the frame sampling rate
+            # Smaller the frame_indexer, the more frames you get
             assert storage_item.fps is not None
             assert storage_item.duration is not None
             N_frames = int(storage_item.duration * storage_item.fps)
-            frame_indices = [int(k * frame_indexer) for k in range(N_frames)]
+            frame_indices = [int(k / frame_indexer) for k in range(N_frames)]
         else:
             frame_indices = [int(x) for x in frame_indexer]
         with download_asset(storage_item, None) as asset:
