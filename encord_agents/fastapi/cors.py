@@ -77,6 +77,16 @@ class EncordCORSMiddleware(BaseHTTPMiddleware, _EncordCORSMiddlewarePure):  # ty
 
 
 async def authorization_error_exception_handler(request: Request, exc: AuthorisationError) -> JSONResponse:
+    """
+    Custom exception handler for encord.exceptions.AuthorisationError.
+
+    Args:
+        request: FastAPI request object
+        exc: Exception raised by the Encord platform
+
+    Returns:
+        JSON response with the error message and status code 403
+    """
     return JSONResponse(
         status_code=HTTPStatus.FORBIDDEN,
         content={"message": exc.message},
