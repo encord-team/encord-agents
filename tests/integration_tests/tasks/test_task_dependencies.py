@@ -27,6 +27,7 @@ from encord_agents.tasks.dependencies import (
     dep_storage_item,
     dep_twin_label_row,
     dep_video_iterator,
+    dep_video_sampler,
 )
 
 
@@ -166,6 +167,23 @@ class TestDependencyResolution:
             counter += 1
 
         assert counter == self.context.video_label_row.number_of_frames
+
+    def test_dep_video_sampler(self) -> None:
+        video_sampler = dep_video_sampler(self.context.video_storage_item)
+        # Call with int
+        frames = video_sampler(1)
+        assert isinstance(frames, Iterator)
+        assert abs(len(list(frames)) - self.context.video_label_row.number_of_frames) <= 1
+
+        # Call with float
+        frames = video_sampler(2.0)
+        assert isinstance(frames, Iterator)
+        assert abs(len(list(frames)) - self.context.video_label_row.number_of_frames // 2) <= 1
+
+        # Call with list
+        frames = video_sampler([1, 2, 3])
+        assert isinstance(frames, Iterator)
+        assert len(list(frames)) == 3
 
     def test_dep_asset(self) -> None:
         """
