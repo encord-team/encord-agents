@@ -8,20 +8,21 @@ from numpy.typing import NDArray
 from encord_agents.core.data_model import Frame
 
 
-def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
+def get_frame(video_path: Path, desired_frame: int, to_rgb: bool = False) -> NDArray[np.uint8]:
     """
     Extract an exact frame from a video.
 
     Args:
         video_path: The file path to where the video is stored.
         desired_frame: The frame to extract
+        to_rgb: Whether to convert the frame to RGB.
 
     Raises:
         Exception:  If the video cannot be opened properly or the requested
             frame could not be retrieved from the video.
 
     Returns:
-        Numpy array of shape [h, w, c] where channels are RGB.
+        Numpy array of shape [h, w, c] where channels are BGR.
 
     """
     cap = cv2.VideoCapture(video_path.as_posix())
@@ -35,7 +36,10 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
         raise Exception("Error retrieving frame.")
 
     cap.release()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    if to_rgb:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
     return frame.astype(np.uint8)
 
 
