@@ -1,8 +1,10 @@
 import html
 import os
-import subprocess
 import sys
 from pathlib import Path
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
 
 
 def is_running_on_colab() -> bool:
@@ -28,6 +30,20 @@ DARK_LOGO = "https://storage.googleapis.com/docs-media.encord.com/Primary%20logo
 LIGHT_LOGO = "https://storage.googleapis.com/docs-media.encord.com/Primary%20logo%20Light%20mode%20-%20Horizontal.png"
 
 
+def _generate_public_private_key_content() -> tuple[str, str]:
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    public_key = private_key.public_key()
+    pem_private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.OpenSSH,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    pem_public_key = public_key.public_bytes(
+        encoding=serialization.Encoding.OpenSSH, format=serialization.PublicFormat.OpenSSH
+    )
+    return pem_private_key.decode(), pem_public_key.decode()
+
+
 def generate_public_private_keypair(public_key_path: Path = Path.cwd() / "temporary_key.pub") -> tuple[Path, Path]:
     """
     Will look for the key. If it doesn't exist, it will create it along with a private key.
@@ -48,13 +64,12 @@ def generate_public_private_keypair(public_key_path: Path = Path.cwd() / "tempor
             public_key_path.unlink()
         if private_key_path.is_file():
             private_key_path.unlink()
-        devnull = subprocess.DEVNULL
-        subprocess.run(
-            f'ssh-keygen -t ed25519 -f {private_key_path} -N "" -q',
-            shell=True,
-            stdout=devnull,
-        )
+
+        private_key_content, public_key_content = _generate_public_private_key_content()
+        private_key_path.write_text(private_key_content)
+        public_key_path.write_text(public_key_content)
         print("We have created a public/private ssh key pair for you.")
+        print("You can find them in the current working directory.")
     return public_key_path, private_key_path
 
 
