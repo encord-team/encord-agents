@@ -58,6 +58,7 @@ nav:
           - "Sentiment Analysis": notebooks/sentiment_analysis.ipynb
           - "Multimodal LLM as a Judge": notebooks/llm_as_a_judge.ipynb
           - "Multistage VLM Video Captioning": notebooks/multistage_video_summarisation.ipynb
+          - "Recaption video frames with an LLM": notebooks/recaption_video.ipynb
   - "Pre-built Agents":
       - "Docker Agent Examples": pre_built_agents.md
   - "Reference":
