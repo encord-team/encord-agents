@@ -12,7 +12,11 @@ from flask import Request, Response, make_response
 
 from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
-from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import (
+    EditorAgentReturnType,
+    LabelRowInitialiseLabelsArgs,
+    LabelRowMetadataIncludeArgs,
+)
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.utils import get_user_client
@@ -113,7 +117,11 @@ def editor_agent(
             context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
             with ExitStack() as stack:
                 dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
-                func(**dependencies.values)
+                result = func(**dependencies.values)
+            if isinstance(result, EditorAgentReturnType):
+                response = make_response(result.model_dump_json())
+                response.status_code = HTTPStatus.OK
+                return response
             return generate_response()
 
         return wrapper
