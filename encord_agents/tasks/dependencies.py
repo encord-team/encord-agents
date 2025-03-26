@@ -151,7 +151,9 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
         yield iter_video(asset)
 
 
-def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Sequence[int]], Iterable[Frame]]:
+def dep_video_sampler(
+    storage_item: StorageItem,
+) -> Generator[Callable[[float | Sequence[int]], Iterable[Frame]], None, None]:
     """
     Dependency to inject a video sampler for doing things over many frames.
     This will use OpenCV and the local backend on your machine.
@@ -183,36 +185,37 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Sequence[i
     if storage_item.item_type != StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_sampler` only supported for video label rows")
 
-    def video_sampler(
-        frame_indexer: int | float | Sequence[int],
-    ) -> Iterable[Frame]:
-        """
+    with download_asset(storage_item, None) as asset:
 
-        Args:
-            frame_indexer (int | float | Iterable[int]):
-                * If int or float, the frame indexer is the frame sampling rate, e.g., 1/5 will return every 5th frame.
-                * If Iterable[int], the frame indexer is the list of frames to return.
+        def video_sampler(
+            frame_indexer: int | float | Sequence[int],
+        ) -> Iterable[Frame]:
+            """
 
-        Returns:
-            Iterable[Frame]: Iterates over the frames as described by the frame_indexer.
-        """
-        if isinstance(frame_indexer, (int, float)):
-            # If frame_indexer is a float / int, it is the frame sampling rate
-            # The larger the frame_indexer, the more frames you get
-            if frame_indexer <= 0 or frame_indexer > 1:
-                raise ValueError("Frame sampling rate must be between 0 and 1")
-            N_frames = get_frame_count(storage_item)
-            frame_indices = [int(k / frame_indexer) for k in range(N_frames)]
-        else:
-            frame_indices = sorted(frame_indexer)
+            Args:
+                frame_indexer (int | float | Iterable[int]):
+                    * If int or float, the frame indexer is the frame sampling rate, e.g., 1/5 will return every 5th frame.
+                    * If Iterable[int], the frame indexer is the list of frames to return.
 
-        def inner() -> Iterable[Frame]:
-            with download_asset(storage_item, None) as asset:
+            Returns:
+                Iterable[Frame]: Iterates over the frames as described by the frame_indexer.
+            """
+            if isinstance(frame_indexer, (int, float)):
+                # If frame_indexer is a float / int, it is the frame sampling rate
+                # The larger the frame_indexer, the more frames you get
+                if frame_indexer <= 0 or frame_indexer > 1:
+                    raise ValueError("Frame sampling rate must be between 0 and 1")
+                N_frames = get_frame_count(storage_item)
+                frame_indices = [int(k / frame_indexer) for k in range(N_frames)]
+            else:
+                frame_indices = sorted(frame_indexer)
+
+            def inner() -> Iterable[Frame]:
                 yield from iter_video_with_indices(asset, frame_indices)
 
-        return inner()
+            return inner()
 
-    return video_sampler
+        yield video_sampler
 
 
 def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:

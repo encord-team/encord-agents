@@ -177,7 +177,9 @@ class TestDependencyResolution:
         assert np.array_equal(first_frame.content, dep_single_frame_frame)
 
     def test_dep_video_sampler(self) -> None:
-        video_sampler = dep_video_sampler(self.context.video_storage_item)
+        video_sampler_gen = dep_video_sampler(self.context.video_storage_item)
+        video_sampler = next(video_sampler_gen)
+
         # Call with int
         frames = video_sampler(1)
         assert isinstance(frames, Iterator)

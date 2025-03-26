@@ -81,6 +81,8 @@ def iter_video_with_indices(video_path: Path, frame_indices: Iterable[int]) -> I
         Frames from the video.
 
     """
+    if not video_path.exists():
+        raise Exception("Video file does not exist.")
     cap = cv2.VideoCapture(video_path.as_posix())
     if not cap.isOpened():
         raise Exception("Error opening video file.")
