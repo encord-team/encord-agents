@@ -13,7 +13,7 @@ from flask import Request, Response, make_response
 from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import (
-    EditorAgentReturnType,
+    EditorAgentResponse,
     LabelRowInitialiseLabelsArgs,
     LabelRowMetadataIncludeArgs,
 )
@@ -118,7 +118,7 @@ def editor_agent(
             with ExitStack() as stack:
                 dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
                 result = func(**dependencies.values)
-            if isinstance(result, EditorAgentReturnType):
+            if isinstance(result, EditorAgentResponse):
                 response = make_response(result.model_dump_json())
                 response.status_code = HTTPStatus.OK
                 return response

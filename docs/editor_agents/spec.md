@@ -20,8 +20,9 @@ Additionally when registering your editor agent in the platform at: [Editor Agen
 
 ### Response
 
-We offer a [`EditorAgentResponse`](../reference/core.md#encord_agents.core.data_model.EditorAgentResponse) type for which we will show that response in the platform. This makes your agents more interactive and more informative. Suppose that your agent labelled a polygon as opposed to a bounding box for a certain reason. This reason can be communicated to the user in the platform that prompted the request.
-
+We offer an [`EditorAgentResponse`](../reference/core.md#encord_agents.core.data_model.EditorAgentResponse) type for which we will show that response in the platform. 
+This makes your agents more interactive and more informative. 
+When, for example, the label state does not conform with the expectation of the editor agent or function of the agent is to check the validity of the current labels, the response type offers a way to communicate that to the annotator.
 ### Error handling
 
 Additionally, if you make use of the `AuthorisationError` handler (via [get_encord_app](../reference/editor_agents.md#encord_agents.fastapi.cors.get_encord_app)), then we will raise appropriate errors depending on issues with the Agent. Most notably, in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include message in the body of the response:

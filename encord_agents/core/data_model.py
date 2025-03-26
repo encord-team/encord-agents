@@ -164,7 +164,7 @@ class InstanceCrop(Frame):
     """
 
 
-class EditorAgentReturnType(BaseModel):
+class EditorAgentResponse(BaseModel):
     """
     A base class for all return types of editor agent functions.
     """

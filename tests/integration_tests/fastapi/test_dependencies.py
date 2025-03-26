@@ -14,7 +14,7 @@ from encord.user_client import EncordUserClient
 from fastapi import FastAPI
 
 from encord_agents.core.data_model import (
-    EditorAgentReturnType,
+    EditorAgentResponse,
     FrameData,
     InstanceCrop,
     LabelRowInitialiseLabelsArgs,
@@ -147,8 +147,8 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert label_branch.branch_name == BRANCH_NAME
 
     @app.post("/editor-agent-return-type")
-    def post_editor_agent_return_type() -> EditorAgentReturnType:
-        return EditorAgentReturnType(message="Hello, world!")
+    def post_editor_agent_return_type() -> EditorAgentResponse:
+        return EditorAgentResponse(message="Hello, world!")
 
     return app
 
