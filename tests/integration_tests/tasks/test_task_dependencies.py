@@ -27,6 +27,7 @@ from encord_agents.tasks.dependencies import (
     dep_storage_item,
     dep_twin_label_row,
     dep_video_iterator,
+    dep_video_sampler,
 )
 
 
@@ -166,6 +167,51 @@ class TestDependencyResolution:
             counter += 1
 
         assert counter == self.context.video_label_row.number_of_frames
+
+    def test_dep_video_sampler(self) -> None:
+        video_sampler_gen = dep_video_sampler(self.context.video_storage_item)
+        video_sampler = next(video_sampler_gen)
+
+        # Call with int
+        frames = video_sampler(1)
+        assert isinstance(frames, Iterator)
+        assert abs(len(list(frames)) - self.context.video_label_row.number_of_frames) <= 1
+
+        # Call with float
+        frames = video_sampler(0.5)
+        assert isinstance(frames, Iterator)
+        assert abs(len(list(frames)) - self.context.video_label_row.number_of_frames // 2) <= 1
+
+        with pytest.raises(ValueError):
+            video_sampler(0)
+        with pytest.raises(ValueError):
+            video_sampler(1.5)
+
+        # Call with list
+        frames = video_sampler([1, 2, 3])
+        assert isinstance(frames, Iterator)
+        frames_list = list(frames)
+        assert len(frames_list) == 3
+        assert [frame.frame for frame in frames_list] == [1, 2, 3]
+
+        # Test that the sampler aligns with the iterator
+        video_iter_gen = dep_video_iterator(self.context.video_storage_item)
+        video_frames = next(video_iter_gen)
+        for sampler_frame, video_frame in zip(video_sampler([0, 1, 2]), video_frames, strict=False):
+            assert sampler_frame.frame == video_frame.frame
+            assert np.equal(sampler_frame.content, video_frame.content).all()
+
+        # Test non-trvial float aligns with previous behaviour
+        frames_from_sampler = video_sampler(0.5)
+        video_iter_gen = dep_video_iterator(self.context.video_storage_item)
+        video_frames = next(video_iter_gen)
+
+        for frame_from_sampler in frames_from_sampler:
+            frame_from_video = next(video_frames)
+            assert frame_from_sampler.frame == frame_from_video.frame
+            assert np.equal(frame_from_sampler.content, frame_from_video.content).all()
+            # Step video_iter_gen 1/0.5 = 2x
+            next(video_frames)
 
     def test_dep_asset(self) -> None:
         """
