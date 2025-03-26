@@ -37,6 +37,7 @@ Please see the [references section](reference/editor_agents.md#encord_agents.gcp
 
 
 To add a custom dependencies:
+
 1. Define a function to load the dependencies.
 2. Use that function as a dependency.
 
