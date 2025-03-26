@@ -188,6 +188,11 @@ class TestDependencyResolution:
         assert isinstance(frames, Iterator)
         assert abs(len(list(frames)) - self.context.video_label_row.number_of_frames // 2) <= 1
 
+        with pytest.raises(ValueError):
+            video_sampler(0)
+        with pytest.raises(ValueError):
+            video_sampler(1.5)
+
         # Call with list
         frames = video_sampler([1, 2, 3])
         assert isinstance(frames, Iterator)
@@ -195,6 +200,7 @@ class TestDependencyResolution:
         assert len(frames_list) == 3
         assert [frame.frame for frame in frames_list] == [1, 2, 3]
 
+        # Test that the sampler aligns with the iterator
         video_iter_gen = dep_video_iterator(self.context.video_storage_item)
         video_frames = next(video_iter_gen)
         for sampler_frame, video_frame in zip(video_sampler([0, 1, 2]), video_frames, strict=False):

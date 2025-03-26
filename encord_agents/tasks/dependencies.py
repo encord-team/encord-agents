@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Generator, Iterable, Iterator
+from typing import Callable, Generator, Iterable, Iterator, Sequence
 
 import cv2
 import numpy as np
@@ -17,7 +17,7 @@ from typing_extensions import Annotated
 from encord_agents.core.data_model import Frame
 from encord_agents.core.dependencies.models import Depends
 from encord_agents.core.dependencies.shares import DataLookup
-from encord_agents.core.utils import download_asset, get_user_client
+from encord_agents.core.utils import download_asset, get_frame_count, get_user_client
 from encord_agents.core.video import iter_video, iter_video_with_indices
 from encord_agents.exceptions import PrintableError
 
@@ -151,7 +151,7 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
         yield iter_video(asset)
 
 
-def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[int]], Iterable[Frame]]:
+def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Sequence[int]], Iterable[Frame]]:
     """
     Dependency to inject a video sampler for doing things over many frames.
     This will use OpenCV and the local backend on your machine.
@@ -169,10 +169,11 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[i
 
     @runner.stage("<stage_name_or_uuid>")
     def my_agent(
-        video_sampler: Annotated[Callable[[float | Iterable[int]], Iterable[Frame]], Depends(dep_video_sampler)],
+        video_sampler: Annotated[Callable[[float | Sequence[int]], Iterable[Frame]], Depends(dep_video_sampler)],
     ) -> str | None:
-        for frame in video_sampler(0.5):
-            # Get every 2nd frame
+        for frame in video_sampler(1/5):
+            # Get every 5th frame
+            # i.e: [0,5,10,15,...]
         for frame in video_sampler([1, 2, 3]):
             # Get frames 1, 2, 3
         ...
@@ -183,13 +184,13 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[i
         raise NotImplementedError("`dep_video_sampler` only supported for video label rows")
 
     def video_sampler(
-        frame_indexer: int | float | Iterable[int],
+        frame_indexer: int | float | Sequence[int],
     ) -> Iterable[Frame]:
         """
 
         Args:
             frame_indexer (int | float | Iterable[int]):
-                * If int or float, the frame indexer is the frame sampling rate, e.g., 0.5 will return every 2nd frame.
+                * If int or float, the frame indexer is the frame sampling rate, e.g., 1/5 will return every 5th frame.
                 * If Iterable[int], the frame indexer is the list of frames to return.
 
         Returns:
@@ -197,13 +198,13 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Iterable[i
         """
         if isinstance(frame_indexer, (int, float)):
             # If frame_indexer is a float / int, it is the frame sampling rate
-            # Smaller the frame_indexer, the more frames you get
-            assert storage_item.fps is not None
-            assert storage_item.duration is not None
-            N_frames = int(storage_item.duration * storage_item.fps)
+            # The larger the frame_indexer, the more frames you get
+            if frame_indexer <= 0 or frame_indexer > 1:
+                raise ValueError("Frame sampling rate must be between 0 and 1")
+            N_frames = get_frame_count(storage_item)
             frame_indices = [int(k / frame_indexer) for k in range(N_frames)]
         else:
-            frame_indices = [int(x) for x in frame_indexer]
+            frame_indices = sorted(frame_indexer)
         with download_asset(storage_item, None) as asset:
             yield from iter_video_with_indices(asset, frame_indices)
 

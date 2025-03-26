@@ -207,6 +207,19 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
         yield file_path
 
 
+def get_frame_count(storage_item: StorageItem) -> int:
+    """
+    Get the number of frames in a video.
+    """
+    if storage_item.item_type != StorageItemType.VIDEO:
+        raise ValueError("This function only supports video storage items")
+    if storage_item.frame_count is not None:
+        return storage_item.frame_count
+    if storage_item.duration is not None and storage_item.fps is not None:
+        return int(storage_item.duration * storage_item.fps)
+    raise ValueError("Frame count is not available for this storage item, missing: frame_count or duration and fps")
+
+
 T = TypeVar("T")
 
 
