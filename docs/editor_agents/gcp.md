@@ -41,14 +41,15 @@ Create a `main.py` file using the following template:
 ```python title="main.py"
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.core.data_model import FrameData
+from encord_agents.core.data_model import FrameData, EditorAgentResponse
 from encord_agents.gcp import editor_agent
 
 
 @editor_agent()
-def my_agent(frame_data: FrameData, label_row: LabelRowV2) -> None:
+def my_agent(frame_data: FrameData, label_row: LabelRowV2) -> EditorAgentResponse:
     ...
     # label_row.save()
+    return EditorAgentResponse(message="Done") # Return an EditorAgentResponse to indicate to user
 ```
 
 Complete the `my_agent` function with the logic you want to execute when the agent is triggered.
