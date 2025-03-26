@@ -205,8 +205,12 @@ def dep_video_sampler(storage_item: StorageItem) -> Callable[[float | Sequence[i
             frame_indices = [int(k / frame_indexer) for k in range(N_frames)]
         else:
             frame_indices = sorted(frame_indexer)
-        with download_asset(storage_item, None) as asset:
-            yield from iter_video_with_indices(asset, frame_indices)
+
+        def inner() -> Iterable[Frame]:
+            with download_asset(storage_item, None) as asset:
+                yield from iter_video_with_indices(asset, frame_indices)
+
+        return inner()
 
     return video_sampler
 
