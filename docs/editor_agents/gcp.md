@@ -55,7 +55,9 @@ def my_agent(frame_data: FrameData, label_row: LabelRowV2) -> EditorAgentRespons
 Complete the `my_agent` function with the logic you want to execute when the agent is triggered.
 
 !!! tip
-    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary.
+    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary. 
+    
+    If you don't wish to raise a message to the user, feel free to return None.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 

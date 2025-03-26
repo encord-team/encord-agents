@@ -60,6 +60,7 @@ Complete the `my_agent` function with the logic you want to execute when the age
 
 !!! tip
     You can inject multiple different [dependencies](../reference/editor_agents.md#encord_agents.fastapi.dependencies) into the function if necessary.
+    If you don't wish to raise a message to the user, feel free to return None.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 
