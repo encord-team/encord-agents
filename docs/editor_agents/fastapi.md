@@ -36,21 +36,24 @@ from typing_extensions import Annotated
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord_agents import FrameData
+from encord_agents.core.data_model import EditorAgentResponse
 from encord_agents.fastapi import dep_label_row
 from encord_agents.fastapi.cors import EncordCORSMiddleware
-
-from fastapi import FastAPI, Depends, Form
+from fastapi import Depends, FastAPI
 
 app = FastAPI()
 app.add_middleware(EncordCORSMiddleware)
+
 
 @app.post("/my_agent")
 def my_agent(
     frame_data: FrameData,
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
-):
+) -> EditorAgentResponse:
     # ... Do your edits to the labels
     label_row.save()
+    # Return an EditorAgentResponse to display a message to the user
+    return EditorAgentResponse(message="Done")
 ```
 
 Complete the `my_agent` function with the logic you want to execute when the agent is triggered.

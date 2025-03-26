@@ -14,7 +14,7 @@ from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
 from encord_agents.core.data_model import (
-    EditorAgentReturnType,
+    EditorAgentResponse,
     FrameData,
     LabelRowInitialiseLabelsArgs,
     LabelRowMetadataIncludeArgs,
@@ -113,8 +113,8 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert isinstance(object_instances[0], ObjectInstance)
 
     @app.post("/editor-agent-return-type")
-    def post_editor_agent_return_type() -> EditorAgentReturnType:
-        return EditorAgentReturnType(message="Hello, world!")
+    def post_editor_agent_return_type() -> EditorAgentResponse:
+        return EditorAgentResponse(message="Hello, world!")
 
     return app
 
