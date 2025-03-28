@@ -192,7 +192,7 @@ def test_queue_runner_return_struct_object(ephemeral_project_hash: str) -> None:
         for row in lrs:
             row.initialise_labels(bundle=bundle)
     for row in lrs:
-        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT, DataType.PDF]:
+        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT]:
             continue
         assert row.get_object_instances()
 

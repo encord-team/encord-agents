@@ -105,6 +105,7 @@ class SequentialRunner(RunnerBase):
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
         overwrite: bool = False,
+        will_set_priority: bool = False,
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
         r"""
         Decorator to associate a function with an agent stage.
@@ -181,6 +182,10 @@ class SequentialRunner(RunnerBase):
                 `label_row.initialise_labels(...)`
             overwrite: Overwrite the method associated to this stage if it already exists
                 will throw an error otherwise
+            will_set_priority: Indicates whether you will be returning a `TaskAgentReturnStruct`
+                with a `label_row_priority` field set. This field is only required if you are
+                returning the priority of the label row but not depending on the label row it self.
+                That is, if your function signature does not include a `LabelRowV2` parameter.
 
         Returns:
             The decorated function.
@@ -196,6 +201,7 @@ class SequentialRunner(RunnerBase):
                 printable_name=printable_name,
                 label_row_metadata_include_args=label_row_metadata_include_args,
                 label_row_initialise_labels_args=label_row_initialise_labels_args,
+                will_set_priority=will_set_priority,
             )
             return func
 
@@ -228,6 +234,13 @@ class SequentialRunner(RunnerBase):
                                     pathway_to_follow = agent_response.pathway
                                     if agent_response.label_row:
                                         agent_response.label_row.save(bundle=label_bundle)
+                                    if agent_response.label_row_priority:
+                                        assert (
+                                            context.label_row is not None
+                                        ), f"Label row is not set for task {task} setting the priority requires either setting the `will_set_priority` to True on the stage decorator or depending on the label row."
+                                        context.label_row.set_priority(
+                                            agent_response.label_row_priority, bundle=label_bundle
+                                        )
                                 else:
                                     pathway_to_follow = agent_response
                                 if pathway_to_follow is None:
