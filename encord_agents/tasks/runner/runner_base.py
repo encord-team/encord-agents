@@ -29,6 +29,7 @@ class RunnerAgent:
         printable_name: str | None = None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+        will_set_priority: bool = False,
     ):
         self.identity = identity
         self.printable_name = printable_name or identity
@@ -36,6 +37,7 @@ class RunnerAgent:
         self.dependant: Dependant = get_dependant(func=callable)
         self.label_row_metadata_include_args = label_row_metadata_include_args
         self.label_row_initialise_labels_args = label_row_initialise_labels_args
+        self.will_set_priority = will_set_priority
 
     def __repr__(self) -> str:
         return f'RunnerAgent("{self.printable_name}")'
@@ -222,6 +224,7 @@ class RunnerBase:
         printable_name: str | None,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None,
+        will_set_priority: bool = False,
     ) -> RunnerAgent:
         runner_agent = RunnerAgent(
             identity=identity,
@@ -229,6 +232,7 @@ class RunnerBase:
             printable_name=printable_name,
             label_row_metadata_include_args=label_row_metadata_include_args,
             label_row_initialise_labels_args=label_row_initialise_labels_args,
+            will_set_priority=will_set_priority,
         )
         if stage_insertion is not None:
             if stage_insertion >= len(self.agents):

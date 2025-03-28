@@ -357,11 +357,9 @@ def test_runner_set_bundled_priority(ephemeral_project_hash: str) -> None:
     runner = SequentialRunner(project_hash=ephemeral_project_hash)
 
     assert runner.project
-    N_items = len(runner.project.list_label_rows_v2())
 
-    @runner.stage(AGENT_STAGE_NAME)
+    @runner.stage(AGENT_STAGE_NAME, will_set_priority=True)
     def update_label_row_priority(label_row: LabelRowV2) -> TaskAgentReturnStruct:
-        label_row.set_priority(0.1337)
         return TaskAgentReturnStruct(label_row_priority=0.1337)
 
     runner()
