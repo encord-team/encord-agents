@@ -3,6 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from encord.objects.ontology_labels_impl import LabelRowV2
+from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
@@ -283,3 +284,30 @@ def test_runner_storage_item_dependency_resolved_once(ephemeral_image_project_ha
             runner()
             mock_get_item.assert_not_called()
             mock_get_items.assert_called_once()
+
+
+def test_runner_storage_item_order_is_correct(ephemeral_project_hash: str) -> None:
+    # With label rows
+    fails = []
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def w_lr(label_row: LabelRowV2, storage_item: StorageItem) -> None:
+        if storage_item.uuid != label_row.backing_item_uuid:
+            fails.append(1)
+
+    runner()
+    assert sum(fails) == 0
+
+    # Without label rows
+    fails = []
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def wo_lr(task: AgentTask, project: Project, storage_item: StorageItem) -> None:
+        label_row = project.list_label_rows_v2(data_hashes=[task.data_hash])[0]
+        if storage_item.uuid != label_row.backing_item_uuid:
+            fails.append(1)
+
+    runner()
+    assert sum(fails) == 0

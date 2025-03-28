@@ -89,6 +89,26 @@ class RunnerBase:
         return contexts[0]
 
     @staticmethod
+    def _get_ordered_label_rows_from_tasks(
+        tasks: list[AgentTask],
+        include_args: LabelRowMetadataIncludeArgs | None,
+        project: Project,
+    ) -> list[LabelRowV2]:
+        include_args = include_args or LabelRowMetadataIncludeArgs()
+        label_rows = {
+            UUID(lr.data_hash): lr
+            for lr in project.list_label_rows_v2(data_hashes=[t.data_hash for t in tasks], **include_args.model_dump())
+        }
+        task_lrs: list[LabelRowV2] = []
+        for task in tasks:
+            if task.data_hash not in label_rows:
+                raise ValueError(
+                    f"We have a task: {task}, with {task.data_hash=} but there was no such label row found for this data_hash. Should be impossible"
+                )
+            task_lrs.append(label_rows[task.data_hash])
+        return task_lrs
+
+    @staticmethod
     def _assemble_contexts(
         task_batch: list[AgentTask],
         runner_agent: RunnerAgent,
@@ -109,20 +129,8 @@ class RunnerBase:
             for task in task_batch
         ]
         batch_lrs: list[LabelRowV2] = []
-
         if runner_agent.dependant.needs_label_row:
-            label_rows = {
-                UUID(lr.data_hash): lr
-                for lr in project.list_label_rows_v2(
-                    data_hashes=[t.data_hash for t in task_batch], **include_args.model_dump()
-                )
-            }
-            for task in task_batch:
-                if task.data_hash not in label_rows:
-                    raise ValueError(
-                        f"We have a task: {task}, with {task.data_hash=} but there was no such label row found for this data_hash. Should be impossible"
-                    )
-                batch_lrs.append(label_rows[task.data_hash])
+            batch_lrs = RunnerBase._get_ordered_label_rows_from_tasks(task_batch, include_args, project)
             with project.create_bundle() as lr_bundle:
                 for lr in batch_lrs:
                     lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
@@ -131,7 +139,7 @@ class RunnerBase:
         if runner_agent.dependant.needs_storage_item:
             if not batch_lrs:
                 # Fetch LRs as a reference to the backing_item_uuids. Note not passing args nor passing into context.
-                batch_lrs = project.list_label_rows_v2(data_hashes=[t.data_hash for t in task_batch])
+                batch_lrs = RunnerBase._get_ordered_label_rows_from_tasks(task_batch, None, project)
             storage_items = client.get_storage_items([lr.backing_item_uuid or "" for lr in batch_lrs], sign_url=True)
             for storage_item, context in zip(storage_items, contexts, strict=True):
                 context.storage_item = storage_item
