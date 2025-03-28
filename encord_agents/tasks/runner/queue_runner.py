@@ -99,6 +99,7 @@ class QueueRunner(RunnerBase):
         *,
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
+        will_set_priority: bool = False,
     ) -> Callable[[Callable[..., TaskAgentReturnType]], Callable[[str], str]]:
         """
         Agent wrapper intended for queueing systems and distributed workloads.
@@ -129,6 +130,21 @@ class QueueRunner(RunnerBase):
 
         As the pseudo code indicates, `wrapped_function` understands how to take that string from
         the queue and resolve all your defined dependencies before calling `your_function`.
+
+        Args:
+            stage: The name or uuid of the stage that the function should be
+                associated with.
+            label_row_metadata_include_args: Arguments to be passed to
+                `project.list_label_rows_v2(...)`
+            label_row_initialise_labels_args: Arguments to be passed to
+                `label_row.initialise_labels(...)`
+            will_set_priority: Indicates whether you will be returning a `TaskAgentReturnStruct`
+                with a `label_row_priority` field set. This field is only required if you are
+                returning the priority of the label row but not depending on the label row it self.
+                That is, if your function signature does not include a `LabelRowV2` parameter.
+
+        Returns:
+            The decorated function.
         """
         stage_uuid, printable_name = self._validate_stage(stage)
 
@@ -201,6 +217,11 @@ class QueueRunner(RunnerBase):
                             agent_response.label_row.save()
                         if agent_response.pathway:
                             pathway_to_follow = agent_response.pathway
+                        if agent_response.label_row_priority:
+                            assert (
+                                context.label_row is not None
+                            ), f"Label row is not set for task {task} setting the priority requires either setting the `will_set_priority` to True on the stage decorator or depending on the label row."
+                            context.label_row.set_priority(agent_response.label_row_priority)
                     else:
                         pathway_to_follow = agent_response
                     next_stage_uuid = handle_pathway(task, pathway_to_follow, pathway_lookup, name_lookup, stage=stage)
