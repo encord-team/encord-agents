@@ -22,6 +22,10 @@ class TaskAgentReturnStruct:
     """
     The label to be saved (if present)
     """
+    label_row_priority: float | None = None
+    """
+    The priority of the label row to be saved.
+    """
 
 
 TaskAgentReturnType = TaskAgentReturnPathway | TaskAgentReturnStruct

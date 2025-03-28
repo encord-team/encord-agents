@@ -332,7 +332,9 @@ def test_runner_return_struct_object(ephemeral_image_project_hash: str) -> None:
         obj_instance = bbox_object.create_instance()
         obj_instance.set_for_frames(BoundingBoxCoordinates(height=0.5, width=0.5, top_left_x=0, top_left_y=0))
         label_row.add_object_instance(obj_instance)
-        return TaskAgentReturnStruct(pathway=AGENT_TO_COMPLETE_PATHWAY_HASH, label_row=label_row)
+        return TaskAgentReturnStruct(
+            pathway=AGENT_TO_COMPLETE_PATHWAY_HASH, label_row=label_row, label_row_priority=0.1337
+        )
 
     with patch.object(
         EncordClientProject, "save_label_rows", side_effect=EncordClientProject.save_label_rows, autospec=True
@@ -349,3 +351,21 @@ def test_runner_return_struct_object(ephemeral_image_project_hash: str) -> None:
     agent_stage = runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
     agent_stage_tasks = list(agent_stage.get_tasks())
     assert len(agent_stage_tasks) == 0
+
+
+def test_runner_set_bundled_priority(ephemeral_project_hash: str) -> None:
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    assert runner.project
+    N_items = len(runner.project.list_label_rows_v2())
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def update_label_row_priority(label_row: LabelRowV2) -> TaskAgentReturnStruct:
+        label_row.set_priority(0.1337)
+        return TaskAgentReturnStruct(label_row_priority=0.1337)
+
+    runner()
+
+    lrs = runner.project.list_label_rows_v2()
+    for row in lrs:
+        assert row.priority == 0.1337

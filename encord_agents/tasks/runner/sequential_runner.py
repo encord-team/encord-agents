@@ -228,6 +228,10 @@ class SequentialRunner(RunnerBase):
                                     pathway_to_follow = agent_response.pathway
                                     if agent_response.label_row:
                                         agent_response.label_row.save(bundle=label_bundle)
+                                    if agent_response.label_row_priority:
+                                        context.label_row.set_priority(
+                                            agent_response.label_row_priority, bundle=label_bundle
+                                        )
                                 else:
                                     pathway_to_follow = agent_response
                                 if pathway_to_follow is None:
