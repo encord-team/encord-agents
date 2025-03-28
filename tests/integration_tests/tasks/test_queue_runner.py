@@ -147,8 +147,8 @@ def test_runner_throws_error_if_wrong_pathway(ephemeral_project_hash: str, pathw
             assert AGENT_TO_COMPLETE_PATHWAY_HASH in str(e)
 
 
-def test_queue_runner_return_struct_object(ephemeral_image_project_hash: str) -> None:
-    queue_runner = QueueRunner(project_hash=ephemeral_image_project_hash)
+def test_queue_runner_return_struct_object(ephemeral_project_hash: str) -> None:
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
 
     assert queue_runner.project
     bbox_object = queue_runner.project.ontology_structure.get_child_by_hash(BBOX_ONTOLOGY_HASH, type_=Object)
@@ -156,6 +156,9 @@ def test_queue_runner_return_struct_object(ephemeral_image_project_hash: str) ->
 
     @queue_runner.stage(AGENT_STAGE_NAME)
     def update_label_row(label_row: LabelRowV2) -> TaskAgentReturnStruct:
+        if label_row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT]:
+            # TODO: Make instances of objects for these data types
+            return TaskAgentReturnStruct(pathway=AGENT_TO_COMPLETE_PATHWAY_HASH, label_row=label_row)
         obj_instance = bbox_object.create_instance()
         obj_instance.set_for_frames(BoundingBoxCoordinates(height=0.5, width=0.5, top_left_x=0, top_left_y=0))
         label_row.add_object_instance(obj_instance)
@@ -189,6 +192,8 @@ def test_queue_runner_return_struct_object(ephemeral_image_project_hash: str) ->
         for row in lrs:
             row.initialise_labels(bundle=bundle)
     for row in lrs:
+        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT, DataType.PDF]:
+            continue
         assert row.get_object_instances()
 
     # Verify tasks were moved from agent stage to final stage
