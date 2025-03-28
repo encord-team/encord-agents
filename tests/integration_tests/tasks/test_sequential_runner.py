@@ -3,7 +3,6 @@ from uuid import UUID, uuid4
 
 import pytest
 from encord.client import EncordClientProject
-from encord.constants.enums import DataType
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
@@ -362,7 +361,14 @@ def test_runner_set_bundled_priority(ephemeral_project_hash: str) -> None:
     def update_label_row_priority(label_row: LabelRowV2) -> TaskAgentReturnStruct:
         return TaskAgentReturnStruct(label_row_priority=0.1337)
 
-    runner()
+    with patch.object(
+        EncordClientProject,
+        "workflow_set_priority",
+        side_effect=EncordClientProject.workflow_set_priority,
+        autospec=True,
+    ) as workflow_set_priority_patch:
+        runner()
+        assert workflow_set_priority_patch.call_count == 1
 
     lrs = runner.project.list_label_rows_v2()
     for row in lrs:
