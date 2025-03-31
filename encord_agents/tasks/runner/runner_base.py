@@ -134,11 +134,12 @@ class RunnerBase:
             for task in task_batch
         ]
         batch_lrs: list[LabelRowV2] = []
-        if runner_agent.dependant.needs_label_row:
+        if runner_agent.dependant.needs_label_row or runner_agent.will_set_priority:
             batch_lrs = RunnerBase._get_ordered_label_rows_from_tasks(task_batch, include_args, project)
-            with project.create_bundle() as lr_bundle:
-                for lr in batch_lrs:
-                    lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
+            if runner_agent.dependant.needs_label_row:
+                with project.create_bundle() as lr_bundle:
+                    for lr in batch_lrs:
+                        lr.initialise_labels(bundle=lr_bundle, **init_args.model_dump())
             for label_row, context in zip(batch_lrs, contexts, strict=True):
                 context.label_row = label_row
         if runner_agent.dependant.needs_storage_item:

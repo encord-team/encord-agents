@@ -358,7 +358,7 @@ def test_runner_set_bundled_priority(ephemeral_project_hash: str) -> None:
     assert runner.project
 
     @runner.stage(AGENT_STAGE_NAME, will_set_priority=True)
-    def update_label_row_priority(label_row: LabelRowV2) -> TaskAgentReturnStruct:
+    def update_label_row_priority() -> TaskAgentReturnStruct:
         return TaskAgentReturnStruct(label_row_priority=0.1337)
 
     with patch.object(
