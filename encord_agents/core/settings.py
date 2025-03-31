@@ -84,3 +84,6 @@ class Settings(BaseSettings):
                 raise ValueError("Both ssh key content and ssh key file is None")
             self.ssh_key_content = self.ssh_key_file.read_text()
         return self.ssh_key_content
+
+    def __hash__(self) -> int:
+        return hash((self.ssh_key_content, self.ssh_key_file, self.domain))

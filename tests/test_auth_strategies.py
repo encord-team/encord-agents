@@ -5,6 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from encord_agents.core.settings import Settings
+from encord_agents.core.utils import get_user_client
 
 from .utils import AuthMode
 
@@ -66,3 +67,11 @@ def test_auth_stragies_with_default_env() -> None:
     assert settings.ssh_key_content is not None
     assert settings.ssh_key_file is None
     assert settings.ssh_key
+
+
+def test_user_client_from_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    user_client = get_user_client()
+    assert user_client._api_client._domain == "https://api.encord.com"
+    monkeypatch.setenv("ENCORD_DOMAIN", "https://api.annotation.encord.ai/")
+    user_client = get_user_client()
+    assert user_client._api_client._domain == "https://api.annotation.encord.ai/"

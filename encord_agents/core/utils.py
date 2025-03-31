@@ -26,8 +26,7 @@ DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE = (
 )
 
 
-@lru_cache(maxsize=1)
-def get_user_client() -> EncordUserClient:
+def get_user_client(settings: Settings | None = None) -> EncordUserClient:
     """
     Generate an user client to access Encord.
 
@@ -35,7 +34,12 @@ def get_user_client() -> EncordUserClient:
         An EncordUserClient authenticated with the credentials from the encord_agents.core.settings.Settings.
 
     """
-    settings = Settings()
+    settings = settings or Settings()
+    return get_user_client_from_settings(settings)
+
+
+@lru_cache(maxsize=1)
+def get_user_client_from_settings(settings: Settings) -> EncordUserClient:
     kwargs: dict[str, Any] = {"user_agent_suffix": f"encord-agents/{__version__}"}
 
     if settings.domain:
