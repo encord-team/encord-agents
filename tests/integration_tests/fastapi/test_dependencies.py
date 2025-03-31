@@ -13,7 +13,12 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import (
+    EditorAgentResponse,
+    FrameData,
+    LabelRowInitialiseLabelsArgs,
+    LabelRowMetadataIncludeArgs,
+)
 from encord_agents.fastapi.cors import EncordCORSMiddleware, authorization_error_exception_handler
 from encord_agents.fastapi.dependencies import (
     dep_client,
@@ -106,6 +111,10 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert len(object_instances) == 1
         assert object_instances[0].object_hash == object_hash
         assert isinstance(object_instances[0], ObjectInstance)
+
+    @app.post("/editor-agent-return-type")
+    def post_editor_agent_return_type() -> EditorAgentResponse:
+        return EditorAgentResponse(message="Hello, world!")
 
     return app
 
@@ -209,3 +218,8 @@ class TestDependencyResolutionFastapi:
         json_resp = resp.json()
         assert json_resp
         assert json_resp["message"]
+
+    def test_editor_agent_return_type(self) -> None:
+        resp = self.client.post("/editor-agent-return-type")
+        assert resp.status_code == 200, resp.content
+        assert resp.json() == {"message": "Hello, world!"}
