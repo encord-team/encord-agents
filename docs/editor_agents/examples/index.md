@@ -1121,8 +1121,8 @@ As the figure below depicts, the workflow for this agent is:
 Every video is being annotated with a caption by a human (the pink node).
 Successively, a data agent produces multiple new captions automatically (the purple node).
 Finally, a humans reviews all four captions (the yellow node) before the item is complete.
-If there are no human captions when the task reaches the data agent, it'll send it back for annotation.
-Similarly, if the task is rejected during review, it's also sent back for another round of annotation.
+If there are no human captions when the task reaches the data agent, it sends it back for annotation.
+Similarly, if the task is rejected during review, it is also sent back for another round of annotation.
 
 <figure style="text-align: center; flex: 1; margin: 1em 0;">
   <img src="/assets/examples/editor_agents/recaptioning_workflow.png" width="100%"/>
@@ -1496,9 +1496,9 @@ export ENCORD_SSH_KEY_FILE="/path/to/your/private/key"  # Define your Encord SSH
 
 Create a Project with video content in Encord. 
 
-This example requires an ontology with four text classifications as demonstrated in the figure below:
+This example requires an Ontology with four text classifications:
 
-* 1) A text classification for human-created summaries of what's happening in the video.
+* 1) A text classification for human-created summaries of what is happening in the video.
 * 2-4) Three text classifications that will be automatically filled by the LLM.
 
 <figure style="text-align: center; justify-items: center; flex: 1; margin: 1em 0; width: 100%;">
@@ -1506,7 +1506,7 @@ This example requires an ontology with four text classifications as demonstrated
   <strong>Ontology</strong> 
 </figure>
 
-??? "Expand to see ontology JSON"
+??? "Expand to see the Ontology JSON"
     ```json
     {
       "objects": [],
@@ -1602,8 +1602,8 @@ As the figure below depicts, the workflow for this agent is:
 Every video is being annotated with a caption by a human (the pink node).
 Successively, a data agent produces multiple new captions automatically (the purple node).
 Finally, a humans reviews all four captions (the yellow node) before the item is complete.
-If there are no human captions when the task reaches the data agent, it'll send it back for annotation.
-Similarly, if the task is rejected during review, it's also sent back for another round of annotation.
+If there are no human captions when the task reaches the data agent, sends it back for annotation.
+Similarly, if the task is rejected during review, it is also sent back for another round of annotation.
 
 <figure style="text-align: center; flex: 1; margin: 1em 0;">
   <img src="/assets/examples/editor_agents/recaptioning_workflow.png" width="100%"/>

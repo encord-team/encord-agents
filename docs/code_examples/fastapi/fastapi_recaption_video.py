@@ -1,20 +1,20 @@
 """
 This example demonstrate how to use `gpt-4o-mini` to recaption videos.
 
-The example applies to projects with videos and an
-ontology with the four text classifications:
+The example applies to Projects with videos and an
+Ontology with four text classifications:
 
-1. A text classification containing a human created summary of 
-    what's happening in the video.
+1. A text classification containing a summary of 
+    what is happening in the video created by a human.
 2-4. Text classification for the LLM to fill in.
 
 The workflow for this agent is as follows:
 
 1. A human sees the video and types in a caption in the first text field.
-2. Then, the agent is triggered and the three other captions will be 
+2. Then, the agent is triggered and the three other captions are
     filled in for the human to review and potentially correct.
 
-Please see [here](https://agents-docs.encord.com/notebooks/recaption_video/) for a concrete Vision Language Action model use-case.
+[Click here](https://agents-docs.encord.com/notebooks/recaption_video/) for a concrete Vision Language Action model use-case.
 
 This example has the following dependencies:
 
@@ -131,10 +131,10 @@ def my_agent(
     label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
-    # Get the relevant ontology information
+    # Get the relevant Ontology information
     # Recall that we expect
     # [human annotation, llm recaption 1, llm recaption 2, llm recaption 3]
-    # in the ontology
+    # in the Ontology
     cap, *rs = label_row.ontology_structure.classifications
 
     # Read the existing human caption if there are more captions,
