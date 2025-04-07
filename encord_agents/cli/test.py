@@ -16,7 +16,7 @@ from typer import Argument, Option, Typer
 from typing_extensions import Annotated
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_URL_PARTS_REGEX
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, EDITOR_URL_PARTS_REGEX
 
 app = Typer(
     name="test",
@@ -58,13 +58,15 @@ Format is expected to be [blue]https://app.(us.)?encord.com/label_editor/[magent
         raise typer.Abort()
 
 
-def hit_endpoint(endpoint: str, payload: FrameData, domain: str) -> None:
+def hit_endpoint(endpoint: str, payload: FrameData, domain: str, test_header: bool = False) -> None:
     with requests.Session() as sess:
         request = requests.Request(
             "POST",
             endpoint,
             json=payload.model_dump(mode="json", by_alias=True),
-            headers={"Content-type": "application/json"},
+            headers={"Content-type": "application/json", EDITOR_TEST_REQUEST_HEADER: "test-header"}
+            if test_header
+            else {"Content-type": "application/json"},
         )
         prepped = request.prepare()
 
@@ -110,6 +112,7 @@ def hit_endpoint(endpoint: str, payload: FrameData, domain: str) -> None:
 def custom(
     endpoint: Annotated[str, Argument(help="Endpoint to hit with json payload")],
     editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
+    test_header: Annotated[bool, Option(help="Test header")] = False,
 ) -> None:
     """
     Hit a custom agents endpoint for testing an editor agent by copying the url from the Encord Label Editor.
@@ -128,7 +131,7 @@ def custom(
     }
     """
     payload, domain = parse_editor_url(editor_url)
-    hit_endpoint(endpoint, payload, domain)
+    hit_endpoint(endpoint, payload, domain, test_header=test_header)
 
 
 @app.command(
@@ -142,6 +145,7 @@ def local(
     ],
     editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
     port: Annotated[int, Option(help="Local host port to hit")] = 8080,
+    test_header: Annotated[bool, Option(help="Test header")] = False,
 ) -> None:
     """Hit a localhost agents endpoint for testing an agent by copying the url from the Encord Label Editor over.
 
@@ -163,4 +167,4 @@ def local(
         target = f"/{target}"
     endpoint = f"http://localhost:{port}{target}"
 
-    hit_endpoint(endpoint, payload, domain)
+    hit_endpoint(endpoint, payload, domain, test_header=test_header)

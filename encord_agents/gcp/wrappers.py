@@ -8,7 +8,6 @@ from typing import Any, Callable
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
-from fastapi import HTTPException
 from flask import Request, Response, make_response
 
 from encord_agents import FrameData
@@ -80,6 +79,7 @@ def editor_agent(
                 return response
 
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
+                logging.info("Editor test request")
                 return generate_response()
             if not request.is_json:
                 raise Exception("Request should be JSON. Migrated over to new format")
