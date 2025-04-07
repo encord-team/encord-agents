@@ -156,9 +156,12 @@ class TestDependencyResolution:
         video_iter = next(video_gen)
         assert isinstance(video_iter, Iterator)
 
+        first_frame: Frame | None = None
         counter = 0
         for i, frame in enumerate(video_iter):
             # Check last frame
+            if first_frame is None:
+                first_frame = frame
             assert isinstance(frame, Frame)
             assert isinstance(frame.content, np.ndarray)
             assert frame.content.ndim == 3
@@ -166,6 +169,11 @@ class TestDependencyResolution:
             counter += 1
 
         assert counter == self.context.video_label_row.number_of_frames
+
+        # Check equal to dep_single_frame
+        assert first_frame is not None
+        dep_single_frame_frame = dep_single_frame(self.context.video_storage_item)
+        assert np.array_equal(first_frame.content, dep_single_frame_frame)
 
     def test_dep_asset(self) -> None:
         """
