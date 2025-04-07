@@ -15,6 +15,7 @@ from encord.user_client import EncordUserClient
 
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.pdf import extract_page
 from encord_agents.core.settings import Settings
 
 from .video import get_frame
@@ -203,6 +204,10 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
             frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
             cv2.imwrite(frame_file.as_posix(), frame_content)
             file_path = frame_file
+
+        if storage_item.item_type == StorageItemType.PDF and frame is not None:
+            page_file_path = extract_page(file_path, frame)
+            file_path = page_file_path
 
         yield file_path
 
