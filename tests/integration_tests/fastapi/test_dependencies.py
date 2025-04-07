@@ -38,6 +38,10 @@ except Exception:
     exit()
 
 
+VIDEO_BOX_1_SIZE = 0.5
+VIDEO_BOX_2_SIZE = 0.6
+
+
 class SharedResolutionContext(NamedTuple):
     project: Project
     video_label_row: LabelRowV2
@@ -128,11 +132,14 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
             assert crops[0].frame == 0
             assert crops[0].instance.object_hash == video_object_hash
             assert video_label_row.height is not None and video_label_row.width is not None
-            expected_shape = (video_label_row.height * 0.5, video_label_row.width * 0.5, 3)
+            expected_shape = (video_label_row.height * VIDEO_BOX_1_SIZE, video_label_row.width * VIDEO_BOX_1_SIZE, 3)
             assert crops[0].content.shape == expected_shape
         else:
             assert crops[0].frame == 1
             assert crops[0].instance.object_hash != video_object_hash
+            assert video_label_row.height is not None and video_label_row.width is not None
+            expected_shape = (video_label_row.height * VIDEO_BOX_2_SIZE, video_label_row.width * VIDEO_BOX_2_SIZE, 3)
+            assert crops[0].content.shape == expected_shape
 
     @app.post("/object-instance-crops-pdf")
     def post_object_instance_crops_pdf(
@@ -167,10 +174,12 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     )
     pdf_label_row.add_object_instance(pdf_obj_instance)
     obj_instance = bbox_object.create_instance()
-    obj_instance.set_for_frames(BoundingBoxCoordinates(height=0.5, width=0.5, top_left_x=0, top_left_y=0), frames=[0])
+    obj_instance.set_for_frames(
+        BoundingBoxCoordinates(height=VIDEO_BOX_1_SIZE, width=VIDEO_BOX_1_SIZE, top_left_x=0, top_left_y=0), frames=[0]
+    )
     obj_instance_frame_2 = bbox_object.create_instance()
     obj_instance_frame_2.set_for_frames(
-        BoundingBoxCoordinates(height=0.6, width=0.6, top_left_x=0.5, top_left_y=0.5), frames=[1]
+        BoundingBoxCoordinates(height=VIDEO_BOX_2_SIZE, width=VIDEO_BOX_2_SIZE, top_left_x=0, top_left_y=0), frames=[1]
     )
     video_label_row.add_object_instance(obj_instance)
     video_label_row.add_object_instance(obj_instance_frame_2)
