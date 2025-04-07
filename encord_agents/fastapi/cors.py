@@ -4,14 +4,13 @@ with the appropriate CORS Middleware to allow
 interactions from the Encord platform.
 """
 
-import json
 import typing
 from http import HTTPStatus
 
 from encord.exceptions import AuthorisationError
 
 try:
-    from fastapi import Request
+    from fastapi import FastAPI, Request
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse, Response
     from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -27,7 +26,7 @@ from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMA
 
 # Type checking does not work here because we do not enforce people to
 # install fastapi as they can use package for, e.g., task runner wo fastapi.
-class _EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-ignore]
+class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore]
     def __init__(
         self,
         app: ASGIApp,
@@ -51,7 +50,7 @@ class _EncordCORSMiddlewarePure(CORSMiddleware):  # type: ignore [misc, unused-i
         )
 
 
-class EncordCORSMiddleware(BaseHTTPMiddleware, _EncordCORSMiddlewarePure):  # type: ignore [misc, unused-ignore]
+class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unused-ignore]
     """
     Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
     the Encord origin by default and handles X-Encord-Editor-Agent test header
@@ -91,3 +90,14 @@ async def authorization_error_exception_handler(request: Request, exc: Authorisa
         status_code=HTTPStatus.FORBIDDEN,
         content={"message": exc.message},
     )
+
+
+def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
+    app = FastAPI()
+    app.add_middleware(
+        EncordCORSMiddleware,
+        allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,
+    )
+    app.add_middleware(EncordTestHeaderMiddleware)
+    app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
+    return app
