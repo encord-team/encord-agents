@@ -4,7 +4,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER
 from encord_agents.core.data_model import FrameData
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
     dep_label_row,
 )
@@ -17,8 +17,7 @@ except Exception:
 
 
 def test_fastapi_can_handle_placeholder_payload() -> None:
-    app = FastAPI()
-    app.add_middleware(EncordCORSMiddleware)
+    app = get_encord_app()
     counter = 0
 
     @app.post("/test")
