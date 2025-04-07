@@ -74,7 +74,7 @@ def dep_client() -> EncordUserClient:
     return get_user_client()
 
 
-def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
+def dep_single_frame(storage_item: StorageItem, frame_data: FrameData) -> NDArray[np.uint8]:
     """
     Dependency to inject the first frame of the underlying asset.
 
@@ -103,7 +103,7 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
         Numpy array of shape [h, w, 3] RGB colors.
 
     """
-    with download_asset(storage_item, frame=0) as asset:
+    with download_asset(storage_item, frame=frame_data.frame) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
 
     return np.asarray(img, dtype=np.uint8)
