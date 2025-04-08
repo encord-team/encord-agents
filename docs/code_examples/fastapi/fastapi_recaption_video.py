@@ -55,13 +55,13 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends, FastAPI
+from fastapi import Depends
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from encord_agents import FrameData
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
 
 
@@ -121,8 +121,7 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
 
 # Define the FastAPI app to host the agent. This is the function
 # that will be running as an API endpoint.
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
+app = get_encord_app()
 
 
 @app.post("/my_agent")

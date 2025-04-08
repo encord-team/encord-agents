@@ -1238,7 +1238,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object_instance import ObjectInstance
 from fastapi import Depends, FastAPI
 
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app()
 from encord_agents.fastapi.dependencies import (
     FrameData,
     dep_label_row,
@@ -1246,8 +1246,7 @@ from encord_agents.fastapi.dependencies import (
 )
 
 # Initialize FastAPI app
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
+app = get_encord_app()
 
 
 @app.post("/handle-object-hashes")
