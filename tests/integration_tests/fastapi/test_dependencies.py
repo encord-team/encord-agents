@@ -13,12 +13,18 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.data_model import (
+    FrameData,
+    InstanceCrop,
+    LabelRowInitialiseLabelsArgs,
+    LabelRowMetadataIncludeArgs,
+)
 from encord_agents.fastapi.cors import EncordCORSMiddleware, authorization_error_exception_handler, get_encord_app
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
     dep_label_row_with_args,
+    dep_object_crops,
     dep_objects,
     dep_project,
     dep_storage_item,
@@ -32,16 +38,21 @@ except Exception:
     exit()
 
 
+VIDEO_BOX_1_SIZE = 0.5
+VIDEO_BOX_2_SIZE = 0.6
+
+
 class SharedResolutionContext(NamedTuple):
     project: Project
     video_label_row: LabelRowV2
+    pdf_label_row: LabelRowV2
     object_hash: str
 
 
 def build_app(context: SharedResolutionContext) -> FastAPI:
     project = context.project
     video_label_row = context.video_label_row
-    object_hash = context.object_hash
+    video_object_hash = context.object_hash
     app = FastAPI()
     app.add_middleware(EncordCORSMiddleware)
     app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
@@ -102,10 +113,45 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         frame_data: FrameData, object_instances: Annotated[list[ObjectInstance], Depends(dep_objects)]
     ) -> None:
         assert frame_data
-        assert frame_data.object_hashes == [object_hash]
+        assert frame_data.object_hashes == [video_object_hash]
         assert len(object_instances) == 1
-        assert object_instances[0].object_hash == object_hash
+        assert object_instances[0].object_hash == video_object_hash
         assert isinstance(object_instances[0], ObjectInstance)
+
+    @app.post("/object-instance-crops-video")
+    def post_object_instance_crops_video(
+        frame_data: FrameData,
+        crops: Annotated[
+            list[InstanceCrop],
+            Depends(dep_object_crops()),
+        ],
+    ) -> None:
+        assert crops
+        assert len(crops) == 1
+        if frame_data.frame == 0:
+            assert crops[0].frame == 0
+            assert crops[0].instance.object_hash == video_object_hash
+            assert video_label_row.height is not None and video_label_row.width is not None
+            expected_shape = (video_label_row.height * VIDEO_BOX_1_SIZE, video_label_row.width * VIDEO_BOX_1_SIZE, 3)
+            assert crops[0].content.shape == expected_shape
+        else:
+            assert crops[0].frame == 1
+            assert crops[0].instance.object_hash != video_object_hash
+            assert video_label_row.height is not None and video_label_row.width is not None
+            expected_shape = (video_label_row.height * VIDEO_BOX_2_SIZE, video_label_row.width * VIDEO_BOX_2_SIZE, 3)
+            assert crops[0].content.shape == expected_shape
+
+    @app.post("/object-instance-crops-pdf")
+    def post_object_instance_crops_pdf(
+        frame_data: FrameData,
+        crops: Annotated[list[InstanceCrop], Depends(dep_object_crops())],
+    ) -> None:
+        assert crops
+        assert len(crops) == 1
+        assert crops[0].frame == 0
+        # Hard-coded shape: Depends on object crop size and PDF file
+        expected_shape = (554, 428, 3)
+        assert crops[0].content.shape == expected_shape
 
     return app
 
@@ -118,14 +164,32 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     video_label_row = next(
         row for row in label_rows if row.data_type == DataType.VIDEO
     )  # Pick a video such that frame obviously makes sense
+    pdf_label_row = next(row for row in label_rows if row.data_type == DataType.PDF)
     video_label_row.initialise_labels()
+    pdf_label_row.initialise_labels()
     bbox_object = project.ontology_structure.get_child_by_hash(BBOX_ONTOLOGY_HASH, type_=Object)
+    pdf_obj_instance = bbox_object.create_instance()
+    pdf_obj_instance.set_for_frames(
+        BoundingBoxCoordinates(height=0.7, width=0.7, top_left_x=0, top_left_y=0), frames=[0]
+    )
+    pdf_label_row.add_object_instance(pdf_obj_instance)
     obj_instance = bbox_object.create_instance()
-    obj_instance.set_for_frames(BoundingBoxCoordinates(height=0.5, width=0.5, top_left_x=0, top_left_y=0))
+    obj_instance.set_for_frames(
+        BoundingBoxCoordinates(height=VIDEO_BOX_1_SIZE, width=VIDEO_BOX_1_SIZE, top_left_x=0, top_left_y=0), frames=[0]
+    )
+    obj_instance_frame_2 = bbox_object.create_instance()
+    obj_instance_frame_2.set_for_frames(
+        BoundingBoxCoordinates(height=VIDEO_BOX_2_SIZE, width=VIDEO_BOX_2_SIZE, top_left_x=0, top_left_y=0), frames=[1]
+    )
     video_label_row.add_object_instance(obj_instance)
+    video_label_row.add_object_instance(obj_instance_frame_2)
     video_label_row.save()
+    pdf_label_row.save()
     return SharedResolutionContext(
-        project=project, video_label_row=video_label_row, object_hash=obj_instance.object_hash
+        project=project,
+        video_label_row=video_label_row,
+        pdf_label_row=pdf_label_row,
+        object_hash=obj_instance.object_hash,
     )
 
 
@@ -209,6 +273,37 @@ class TestDependencyResolutionFastapi:
         json_resp = resp.json()
         assert json_resp
         assert json_resp["message"]
+
+    def test_object_instance_crops_video(self) -> None:
+        resp = self.client.post(
+            "/object-instance-crops-video",
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.video_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+        resp = self.client.post(
+            "/object-instance-crops-video",
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.video_label_row.data_hash,
+                "frame": 1,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+
+    def test_object_instance_crops_pdf(self) -> None:
+        resp = self.client.post(
+            "/object-instance-crops-pdf",
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.pdf_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
 
 
 class TestCustomCorsRegex:

@@ -56,7 +56,7 @@ typing-extensions = ">=4.8.0"
 encord = ">=0.1.159"
 numpy = ">=1.26.4"
 opencv-python = ">=4.1"
-
+PyMuPdf = ">1.25.0"
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
 ipython = "^8.28.0"
