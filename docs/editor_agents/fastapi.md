@@ -55,7 +55,7 @@ def my_agent(
 Complete the `my_agent` function with the logic you want to execute when the agent is triggered.
 
 !!! tip
-    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary.
+    You can inject multiple different [dependencies](../reference/editor_agents.md#encord_agents.fastapi.dependencies) into the function if necessary.
 
 You can find multiple examples of what can be done with editor agents [here](/editor_agents/examples).
 

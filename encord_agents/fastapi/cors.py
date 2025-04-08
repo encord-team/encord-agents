@@ -108,7 +108,7 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
 
     Args:
         custom_cors_regex (str | None, optional): A regex to use for the CORS middleware.
-        Only necessary if you are not using the default Encord domain.
+            Only necessary if you are not using the default Encord domain.
 
     Returns:
         FastAPI: A FastAPI app with the Encord middleware.
