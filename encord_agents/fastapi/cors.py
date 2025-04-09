@@ -26,7 +26,7 @@ from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMA
 
 # Type checking does not work here because we do not enforce people to
 # install fastapi as they can use package for, e.g., task runner wo fastapi.
-class _EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore]
+class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore]
     """
     Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
     the Encord origin by default and handles X-Encord-Editor-Agent test header
@@ -66,7 +66,7 @@ class _EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignor
         )
 
 
-class _EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unused-ignore]
+class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unused-ignore]
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """
         Middleware to handle the X-Encord-Editor-Agent test header.
@@ -115,9 +115,9 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     """
     app = FastAPI()
     app.add_middleware(
-        _EncordCORSMiddleware,
+        EncordCORSMiddleware,
         allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,
     )
-    app.add_middleware(_EncordTestHeaderMiddleware)
+    app.add_middleware(EncordTestHeaderMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
     return app
