@@ -1,19 +1,17 @@
 from typing import Annotated
 
-from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.user_client import EncordUserClient
-from fastapi import HTTPException
 
 from encord_agents.core.utils import get_user_client_from_token
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
 )
 
 try:
-    from fastapi import Depends, FastAPI
+    from fastapi import Depends
     from fastapi.testclient import TestClient
 except Exception:
     exit()
@@ -24,16 +22,12 @@ def test_auth_router(
     authenticated_user_token: str,
     unauthenticated_user_token: str,
 ) -> None:
-    app = FastAPI()
-    # app.add_middleware(EncordAuthMiddleware)
+    app = get_encord_app()
 
     @app.post("/client")
     def client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
         assert client
-        try:
-            client.get_project(ephemeral_project_hash)
-        except AuthorisationError:
-            raise HTTPException(status_code=403)
+        client.get_project(ephemeral_project_hash)
 
     test_client = TestClient(app)
 
@@ -50,8 +44,7 @@ def test_auth_router_label_row(
     authenticated_user_token: str,
     unauthenticated_user_token: str,
 ) -> None:
-    app = FastAPI()
-    app.add_middleware(EncordCORSMiddleware)
+    app = get_encord_app()
 
     @app.post("/label_row")
     def client(label_row: Annotated[LabelRowV2, Depends(dep_label_row)]) -> None:
