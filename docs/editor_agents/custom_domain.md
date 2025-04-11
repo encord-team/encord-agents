@@ -35,5 +35,5 @@ If deploying with a GCP cloud function, create a GCP secret & pass in the Key
 You'll need to pass in the Encord Front-end domain into the `@editor_agent` declaration so that the function respects CORS:
 
 ```python
-@editor_agent(custom_cors_regex="https://app.us.encord.com")
+@editor_agent(custom_cors_regex="https://app.us.encord.com") # Or the domain of your custom FE
 ```
