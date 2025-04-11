@@ -38,6 +38,7 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         expose_headers: typing.Sequence[str] = (),
         max_age: int = 3600,
     ) -> None:
+        print("made middleware")
         super().__init__(
             app,
             allow_origins,
@@ -69,6 +70,7 @@ class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unu
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if request.method == "POST":
+            print(f"dispatch POST")
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
                 return JSONResponse(content=None, status_code=200)
 
@@ -86,6 +88,7 @@ async def authorization_error_exception_handler(request: Request, exc: Authorisa
     Returns:
         JSON response with the error message and status code 403
     """
+    print(f"authorization_error_exception_handler")
     return JSONResponse(
         status_code=HTTPStatus.FORBIDDEN,
         content={"message": exc.message},
@@ -94,6 +97,8 @@ async def authorization_error_exception_handler(request: Request, exc: Authorisa
 
 def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     app = FastAPI()
+    print(f"get_encord_app custom_cors_regex is {custom_cors_regex}")
+    print("get_encord_app")
     app.add_middleware(
         EncordCORSMiddleware,
         allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,

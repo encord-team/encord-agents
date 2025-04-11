@@ -43,6 +43,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
     video_label_row = context.video_label_row
     object_hash = context.object_hash
     app = FastAPI()
+    print("test app")
     app.add_middleware(EncordCORSMiddleware)
     app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
 
