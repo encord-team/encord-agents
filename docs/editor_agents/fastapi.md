@@ -9,23 +9,23 @@
 
 1. Create a new Encord Project:
 
-```shell
-mkdir my_project
-cd my_project
-```
+    ```shell
+    mkdir my_project
+    cd my_project
+    ```
 
 2. Create and source a new virtual environment.
 
-```
-python -m venv venv
-source venv/bin/activate
-```
+    ```
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
 3. Install dependencies.
 
-```shell
-python -m pip install "fastapi[standard]" encord-agents
-```
+    ```shell
+    python -m pip install "fastapi[standard]" encord-agents
+    ```
 
 ## STEP 2: Define the Agent
 

@@ -9,30 +9,30 @@
 
 1. Create a new Encord Project:
 
-```shell
-mkdir my_project
-cd my_project
-```
+    ```shell
+    mkdir my_project
+    cd my_project
+    ```
 
 2. Create and source a new virtual environment.
 
-```
-python -m venv venv
-source venv/bin/activate
-```
+    ```
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
 3. Create a requirements file.
 
-```requirements title="requirements.txt"
-functions-framework
-encord-agents
-```
+    ```requirements title="requirements.txt"
+    functions-framework
+    encord-agents
+    ```
 
 4. Install dependencies.  
 
-```shell
-python -m pip install -r requirements.txt
-```
+    ```shell
+    python -m pip install -r requirements.txt
+    ```
 
 ## STEP 2: Define the Agent
 
