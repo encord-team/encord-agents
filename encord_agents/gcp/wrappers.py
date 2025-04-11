@@ -67,6 +67,7 @@ def editor_agent(
                 if not cors_regex.fullmatch(request.origin):
                     response.status_code = 403
                     return response
+
                 headers = {
                     "Access-Control-Allow-Origin": request.origin,
                     "Access-Control-Allow-Methods": "POST",
