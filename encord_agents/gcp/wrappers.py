@@ -15,7 +15,7 @@ from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMA
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
-from encord_agents.core.utils import get_user_client
+from encord_agents.core.utils import get_user_client, get_user_client_from_token
 
 AgentFunction = Callable[..., Any]
 
@@ -71,7 +71,7 @@ def editor_agent(
                 headers = {
                     "Access-Control-Allow-Origin": request.origin,
                     "Access-Control-Allow-Methods": "POST",
-                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization",
                     "Access-Control-Max-Age": "3600",
                 }
                 response.headers.update(headers)
@@ -86,7 +86,11 @@ def editor_agent(
             frame_data = FrameData.model_validate(request.get_json())
             logging.info(f"Request: {frame_data}")
 
-            client = get_user_client()
+            if auth_token := request.headers.get("Authorization"):
+                logging.info("Using user token")
+                client = get_user_client_from_token(auth_token[len("Bearer ") :])
+            else:
+                client = get_user_client()
             try:
                 project = client.get_project(frame_data.project_hash)
             except AuthorisationError:

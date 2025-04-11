@@ -10,6 +10,7 @@ from encord.ontology import Ontology
 from encord.project import Project
 from encord.user_client import EncordUserClient
 
+ENCORD_ORIGIN = "https://app.encord.com"
 ONTOLOGY_HASH = "6d8bb167-0c9d-43b1-a577-3da0693d664e"
 ONE_OF_EACH_DATASET_HASH = (
     # dataset with [image, image group, image_sequence, pdf, audio, txt, and video]
@@ -175,10 +176,8 @@ def mock_agent() -> MagicMock:
 
 
 @pytest.fixture(scope="module")
-def authenticated_user_token() -> str:
-    token = os.getenv("AUTHENTICATED_USER_BEARER_TOKEN")
-    if not token:
-        raise ValueError
+def authenticated_user_token(user_client: EncordUserClient) -> str:
+    token = user_client.get_bearer_token()
     return token
 
 

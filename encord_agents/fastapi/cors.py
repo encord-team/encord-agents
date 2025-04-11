@@ -48,7 +48,7 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         app: ASGIApp,
         allow_origins: typing.Sequence[str] = (),
         allow_methods: typing.Sequence[str] = ("POST",),
-        allow_headers: typing.Sequence[str] = (),
+        allow_headers: typing.Sequence[str] = ("Authorization", "Content-Type"),
         allow_credentials: bool = False,
         allow_origin_regex: str = ENCORD_DOMAIN_REGEX,
         expose_headers: typing.Sequence[str] = (),
