@@ -9,6 +9,7 @@ from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
 )
+from tests.fixtures import ENCORD_ORIGIN
 
 try:
     from fastapi import Depends
@@ -31,14 +32,19 @@ def test_auth_router(
 
     test_client = TestClient(app)
 
-    resp = test_client.post("/client", headers={"Authorization": f"Bearer {authenticated_user_token}"})
+    resp = test_client.post(
+        "/client", headers={"Authorization": f"Bearer {authenticated_user_token}", "Origin": ENCORD_ORIGIN}
+    )
     assert resp.status_code == 200
+    assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
 
-    resp = test_client.post("/client", headers={"Authorization": f"Bearer {unauthenticated_user_token}"})
+    resp = test_client.post(
+        "/client", headers={"Authorization": f"Bearer {unauthenticated_user_token}", "Origin": ENCORD_ORIGIN}
+    )
     assert resp.status_code == 403, resp.content
+    assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
 
 
-# TODO: Need a body to test against see FastAPI example
 def test_auth_router_label_row(
     ephemeral_project_hash: str,
     authenticated_user_token: str,
@@ -64,14 +70,16 @@ def test_auth_router_label_row(
 
     resp = test_client.post(
         "/label_row",
-        headers={"Authorization": f"Bearer {authenticated_user_token}"},
+        headers={"Authorization": f"Bearer {authenticated_user_token}", "Origin": ENCORD_ORIGIN},
         json=payload,
     )
     assert resp.status_code == 200, resp.content
+    assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
 
     resp = test_client.post(
         "/label_row",
-        headers={"Authorization": f"Bearer {unauthenticated_user_token}"},
+        headers={"Authorization": f"Bearer {unauthenticated_user_token}", "Origin": ENCORD_ORIGIN},
         json=payload,
     )
     assert resp.status_code == 403, resp.content
+    assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
