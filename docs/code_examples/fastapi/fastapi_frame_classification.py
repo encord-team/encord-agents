@@ -3,14 +3,14 @@ import os
 import numpy as np
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends, FastAPI, Form
+from fastapi import Depends
 from numpy.typing import NDArray
 from typing_extensions import Annotated
 
 from encord_agents.core.data_model import Frame
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
     FrameData,
     dep_label_row,
@@ -18,8 +18,7 @@ from encord_agents.fastapi.dependencies import (
 )
 
 # Initialize FastAPI app
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
+app = get_encord_app()
 
 # Setup project and data model
 client = get_user_client()

@@ -20,7 +20,7 @@ Additionally when registering your editor agent in the platform at: [Editor Agen
 
 ### Error handling
 
-Additionally, if you make use of the `AuthorisationError` handler, then we will raise appropriate errors depending on issues with the Agent. Most notably, in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include message in the body of the response:
+Additionally, if you make use of the `AuthorisationError` handler (via [get_encord_app](../reference/editor_agents.md#encord_agents.fastapi.cors.get_encord_app)), then we will raise appropriate errors depending on issues with the Agent. Most notably, in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include message in the body of the response:
 
 ```typescript
 type EditorAgentErrorResponse = {

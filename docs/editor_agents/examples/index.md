@@ -1238,7 +1238,7 @@ from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object_instance import ObjectInstance
 from fastapi import Depends, FastAPI
 
-from encord_agents.fastapi.cors import EncordCORSMiddleware
+from encord_agents.fastapi.cors import get_encord_app()
 from encord_agents.fastapi.dependencies import (
     FrameData,
     dep_label_row,
@@ -1246,8 +1246,7 @@ from encord_agents.fastapi.dependencies import (
 )
 
 # Initialize FastAPI app
-app = FastAPI()
-app.add_middleware(EncordCORSMiddleware)
+app = get_encord_app()
 
 
 @app.post("/handle-object-hashes")
@@ -1357,19 +1356,19 @@ Here is the full code, but a section-by-section explanation follows.
 2. Set up the Project and create a data model based on the Ontology.
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:25-27
+    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:24-27
     <!--/codeinclude-->
 
 3. Create the system prompt that tells Claude how to structure its response.
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:30-42
+    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:29-42
     <!--/codeinclude-->
 
 4. Define the endpoint to handle the classification:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:45-75
+    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:44-74
     <!--/codeinclude-->
 
 The endpoint:  
@@ -1477,13 +1476,13 @@ Here is the full code, but a section-by-section explanation follows.
 3. Create the data model and system prompt for Claude.
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:32-44
+    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:31-44
     <!--/codeinclude-->
 
 4. Define the attribute endpoint:
 
 <!--codeinclude-->
-[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:47-94
+[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:46-93
 <!--/codeinclude-->
 
 The endpoint:
@@ -1701,13 +1700,13 @@ Here is the full code, but a section-by-section explanation follows.
 5. We initialize the FastAPI app with the required CORS middleware:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:121-125
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:121-124
     <!--/codeinclude-->
 
 6. Finally, we define the endpoint that will handle the recaptioning:
 
     <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:127-190
+    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:127-189
     <!--/codeinclude-->
 
 The endpoint follows these steps:

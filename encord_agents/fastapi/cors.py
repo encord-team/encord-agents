@@ -27,6 +27,22 @@ from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMA
 # Type checking does not work here because we do not enforce people to
 # install fastapi as they can use package for, e.g., task runner wo fastapi.
 class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore]
+    """
+    Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
+    the Encord origin by default and handles X-Encord-Editor-Agent test header
+
+    **Example:**
+    ```python
+    from fastapi import FastAPI
+    from encord_agents.fastapi.cors import EncordCORSMiddleware
+
+    app = FastAPI()
+    app.add_middleware(EncordCORSMiddleware)
+    ```
+
+    The CORS middleware will allow POST requests from the Encord domain.
+    """
+
     def __init__(
         self,
         app: ASGIApp,
@@ -51,23 +67,17 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
 
 
 class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unused-ignore]
-    """
-    Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
-    the Encord origin by default and handles X-Encord-Editor-Agent test header
-
-    **Example:**
-    ```python
-    from fastapi import FastAPI
-    from encord_agents.fastapi.cors import EncordCORSMiddleware
-
-    app = FastAPI()
-    app.add_middleware(EncordCORSMiddleware)
-    ```
-
-    The CORS middleware will allow POST requests from the Encord domain.
-    """
-
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """
+        Middleware to handle the X-Encord-Editor-Agent test header.
+
+        Args:
+            request (Request):
+            call_next (RequestResponseEndpoint):
+
+        Returns:
+            Response
+        """
         if request.method == "POST":
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
                 return JSONResponse(content=None, status_code=200)
@@ -75,7 +85,7 @@ class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unu
         return await call_next(request)
 
 
-async def authorization_error_exception_handler(request: Request, exc: AuthorisationError) -> JSONResponse:
+async def _authorization_error_exception_handler(request: Request, exc: AuthorisationError) -> JSONResponse:
     """
     Custom exception handler for encord.exceptions.AuthorisationError.
 
@@ -93,11 +103,21 @@ async def authorization_error_exception_handler(request: Request, exc: Authorisa
 
 
 def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
+    """
+    Get a FastAPI app with the Encord middleware.
+
+    Args:
+        custom_cors_regex (str | None, optional): A regex to use for the CORS middleware.
+            Only necessary if you are not using the default Encord domain.
+
+    Returns:
+        FastAPI: A FastAPI app with the Encord middleware.
+    """
     app = FastAPI()
     app.add_middleware(
         EncordCORSMiddleware,
         allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,
     )
     app.add_middleware(EncordTestHeaderMiddleware)
-    app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
+    app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
     return app

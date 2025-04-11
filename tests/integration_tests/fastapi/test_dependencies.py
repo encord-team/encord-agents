@@ -4,7 +4,6 @@ from uuid import uuid4
 
 import pytest
 from encord.constants.enums import DataType
-from encord.exceptions import AuthorisationError
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
@@ -13,8 +12,12 @@ from encord.project import Project
 from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 
-from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.fastapi.cors import EncordCORSMiddleware, authorization_error_exception_handler, get_encord_app
+from encord_agents.core.data_model import (
+    FrameData,
+    LabelRowInitialiseLabelsArgs,
+    LabelRowMetadataIncludeArgs,
+)
+from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
     dep_client,
     dep_label_row,
@@ -42,9 +45,7 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
     project = context.project
     video_label_row = context.video_label_row
     object_hash = context.object_hash
-    app = FastAPI()
-    app.add_middleware(EncordCORSMiddleware)
-    app.exception_handlers[AuthorisationError] = authorization_error_exception_handler
+    app = get_encord_app()
 
     @app.post("/client")
     def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
