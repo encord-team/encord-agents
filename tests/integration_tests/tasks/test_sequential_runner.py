@@ -12,6 +12,7 @@ from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 from encord.workflow.stages.final import FinalStage
 
+from encord_agents.core.data_model import LabelRowMetadataIncludeArgs
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import SequentialRunner
@@ -373,3 +374,18 @@ def test_runner_set_bundled_priority(ephemeral_project_hash: str) -> None:
     lrs = runner.project.list_label_rows_v2()
     for row in lrs:
         assert row.priority == 0.1337
+
+
+def test_runner_can_request_specific_branch(ephemeral_project_hash: str) -> None:
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    assert runner.project
+    BRANCH_NAME = "BRANCH_NAME"
+
+    @runner.stage(
+        AGENT_STAGE_NAME, label_row_metadata_include_args=LabelRowMetadataIncludeArgs(branch_name=BRANCH_NAME)
+    )
+    def label_branch(label_row: LabelRowV2) -> None:
+        assert label_row.branch_name == BRANCH_NAME
+
+    runner()
