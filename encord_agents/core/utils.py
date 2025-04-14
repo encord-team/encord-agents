@@ -15,8 +15,8 @@ from encord.user_client import EncordUserClient
 
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
-from encord_agents.core.pdf import extract_page
 from encord_agents.core.settings import Settings
+from encord_agents.exceptions import PrintableError
 
 from .video import get_frame
 
@@ -206,7 +206,14 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
             file_path = frame_file
 
         if storage_item.item_type == StorageItemType.PDF and frame is not None:
-            page_file_path = extract_page(file_path, frame)
+            try:
+                from encord_agents.core.pdf import extract_page
+
+                page_file_path = extract_page(file_path, frame)
+            except ImportError as e:
+                raise PrintableError(
+                    "Trying to access a crop from a pdf. Please install encord-agents[pdf] to access pdf support"
+                ) from e
             file_path = page_file_path
 
         yield file_path
