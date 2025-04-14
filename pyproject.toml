@@ -80,6 +80,11 @@ notebook = "^7.3.2"
 mkdocs-macros-plugin = "^1.3.7"
 fastapi = "^0.115.0"
 
+[tool.poetry.group.pdf]
+optional = true
+
+[tool.poetry.group.pdf.dependencies]
+PyMuPdf = ">1.25.0"
 
 [tool.poetry.scripts]
 encord-agents = "encord_agents.cli.main:app"

@@ -33,7 +33,7 @@ runs:
     - if: steps.cached-poetry.outputs.cache-hit != 'true'
       run: |
         poetry lock --no-update
-        poetry install --no-interaction
+        poetry install --no-interaction --with pdf
       shell: bash
 
     - name: Clear lint cache
