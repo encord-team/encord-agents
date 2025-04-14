@@ -1739,6 +1739,66 @@ The endpoint follows these steps:
 4. Refresh your browser to view the three AI-generated caption variations. Once the test runs successfully, you are ready to deploy your agent. Visit [the deployment documentation](../fastapi.md) to learn more.
 
 
+## Modal Example
+
+### Cotracker3 Keypoint tracking
+
+[Cotracker3](https://cotracker3.github.io/){ target="\_blank", rel="noopener noreferrer" } is a keypoint tracking algorithm from Meta that serves as an excellent example of Modal agents. Cotracker3 involves a moderately sized (100MB) model where deployment on Modal and access to a serverless GPU works excellently.
+
+**Prerequisites**
+
+Firstly, we would strongly encourage any reader to first read and follow the general [Modal tutorial](../modal.md). This provides clear instructions on how to register your Encord credentials in the Modal platform and more straight forward agent code.
+One new dependency here is that we need to pull in the model weights and have additional ML dependencies.
+Additionally, create a Python venv with:
+
+  ```shell
+  python -m venv venv
+  source venv/bin/activate
+  python -m pip install encord-agents modal
+  ```
+
+as in the original modal tutorial.
+
+Additionally to bring in the cotracker dependency, we found the most straightforward way to be:
+
+  ```shell
+  git clone https://github.com/facebookresearch/co-tracker.git
+  mv co-tracker/cotracker ./cotracker
+  ```
+
+**Create the Modal Agent**
+
+Here is the full code, but a section-by-section explanation follows.
+
+??? "The full code for `main.py`"
+    <!--codeinclude-->
+    [main.py](../../code_examples/modal/editor_cotracker3.py) linenums:1
+    <!--/codeinclude-->
+
+1. Define the Modal image.
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:1-38
+    <!--/codeinclude-->
+
+2. Define the modal app.
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:39-41
+    <!--/codeinclude-->
+
+3. Define the endpoint and Cotracker3 usage
+
+    <!--codeinclude-->
+    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:59-110
+    <!--/codeinclude-->
+
+**Create the Modal Agent**
+
+Once the above (full) code has been saved at `app.py` say, it can be deployed with: `modal deploy app.py`. Please note that it is written to use an L4 GPU so there will be some usage charges but this model can easily be used and tested within Modal's $5 free allowance.
+
+This agent then utilises the tracking prompted on agents so to trigger, please right-click on a keypoint in the platform and trigger with this agent.
+
 ## Agent Examples in the Making
 
 The following example are being worked on:

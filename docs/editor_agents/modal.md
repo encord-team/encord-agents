@@ -209,6 +209,6 @@ modal deploy example.py
 
 Copy the displayed url and configure it in the Encord platform by following [the documentation](https://docs.encord.com/platform-documentation/Annotate/automated-labeling/annotate-editor-agents).
 
-Once that is done, you can right-click the frame in the Label Editor to trigger the agent.
+Once that is done, you can right-click the frame in the Label Editor to trigger the agent. If you are interested in a more involved Modal example, please see [Cotracker3 Modal](./examples/index.md#cotracker3-keypoint-tracking)
 
 [modal-docs]: https://modal.com/docs
