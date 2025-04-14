@@ -102,7 +102,11 @@ async def _authorization_error_exception_handler(request: Request, exc: Authoris
     )
 
 
-def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
+def get_encord_app(
+    *,
+    custom_cors_regex: str | None = None,
+    fallback_to_local_auth: bool = True,
+) -> FastAPI:
     """
     Get a FastAPI app with the Encord middleware.
 
@@ -120,4 +124,5 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     )
     app.add_middleware(EncordTestHeaderMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
+    app.state.fallback_to_local_auth = fallback_to_local_auth
     return app

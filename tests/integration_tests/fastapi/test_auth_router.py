@@ -83,3 +83,17 @@ def test_auth_router_label_row(
     )
     assert resp.status_code == 403, resp.content
     assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
+
+
+def test_fallback_to_local_router() -> None:
+    app = get_encord_app(fallback_to_local_auth=False)
+
+    @app.post("/client")
+    def client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
+        assert client
+
+    test_client = TestClient(app)
+
+    resp = test_client.post("/client", headers={"Origin": ENCORD_ORIGIN})
+    assert resp.status_code == 401
+    assert resp.headers["Access-Control-Allow-Origin"] == ENCORD_ORIGIN
