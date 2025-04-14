@@ -41,18 +41,21 @@ os.environ["ENCORD_SSH_KEY"] = "<your key>"
 os.environ["ENCORD_SSH_KEY_FILE"] = "path/to/your/file"
 ```
 
-## STEP 3: If you are using the Encord Client in your Task agent, pass in your domain 
+## STEP 3: If you are using the Encord Client in your Task agent, make sure you instantiate the client from the agent
 
-Since Encord is a separate package than Encord-Agents, when creating an Encord Client, you'll also need to declare the domain
+Since Encord is a separate package than Encord-Agents, when leveraging an Encord Client, you'll also need to use the client connected to the agent.
+
+For tasks that need the Encord client for every operation, we recommend:
+```python
+@app.post("/my-agent")
+def my_agent(user_client: Anntotated[EncordUserClient, Depends(dep_user_client)]):
+    # use agent to get project, dataset, etc
+```
+
+If you only need the client once to do batch processing or filtering, you can fetch the existing client from the agents library:
 
 ```python
-from encord import EncordUserClient
+from encord_agents.core.utils import get_user_client
 
-DOMAIN = "https://api.us.encord.com"
-
-# You can get your Encord Key here: https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys
-client = EncordUserClient.create_with_ssh_private_key(
-    ssh_private_key="<private_key>",
-    domain=DOMAIN
-)
+encord_user_client = get_user_client()
 ```
