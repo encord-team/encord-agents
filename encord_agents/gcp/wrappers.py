@@ -35,6 +35,7 @@ def editor_agent(
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
     label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
     custom_cors_regex: str | None = None,
+    fallback_to_local_auth: bool = True,
 ) -> Callable[[AgentFunction], Callable[[Request], Response]]:
     """
     Wrapper to make resources available for gcp editor agents.
@@ -49,6 +50,8 @@ def editor_agent(
             on `label_row.initialise_labels(...)`
         custom_cors_regex: A regex to use for the CORS settings. If not provided, the default regex will be used.
             Only required if the agent is not deployed on Encord's platform.
+        fallback_to_local_auth: If the user does not provide an Auth token,
+            fallback to the local credentials. If false, respond with an error
 
     Returns:
         A wrapped function suitable for gcp functions.
@@ -89,8 +92,12 @@ def editor_agent(
             if auth_token := request.headers.get("Authorization"):
                 logging.info("Using user token")
                 client = get_user_client_from_token(auth_token[len("Bearer ") :])
-            else:
+            elif fallback_to_local_auth:
                 client = get_user_client()
+            else:
+                response = make_response()
+                response.status_code = HTTPStatus.UNAUTHORIZED
+                return response
             try:
                 project = client.get_project(frame_data.project_hash)
             except AuthorisationError:

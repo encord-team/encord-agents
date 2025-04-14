@@ -40,7 +40,7 @@ from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.vision import crop_to_object
 
 try:
-    from fastapi import Depends, Form, Request
+    from fastapi import Depends, Form, HTTPException, Request
 except ModuleNotFoundError:
     print(
         'To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"'
@@ -77,7 +77,10 @@ def dep_client(request: Request) -> EncordUserClient:
     """
     if auth_token := request.headers.get("Authorization"):
         return get_user_client_from_token(auth_token[len("Bearer ") :])
-    return get_user_client()
+    elif request.app.state.fallback_to_local_auth:
+        return get_user_client()
+    else:
+        raise HTTPException(status_code=401, detail="Authorisation required and not provided")
 
 
 def dep_label_row_with_args(
