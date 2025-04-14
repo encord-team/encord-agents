@@ -19,7 +19,7 @@ from encord_agents.fastapi.dependencies import (
 # 1. Define the Modal Image
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .apt_install("libgl1", "libglib2.0-0", "wget", "git")
+    .apt_install("libgl1", "libglib2.0-0", "wget")
     .run_commands(
         "wget https://huggingface.co/facebook/cotracker3/resolve/main/scaled_offline.pth",
     )

@@ -1790,7 +1790,7 @@ Here is the full code, but a section-by-section explanation follows.
 3. Define the endpoint and Cotracker3 usage
 
     <!--codeinclude-->
-    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:59-110
+    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:59-108
     <!--/codeinclude-->
 
 **Create the Modal Agent**
