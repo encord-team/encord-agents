@@ -29,3 +29,18 @@ type EditorAgentErrorResponse = {
 ```
 
 We will display this in the platform to allow intuitive usage of your agent.
+
+### Authorization
+
+Historically Editor Agents have utilised a service account that serves all requests to the endpoint but we now offer user agents where we pass credentials from the front end to the agent that allow the agent to act as that user.
+
+This allows much better control where the agent administrator can be much more confident around the security and Authorization of their agent. Additionally you can get more better granularity around actions understanding who requested whatnot.
+
+If you are interested in this functionality, firstly note that you can get it automatically via the library. Whether using the GCP method or the FastAPI method, our library will inspect the headers on the request to see whether the credentials have been provided and if so, will use those credentials otherwise it will fall back to using the provided credentials. Note you can configure whether we fallback or not.
+
+If you are interested in the gory details / implementing your own authenticated agent, please read on. We would strongly advise that end-users use the `encord-agents` library if they are interested in the Authenticated methodology as it is complicated and great care has been to ensure that we make it as intuitive and easily usable as possible.
+
+What we do:
+Following [RFC-6750](https://www.rfc-editor.org/rfc/rfc6750), we create an encrypted JWT from our Encord backend which we pass to the frontend and then pass via the Bearer token scheme to the Agent in the request from the Encord platform.
+We then take the JWT from the platform request and use that as authorisation for the lifetime of this request from the frontend. As is, we do not provide the public key for the JWT and so you can't interact with it or use it as a mechanism for finger-printing the user. If you are interested in this use-case, please contact the encord team.
+
