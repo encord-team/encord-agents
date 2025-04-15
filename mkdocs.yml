@@ -1,5 +1,6 @@
 site_name: "Encord Agents"
 repo_url: https://github.com/encord-team/encord-agents
+site_url: https://agents-docs.encord.com/
 colab_prefix: https://colab.research.google.com/github/encord-team/encord-agents
 branch_name: main # used for debugging should be "main"
 
@@ -129,3 +130,27 @@ plugins:
       include: ["*.ipynb"]
       include_source: true
   - macros
+  - llmstxt:
+      markdown_description: SDK for writing Agents and using the Encord platform
+      sections:
+        General:
+        - index.md
+        - authentication.md
+        - dependencies.md
+        - installation.md
+        Editor Agents:
+        - editor_agents/index.md
+        - editor_agents/spec.md
+        - editor_agents/modal.md
+        - editor_agents/fastapi.md
+        - editor_agents/gcp.md
+        Task Agents:
+        -  task_agents/index.md
+        -  task_agents/custom_domain.md
+        - task_agents/runner_intro.md
+        - task_agents/queue_runner.md
+        - task_agents/sequential_runner.md
+        Reference:
+        - reference/editor_agents.md
+        - reference/task_agents.md
+        - reference/core.md
