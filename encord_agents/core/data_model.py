@@ -5,7 +5,8 @@ from uuid import UUID
 import numpy as np
 from encord.objects.ontology_object_instance import ObjectInstance
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from typing_extensions import Self
 
 from encord_agents.core.vision import DATA_TYPES, b64_encode_image
 
@@ -24,6 +25,13 @@ class LabelRowMetadataIncludeArgs(BaseModel):
     include_client_metadata: bool = False
     include_images_data: bool = False
     include_all_label_branches: bool = False
+    branch_name: str | None = None
+
+    @model_validator(mode="after")
+    def check_branches_consistent(self) -> Self:
+        if self.branch_name and self.include_all_label_branches:
+            raise ValueError("Can't request all branches and a specific branch")
+        return self
 
 
 class LabelRowInitialiseLabelsArgs(BaseModel):
