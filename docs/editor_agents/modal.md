@@ -48,7 +48,7 @@ Now you need a template for creating an endpoint that can be used for defining a
 The following example:  
 
 1. **Creates a Docker Image** – We define a container that includes all necessary dependencies:  
-   - `encord-agents`: The library for building agents
+   - `encord-agents[headless]`: The library for building agents
    - `modal`: For hosting the agent
    - `libgl`: Required by `opencv`
 
@@ -81,7 +81,7 @@ image = (
         "libglib2.0-0",
     ).pip_install(
         "fastapi[standard]",
-        "encord-agents",
+        "encord-agents[headless]",
     )
 )
 

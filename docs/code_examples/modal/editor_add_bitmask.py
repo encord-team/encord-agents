@@ -4,7 +4,7 @@ Steps to make it work:
 
 # 1. Install modal and encord-agents:
 ```
-python -m pip install modal encord-agents
+python -m pip install modal "encord-agents[opencv]"
 ```
 
 # 2. Log in to modal

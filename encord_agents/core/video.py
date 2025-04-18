@@ -1,9 +1,14 @@
 from pathlib import Path
 from typing import Iterable, Iterator
 
-import cv2
 import numpy as np
 from numpy.typing import NDArray
+
+try:
+    import cv2
+except ImportError:
+    raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
+
 
 from encord_agents.core.data_model import Frame
 
@@ -35,7 +40,6 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
         raise Exception("Error retrieving frame.")
 
     cap.release()
-
     return frame.astype(np.uint8)
 
 
