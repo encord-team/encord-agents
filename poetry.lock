@@ -3807,7 +3807,11 @@ docs = ["Sphinx (>=6.0)", "myst-parser (>=2.0.0)", "sphinx-rtd-theme (>=1.1.0)"]
 optional = ["python-socks", "wsaccel"]
 test = ["websockets"]
 
+[extras]
+opencv = ["opencv-python"]
+opencv-headless = ["opencv-python-headless"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a3ef1412f1fe7289ddb416e6a4af502f057d7720de1c2bdab8f248734f011bc4"
+content-hash = "e7582fd31d9654c4ddf92b52ce27f49773ab5d93a8e1db1c0e5cf993e5049532"

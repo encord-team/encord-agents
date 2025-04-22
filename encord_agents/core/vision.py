@@ -9,7 +9,9 @@ from numpy.typing import NDArray
 try:
     import cv2
 except ImportError:
-    raise ImportError("Your data agent is depending on computer vision capabilities and `opencv` is not installed. Please install either `opencv-python` or `opencv-python-headless`.")
+    raise ImportError(
+        "Your data agent is depending on computer vision capabilities and `opencv` is not installed. Please install either `opencv-python` or `opencv-python-headless`."
+    )
 
 from .types import Base64Formats
 

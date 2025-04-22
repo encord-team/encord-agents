@@ -221,7 +221,9 @@ def dep_single_frame(
     try:
         import cv2
     except ImportError:
-        raise ImportError("Your data agent is depending on computer vision capabilities and `opencv` is not installed. Please install either `opencv-python` or `opencv-python-headless`.")
+        raise ImportError(
+            "Your data agent is depending on computer vision capabilities and `opencv` is not installed. Please install either `opencv-python` or `opencv-python-headless`."
+        )
 
     with download_asset(storage_item, frame_data.frame) as asset:
         img = cv2.cvtColor(cv2.imread(asset.as_posix()), cv2.COLOR_BGR2RGB)
