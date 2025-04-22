@@ -37,6 +37,9 @@ except Exception:
     exit()
 
 
+BRANCH_NAME = "BRANCH_NAME"
+
+
 class SharedResolutionContext(NamedTuple):
     project: Project
     video_label_row: LabelRowV2
@@ -127,6 +130,20 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
             assert crops[0].frame == 1
             assert crops[0].instance.object_hash != object_hash
 
+    @app.post("/custom-label-branch")
+    def post_custom_label_branch(
+        label_branch: Annotated[
+            LabelRowV2,
+            Depends(
+                dep_label_row_with_args(
+                    label_row_metadata_include_args=LabelRowMetadataIncludeArgs(branch_name=BRANCH_NAME)
+                )
+            ),
+        ],
+    ) -> None:
+        assert label_branch
+        assert label_branch.branch_name == BRANCH_NAME
+
     return app
 
 
@@ -178,6 +195,7 @@ class TestDependencyResolutionFastapi:
             "/label-row",
             "/storage-item",
             "/label-row-with-args",
+            "/custom-label-branch",
         ],
     )
     def test_post_dependencies(self, router_path: str) -> None:
