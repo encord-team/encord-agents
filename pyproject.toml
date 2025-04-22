@@ -118,11 +118,11 @@ strict = true
 [tool.pytest.ini_options]
 addopts = "--cov=encord_agents --cov-report=html --junitxml=encord-agents-unit-test-report.xml"
 markers = [
-    "env_mode(AuthMode): mark test to run in a specific environment mode",
+  "env_mode(AuthMode): mark test to run in a specific environment mode",
 ]
 
 [tool.pytest_env]
-ENCORD_SSH_KEY_FILE = {value="tests/integration_tests/private_key_integration_testing", skip_if_set = false}
+ENCORD_SSH_KEY_FILE = { value = "tests/integration_tests/private_key_integration_testing", skip_if_set = false }
 
 [tool.codespell]
 skip = '*.lock,*.ipynb'
