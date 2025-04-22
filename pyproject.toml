@@ -55,8 +55,8 @@ typing-extensions = ">=4.8.0"
 # No-CLI dependencies
 encord = ">=0.1.159"
 numpy = ">=1.26.4"
-opencv-python = {optional = true, extras = ["opencv"], version = ">=4.1"}
-opencv-python-headless = {optional = true, extras = ["headless"], version = ">=4.1"}
+opencv-python = { optional = true, version = ">=4.1" }
+opencv-python-headless = { optional = true, version = ">=4.1" }
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
@@ -82,6 +82,9 @@ mkdocs-macros-plugin = "^1.3.7"
 fastapi = "^0.115.0"
 opencv-python = "^4.1"
 
+[tool.poetry.extras]
+opencv = ["opencv-python"]
+opencv-headless = ["opencv-python-headless"]
 
 [tool.poetry.scripts]
 encord-agents = "encord_agents.cli.main:app"
@@ -116,11 +119,11 @@ strict = true
 [tool.pytest.ini_options]
 addopts = "--cov=encord_agents --cov-report=html --junitxml=encord-agents-unit-test-report.xml"
 markers = [
-    "env_mode(AuthMode): mark test to run in a specific environment mode",
+  "env_mode(AuthMode): mark test to run in a specific environment mode",
 ]
 
 [tool.pytest_env]
-ENCORD_SSH_KEY_FILE = {value="tests/integration_tests/private_key_integration_testing", skip_if_set = false}
+ENCORD_SSH_KEY_FILE = { value = "tests/integration_tests/private_key_integration_testing", skip_if_set = false }
 
 [tool.codespell]
 skip = '*.lock,*.ipynb'
