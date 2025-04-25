@@ -19,11 +19,13 @@ jobs:
           token: ${{ secrets.AUTOMATION_BOT_ACCESS_TOKEN }}
           ref: main
 
-      - name: Setup root poetry environment
-        uses: ./.github/actions/setup-root-poetry-environment
+      - name: Setup root uv environment
+        uses: ./.github/actions/setup-root-uv-environment
 
-      - name: Poetry Version Bump
-        run: "poetry version ${{ github.ref_name }}"
+      - name: uv Version Bump
+        # TODO: Remove this once this PR is merged / uv 0.7 is released
+        # https://github.com/astral-sh/uv/pull/12349 
+        run: "uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ github.ref_name }}"
 
       - name: Module Version Bump
         run: 'sed -i "s/__version__ = \".*\"/__version__ = \"${{ github.ref_name }}\"/g" encord_agents/__init__.py'
@@ -35,11 +37,10 @@ jobs:
           push_options: --force
 
       - name: Build
-        run: poetry build
+        run: uv build
 
       - name: Publish
         run: |
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish
+          uv publish --token ${{ secrets.PYPI_TOKEN }}
   publish-docs:
     uses: ./.github/workflows/update-docs.yml

@@ -22,12 +22,12 @@ jobs:
         with: 
           fetch-depth: 0
 
-      - name: Setup root poetry environment
-        uses: ./.github/actions/setup-root-poetry-environment
+      - name: Setup root uv environment
+        uses: ./.github/actions/setup-root-uv-environment
 
       - name: Build Docs
         run: |
-          poetry run mkdocs build
+          uv run mkdocs build
       
       - name: Deploy Docs
         run: |

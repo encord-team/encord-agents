@@ -1,0 +1,33 @@
+name: 'Setup test environment'
+description: 'Sets up Python, uv environment and dependencies'
+
+inputs:
+  python:
+    description: 'Python version to use'
+    default: '3.11'
+    required: false
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "0.6.16"
+        enable-cache: 'false'
+
+    - id: cached-uv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: ${{ runner.os }}-${{ inputs.python }}-uv-${{ hashFiles('pyproject.toml') }}
+
+    - if: steps.cached-uv.outputs.cache-hit != 'true'
+      run: |
+        uv sync --frozen
+      shell: bash
