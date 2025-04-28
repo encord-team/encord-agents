@@ -3,7 +3,7 @@ name = "encord-agents"
 version = "v0.1.12"
 description = "A framework for producing custom agents for the Encord ecosystem."
 authors = [{ name = "Cord Technologies Limited", email = "hello@encord.com" }]
-requires-python = "~=3.10"
+requires-python = ">=3.10"
 readme = "README.md"
 license = "Apache-2.0"
 keywords = [
