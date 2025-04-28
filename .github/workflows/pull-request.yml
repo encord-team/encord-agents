@@ -68,7 +68,7 @@ jobs:
       - name: Run tests
         run: |
           export ENCORD_SSH_KEY='${{ env.ENCORD_SSH_KEY }}'
-          uv run pytest tests --verbose --junitxml=${{ env.TEST_REPORT }}
+          uv run pytest -n auto tests --verbose --junitxml=${{ env.TEST_REPORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v4
