@@ -531,10 +531,7 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-opencv = [
-    { name = "opencv-python" },
-]
-opencv-headless = [
+vision = [
     { name = "opencv-python-headless" },
 ]
 
@@ -570,8 +567,7 @@ dev = [
 requires-dist = [
     { name = "encord", specifier = ">=0.1.159" },
     { name = "numpy", specifier = ">=1.26.4" },
-    { name = "opencv-python", marker = "extra == 'opencv'", specifier = ">=4.1" },
-    { name = "opencv-python-headless", marker = "extra == 'opencv-headless'", specifier = ">=4.1" },
+    { name = "opencv-python-headless", marker = "extra == 'vision'", specifier = ">=4.1" },
     { name = "pydantic", specifier = ">2.1.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.5.2,<3" },
     { name = "requests", specifier = ">=2.32.3,<3" },

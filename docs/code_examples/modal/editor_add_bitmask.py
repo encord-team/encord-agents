@@ -4,7 +4,7 @@ Steps to make it work:
 
 # 1. Install modal and encord-agents:
 ```
-python -m pip install modal "encord-agents[opencv]"
+python -m pip install modal "encord-agents[vision]"
 ```
 
 # 2. Log in to modal
@@ -38,16 +38,9 @@ from typing_extensions import Annotated
 from encord_agents import FrameData
 from encord_agents.fastapi.dependencies import LabelRowV2, dep_label_row
 
-image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .apt_install(
-        "libgl1",
-        "libglib2.0-0",
-    )
-    .pip_install(
-        "fastapi[standard]",
-        "encord-agents",
-    )
+image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "fastapi[standard]",
+    "encord-agents",
 )
 app = modal.App(name="encord-agents-add-ball", image=image)
 

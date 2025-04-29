@@ -48,10 +48,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-opencv = [
-    "opencv-python>=4.1",
-]
-opencv-headless = [
+vision = [
     "opencv-python-headless>=4.1",
 ]
 

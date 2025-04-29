@@ -48,7 +48,7 @@ Now you need a template for creating an endpoint that can be used for defining a
 The following example:  
 
 1. **Creates a Docker Image** – We define a container that includes all necessary dependencies:  
-   - `encord-agents[opencv-headless]`: The library for building agents
+   - `encord-agents[vision]`: The library for building agents
    - `modal`: For hosting the agent
    - `libgl`: Required by `opencv`
 
@@ -75,13 +75,9 @@ import modal
 
 # 1. Define the docker image that will run the code.
 image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .apt_install(
-        "libgl1",
-        "libglib2.0-0",
-    ).pip_install(
+    modal.Image.debian_slim(python_version="3.12").pip_install(
         "fastapi[standard]",
-        "encord-agents[opencv-headless]",
+        "encord-agents[vision]",
     )
 )
 
