@@ -4,6 +4,15 @@ If you just want to install `encord-agents` in your current environment, you can
 python -m pip install encord-agents
 ```
 
+Note that we also optionally include additional dependencies used for working with Visual files: e.g: Images, Videos, Image Groups / Sequences. These can be used by
+
+```shell
+python -m pip install encord-agents[vision]
+```
+
+!!! info
+    We recommend this for the majority of use cases as we explicitly build our methods to make working with Visual files as easy and as fast as possible. We offer it as an optional dependency to support serverless use cases where you wish to avoid bundle size or are making Agents that don't interact with the visual data in each task e.g: Working purely with label data / priorities, text / pdf files or Audio files.
+
 !!! warning
     This Project requires `python >= 3.10`. If you do not have Python 3.10, we recommend using, e.g., [`pyenv`](https://github.com/pyenv/pyenv){ target="\_blank", rel="noopener noreferrer" } to manage your Python versions.
 
@@ -75,4 +84,4 @@ python -m pip install encord-agents
 
 ## Dependencies
 
-The dependencies for `encord-agents` are kept lightweight, with the only relatively large dependencies being `opencv-python` and `numpy`. To see the full list of dependencies, go [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.
+The dependencies for `encord-agents` are kept lightweight, with the only relatively large dependencies being `numpy` with `opencv-python-headless` included in `encord-agents[vision]` also. To see the full list of dependencies, go [here](https://github.com/encord-team/encord-agents/blob/main/pyproject.toml){ target="\_blank", rel="noopener noreferrer" }.
