@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 from typing import Annotated, NamedTuple
 from uuid import uuid4
@@ -306,3 +307,47 @@ class TestCustomCorsRegex:
         resp = client.post("/client", headers={"Origin": "https://example.com"})
         assert resp.status_code == 200, resp.content
         assert "Access-Control-Allow-Origin" not in resp.headers
+
+
+class TestFieldPairLockMiddleware:
+    context: SharedResolutionContext
+    client: TestClient
+    list_holder: list[int | tuple[int, str]]
+
+    # Set the project and first label row for the class
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup(cls, context: SharedResolutionContext) -> None:
+        cls.context = context
+        app = get_encord_app()
+        cls.list_holder = []
+
+        @app.post("/threadsafe-endpoint")
+        async def threadsafe_endpoint(frame_data: FrameData) -> None:
+            cls.list_holder.append(frame_data.frame)
+            await asyncio.sleep(0.1)
+            cls.list_holder.append((frame_data.frame, "DONE"))
+
+        cls.client = TestClient(app)
+
+    def test_field_pair_lock_middleware(self) -> None:
+        assert self.list_holder == []
+        resp = self.client.post(
+            "/threadsafe-endpoint",
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.video_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+        resp = self.client.post(
+            "/threadsafe-endpoint",
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.video_label_row.data_hash,
+                "frame": 1,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+        assert self.list_holder == [0, (0, "DONE"), 1, (1, "DONE")]

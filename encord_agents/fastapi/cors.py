@@ -4,10 +4,16 @@ with the appropriate CORS Middleware to allow
 interactions from the Encord platform.
 """
 
+import asyncio
+import json
 import typing
 from http import HTTPStatus
+from uuid import UUID
 
 from encord.exceptions import AuthorisationError
+from pydantic import ValidationError
+
+from encord_agents.core.data_model import FrameData
 
 try:
     from fastapi import FastAPI, Request
@@ -102,6 +108,45 @@ async def _authorization_error_exception_handler(request: Request, exc: Authoris
     )
 
 
+class FieldPairLockMiddleware(BaseHTTPMiddleware):
+    def __init__(
+        self,
+        app: ASGIApp,
+    ):
+        super().__init__(app)
+        self.field_locks: dict[tuple[UUID, UUID], asyncio.Lock] = {}
+        self.locks_lock = asyncio.Lock()
+
+    async def get_lock(self, frame_data: FrameData) -> asyncio.Lock:
+        lock_key = (frame_data.project_hash, frame_data.data_hash)
+        async with self.locks_lock:
+            if lock_key not in self.field_locks:
+                self.field_locks[lock_key] = asyncio.Lock()
+            return self.field_locks[lock_key]
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method != "POST":
+            return await call_next(request)
+        try:
+            body = await request.body()
+            try:
+                frame_data = FrameData.model_validate_json(body)
+            except ValidationError:
+                # Hope that route doesn't use FrameData
+                return await call_next(request)
+            lock = await self.get_lock(frame_data)
+            async with lock:
+                # Create a new request with the same body since we've already consumed it
+                request._body = body
+                return await call_next(request)
+        except Exception as e:
+            return Response(
+                content=json.dumps({"detail": f"Error in middleware: {str(e)}"}),
+                status_code=500,
+                media_type="application/json",
+            )
+
+
 def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     """
     Get a FastAPI app with the Encord middleware.
@@ -114,10 +159,12 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
         FastAPI: A FastAPI app with the Encord middleware.
     """
     app = FastAPI()
+
     app.add_middleware(
         EncordCORSMiddleware,
         allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,
     )
     app.add_middleware(EncordTestHeaderMiddleware)
+    app.add_middleware(FieldPairLockMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
     return app
