@@ -76,11 +76,7 @@ def editor_agent(
                 return generate_response()
 
             try:
-                # Adjust this based on how your Lambda receives data (e.g., event["body"])
-                request_body = event.get("body")
-                if not request_body:
-                    raise Exception("Request body is missing.")
-                frame_data = FrameData.model_validate_json(request_body)  # Assuming JSON string
+                frame_data = FrameData.model_validate(event)
                 logging.info(f"Request: {frame_data}")
             except Exception as e:
                 logging.error(f"Error parsing request: {e}")
