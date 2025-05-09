@@ -8,8 +8,6 @@ from numpy.typing import NDArray
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
-from encord_agents.core.vision import DATA_TYPES, b64_encode_image
-
 Base64Formats = Literal[".jpeg", ".jpg", ".png"]
 
 
@@ -126,6 +124,8 @@ class Frame:
         Returns: a dict or string depending on `output_format`.
 
         """
+        from encord_agents.core.vision import DATA_TYPES, b64_encode_image
+
         b64_str = b64_encode_image(self.content, image_format)
         if output_format == "raw":
             return b64_str

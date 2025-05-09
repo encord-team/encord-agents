@@ -46,8 +46,6 @@ from encord_agents.core.data_model import Frame, FrameData, InstanceCrop
 from encord_agents.core.dependencies.models import Depends
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_user_client
-from encord_agents.core.video import iter_video
-from encord_agents.core.vision import crop_to_object
 
 
 def dep_client() -> EncordUserClient:
@@ -181,6 +179,8 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
         An iterator.
 
     """
+    from encord_agents.core.video import iter_video
+
     if not storage_item.item_type == StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
@@ -294,6 +294,8 @@ def dep_object_crops(
     Returns: The dependency to be injected into the cloud function.
 
     """
+    from encord_agents.core.vision import crop_to_object
+
     legal_feature_hashes = {
         o.feature_node_hash if isinstance(o, Object) else o for o in (filter_ontology_objects or [])
     }

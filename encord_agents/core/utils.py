@@ -16,13 +16,6 @@ from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
 
-try:
-    import cv2
-except ImportError:
-    raise ImportError("Please install `opencv-python` or `opencv-python-headless`.")
-
-from .video import get_frame
-
 DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE = (
     "`frame` parameter set to None for a Native Image Group. "
     "Downloading entire native image group is currently not supported. "
@@ -203,9 +196,11 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
                     f.write(chunk)
 
         if file_type == "video" and frame is not None:  # Get that exact frame
+            from .video import get_frame, write_frame
+
             frame_content = get_frame(file_path, frame)
             frame_file = file_path.with_name(f"{file_path.name}_{frame}").with_suffix(".png")
-            cv2.imwrite(frame_file.as_posix(), frame_content)
+            write_frame(frame_file, frame_content)
             file_path = frame_file
 
         yield file_path
