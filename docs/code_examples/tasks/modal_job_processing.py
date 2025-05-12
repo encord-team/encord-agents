@@ -1,9 +1,9 @@
-import modal  # tested with modal client version: 0.72.10
 from encord.objects.ontology_labels_impl import LabelRowV2
-from typing_extensions import Annotated
-
 from encord_agents.tasks import Depends, QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
+from typing_extensions import Annotated
+
+import modal  # tested with modal client version: 0.72.10
 
 # 1. Modal configuration
 # Define a Docker image with the necessary dependencies

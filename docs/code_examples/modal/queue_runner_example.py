@@ -69,12 +69,12 @@ Update the following values for your use case:
 from typing import Iterable
 from uuid import UUID
 
-import modal
 from encord.objects.ontology_labels_impl import LabelRowV2
-from typing_extensions import Annotated
-
 from encord_agents.tasks import Depends, QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
+from typing_extensions import Annotated
+
+import modal
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -116,7 +116,9 @@ def stage_1(prefix: Annotated[str, Depends(last_eight)]):
 def main():
     for stage in runner.get_agent_stages():
         # Remote execution of function on tasks
-        result_strings: list[str] = list(stage_1.map([t.model_dump_json() for t in stage.get_tasks()]))
+        result_strings: list[str] = list(
+            stage_1.map([t.model_dump_json() for t in stage.get_tasks()])
+        )
 
         print(stage.title)
         completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
