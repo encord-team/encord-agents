@@ -331,9 +331,21 @@ def dep_objects(frame_data: FrameData, lr: LabelRowV2) -> list[ObjectInstance]:
     return object_instances
 
 
+DEncordClient = Annotated[EncordUserClient, Depends(dep_client)]
+"""
+Get an authenticated user client.
+"""
+
 DObjectsInstances = Annotated[list[ObjectInstance], Depends(dep_objects)]
 """
-Get all object instances that the agent was triggered on.
+Get all object instances that the agent was triggered on. 
+No pixels, just the annotation.
+"""
+
+DObjectCrops = Annotated[list[InstanceCrop], Depends(dep_object_crops)]
+"""
+Get all object crops that the agent was triggered on.
+The instance crop contains the object instance, the frame content (pixel values), and the frame.
 """
 
 DSingleFrame = Annotated[NDArray[np.uint8], Depends(dep_single_frame)]
@@ -349,11 +361,6 @@ Get a local file path to data asset temporarily stored till end of agent executi
 DVideoIterator = Annotated[Iterator[Frame], Depends(dep_video_iterator)]
 """
 Get a video frame iterator for doing things over many frames.
-"""
-
-DDataLookup = Annotated[DataLookup, Depends(dep_data_lookup)]
-"""
-Get a lookup to easily retrieve data rows and storage items associated with the given task.
 """
 
 DStorageItem = Annotated[StorageItem, Depends(dep_storage_item)]
