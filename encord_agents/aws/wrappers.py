@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
+from pydantic import ValidationError
+from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
@@ -79,11 +81,15 @@ def editor_agent(
             try:
                 frame_data = FrameData.model_validate(event)
                 logging.info(f"Request: {frame_data}")
-            except Exception as e:
+            except ValidationError as err:
                 logging.error(f"Error parsing request: {e}")
                 return {
                     "statusCode": 400,
-                    "body": f"Invalid request: {e}",
+                    "body": {
+                        "errors": err.errors(),
+                        "message": ", ".join([e["msg"] for e in err.errors()]),
+                        "input": to_jsonable_python(event),
+                    },
                 }
 
             client = get_user_client()
