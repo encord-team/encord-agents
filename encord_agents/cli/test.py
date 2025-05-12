@@ -138,7 +138,7 @@ def custom(
     "aws",
     short_help="Hit an AWS Docker container for testing",
 )
-def local(
+def aws(
     editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
     port: Annotated[int, Option(help="Local host port to hit")] = 8080,
     test_header: Annotated[bool, Option(help="Test header")] = False,

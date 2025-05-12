@@ -82,7 +82,7 @@ def editor_agent(
                 frame_data = FrameData.model_validate(event)
                 logging.info(f"Request: {frame_data}")
             except ValidationError as err:
-                logging.error(f"Error parsing request: {e}")
+                logging.error(f"Error parsing request: {err}")
                 return {
                     "statusCode": 400,
                     "body": {
