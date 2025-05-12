@@ -50,15 +50,16 @@ def editor_agent(
             origin = event.get("headers", {}).get("origin")  # Adjust based on your event structure
 
             if event.get("httpMethod") == "OPTIONS":  # Lambda equivalent of OPTIONS
+                headers: dict[str, Any] = {
+                    "Vary": "Origin",
+                }
                 response = {
                     "statusCode": 204,
-                    "headers": {
-                        "Vary": "Origin",
-                    },
+                    "headers": headers,
                 }
 
                 if origin and cors_regex.fullmatch(origin):
-                    response["headers"].update(
+                    headers.update(
                         {
                             "Access-Control-Allow-Origin": origin,
                             "Access-Control-Allow-Methods": "POST",
