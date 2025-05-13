@@ -74,7 +74,8 @@ def editor_agent(
 
                 return response
 
-            if event.get("headers", {}).get(EDITOR_TEST_REQUEST_HEADER):
+            headers = event.get("headers", {})
+            if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
                 return generate_response()
 
