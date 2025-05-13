@@ -26,10 +26,8 @@ def generate_response() -> Dict[str, Any]:
     """
     return {
         "statusCode": 200,
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-        },
         "body": "",  # Lambda expects a string body, even if empty
+        # "headers": CORS headers are handled by AWS Lambda from the configurations.
     }
 
 
@@ -37,7 +35,6 @@ def editor_agent(
     *,
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
     label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
-    custom_cors_regex: str | None = None,
 ) -> Callable[[AgentFunction], Callable[[Dict[str, Any], Any], Dict[str, Any]]]:
     """
     Wrapper to make resources available for AWS Lambda editor agents.
@@ -45,35 +42,9 @@ def editor_agent(
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Dict[str, Any], Any], Dict[str, Any]]:
         dependant = get_dependant(func=func)
-        cors_regex = re.compile(custom_cors_regex or ENCORD_DOMAIN_REGEX)
 
         @wraps(func)
         def wrapper(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-            origin = event.get("headers", {}).get("origin")  # Adjust based on your event structure
-
-            if event.get("httpMethod") == "OPTIONS":  # Lambda equivalent of OPTIONS
-                headers: dict[str, Any] = {
-                    "Vary": "Origin",
-                }
-                response = {
-                    "statusCode": 204,
-                    "headers": headers,
-                }
-
-                if origin and cors_regex.fullmatch(origin):
-                    headers.update(
-                        {
-                            "Access-Control-Allow-Origin": origin,
-                            "Access-Control-Allow-Methods": "POST",
-                            "Access-Control-Allow-Headers": "Content-Type",
-                            "Access-Control-Max-Age": "3600",
-                        }
-                    )
-                else:
-                    response["statusCode"] = 403
-
-                return response
-
             headers = event.get("headers", {})
             if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
