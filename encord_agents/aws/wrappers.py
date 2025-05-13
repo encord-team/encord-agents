@@ -79,7 +79,15 @@ def editor_agent(
                 return generate_response()
 
             try:
-                frame_data = FrameData.model_validate(event)
+                body = event.get("body")
+                if not body:
+                    return {"statusCode": 400, "body": {"errors": ["No request body"], "message": "No request body"}}
+                if isinstance(body, str):
+                    logging.info("Parsing body as string json")
+                    frame_data = FrameData.model_validate_json(body)
+                elif isinstance(body, dict):
+                    logging.info("Parsing body as json object")
+                    frame_data = FrameData.model_validate(body)
                 logging.info(f"Request: {frame_data}")
             except ValidationError as err:
                 logging.error(f"Error parsing request: {err}")
@@ -88,7 +96,6 @@ def editor_agent(
                     "body": {
                         "errors": err.errors(),
                         "message": ", ".join([e["msg"] for e in err.errors()]),
-                        "input": to_jsonable_python(event),
                     },
                 }
 
