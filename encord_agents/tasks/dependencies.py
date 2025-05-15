@@ -17,7 +17,6 @@ from encord_agents.core.data_model import Frame
 from encord_agents.core.dependencies.models import Depends
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.utils import download_asset, get_frame_count, get_user_client
-from encord_agents.core.video import iter_video, iter_video_with_indices
 from encord_agents.exceptions import PrintableError
 
 
@@ -151,6 +150,8 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
         An iterator.
 
     """
+    from encord_agents.core.video import iter_video
+
     if storage_item.item_type != StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
@@ -189,6 +190,8 @@ def dep_video_sampler(
     ```
 
     """
+    from encord_agents.core.video import iter_video_with_indices
+
     if storage_item.item_type != StorageItemType.VIDEO:
         raise NotImplementedError("`dep_video_sampler` only supported for video label rows")
 

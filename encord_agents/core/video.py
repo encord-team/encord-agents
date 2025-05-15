@@ -45,6 +45,18 @@ def get_frame(video_path: Path, desired_frame: int) -> NDArray[np.uint8]:
     return frame.astype(np.uint8)
 
 
+def write_frame(frame_path: Path, frame: NDArray[np.uint8]) -> None:
+    """
+    Write a frame to a file.
+
+    Args:
+        frame_path: The file path to write the frame to.
+        frame: The frame to write.
+
+    """
+    cv2.imwrite(frame_path.as_posix(), frame)
+
+
 def iter_video(video_path: Path) -> Iterator[Frame]:
     """
     Iterate video frame by frame.

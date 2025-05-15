@@ -135,6 +135,36 @@ def custom(
 
 
 @app.command(
+    "aws",
+    short_help="Hit an AWS Docker container for testing",
+)
+def aws(
+    editor_url: Annotated[str, Argument(help="Url copy/pasted from label editor")],
+    port: Annotated[int, Option(help="Local host port to hit")] = 8080,
+    test_header: Annotated[bool, Option(help="Test header")] = False,
+) -> None:
+    """Hit a localhost agents endpoint for testing an agent by copying the url from the Encord Label Editor over.
+
+    Given
+
+        - An editor url of the form [blue]`https://app.encord.com/label_editor/[green]{project_hash}[/green]/[green]{data_hash}[/green]/[green]{frame}[/green]`[/blue]
+        - A [green]port[/green] (optional)
+
+    The url [blue]http://localhost:[green]{port}[/green]/[green]{target}[/green][/blue] will be hit with a post request containing:
+    {
+        "projectHash": "[green]{project_hash}[/green]",
+        "dataHash": "[green]{data_hash}[/green]",
+        "frame": [green]frame[/green] or 0
+    }
+    """
+    payload, domain = parse_editor_url(editor_url)
+    target = "/2015-03-31/functions/function/invocations"
+    endpoint = f"http://localhost:{port}{target}"
+
+    hit_endpoint(endpoint, payload, domain, test_header=test_header)
+
+
+@app.command(
     "local",
     short_help="Hit a localhost agents endpoint for testing",
 )

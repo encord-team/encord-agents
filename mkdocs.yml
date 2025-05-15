@@ -39,6 +39,7 @@ nav:
       - "Overview": editor_agents/index.md
       - "Spec": editor_agents/spec.md
       - "GCP Cloud Functions": editor_agents/gcp.md
+      - "AWS Lambda Functions": editor_agents/aws_lambda.md
       - "FastAPI": editor_agents/fastapi.md
       - "Hosting with Modal": editor_agents/modal.md
       - "Custom Domains": editor_agents/custom_domain.md
