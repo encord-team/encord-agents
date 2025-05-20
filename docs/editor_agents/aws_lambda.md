@@ -536,7 +536,7 @@ aws lambda create-function \
 
 Now, proceed to [Step A](#step-a-configure-public-endpoint) below to complete the setup.
 
-## Communicatoin with Encord
+## Communication with Encord
 
 ### STEP A: Configure public endpoint
 
