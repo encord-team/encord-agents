@@ -18,7 +18,7 @@ Before you dive into one of the examples, please consider the properties in the 
 | [Zip upload](#building-a-lambda-function-using-zip-upload) | 50MB (250MB unzipped) | `easier` |
 | [Docker](#building-a-lambda-function-with-docker) | NA | `harder` |
 
-AWS limits zip uploads to 50MB (250MB uncompressed), which means that if you want to use, e.g., computer vision capabillities (e.g., with `pip install encord-agents[vision]`), the bundle can very quickly become too large; forcing you to use Docker.
+AWS limits zip uploads to 50MB (250MB uncompressed), which means that if you want to use, e.g., computer vision capabillities (like `pip install encord-agents[vision]`), the bundle can very quickly become too large; forcing you to use Docker.
 Other complications are that if you use specific dependencies that use C/C++ code under the hood, you have to install them with the right cpu architecture, which might cause you to have to upload your function before you can test it.
 
 More detailed AWS Documentation on python lambda functions can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python.html){ target="_blank", rel="noopener noreferrer" }.
@@ -67,7 +67,7 @@ Create a `lambda_function.py` file using the following template:
 from encord.objects.ontology_labels_impl import LabelRowV2
 
 from encord_agents.core.data_model import FrameData
-from encord_agents.gcp import editor_agent
+from encord_agents.aws import editor_agent
 
 
 @editor_agent()
@@ -83,7 +83,7 @@ Complete the `lambda_handler` function with the logic you want to execute when t
 
 !!! tip
     For more editor agent examples, see the [examples section](./examples/index.md).
-    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary.
+    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.aws.dependencies) into the function if necessary.
 
 You can find multiple examples of what can be done with editor agents [here](./examples/index.md).
 
@@ -266,7 +266,7 @@ Create a `lambda_function.py` file using the following template:
 from encord.objects.ontology_labels_impl import LabelRowV2
 
 from encord_agents.core.data_model import FrameData
-from encord_agents.gcp import editor_agent
+from encord_agents.aws import editor_agent
 
 
 @editor_agent()
@@ -282,7 +282,7 @@ Complete the `lambda_handler` function with the logic you want to execute when t
 
 !!! tip
     For more editor agent examples, see the [examples section](./examples/index.md).
-    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.gcp.dependencies) into the function if necessary.
+    You can inject multiple different [dependencies](../reference/editor_agents/#encord_agents.aws.dependencies) into the function if necessary.
 
 You can find multiple examples of what can be done with editor agents [here](./examples/index.md).
 

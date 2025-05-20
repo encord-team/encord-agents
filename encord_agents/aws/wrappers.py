@@ -25,7 +25,7 @@ def generate_response() -> Dict[str, Any]:
     Generate a Lambda response dictionary with a 200 status code.
     """
     return {
-        "statusCode": 200,
+        "statusCode": 204,
         "body": "",  # Lambda expects a string body, even if empty
         # "headers": CORS headers are handled by AWS Lambda from the configurations.
     }

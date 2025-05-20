@@ -72,7 +72,7 @@ def dep_single_frame(storage_item: StorageItem, frame_data: FrameData) -> NDArra
 
     The downloaded asset will be named `lr.data_hash.{suffix}`.
     When the function has finished running, the downloaded file is removed from the file system.
-  
+
     **Example:**
 
     ```python
@@ -116,7 +116,7 @@ def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
 
     This dependency fetches the underlying data asset using a signed URL.
 
-    The asset is temporarily stored on disk for the duration of the task and is automatically removed once the task 
+    The asset is temporarily stored on disk for the duration of the task and is automatically removed once the task
     completes.
 
     **Example:**
