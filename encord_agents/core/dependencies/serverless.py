@@ -1,12 +1,7 @@
 """
-Dependencies for injection in serverless editor agents.
+This module defines dependencies available for injection within serverless Editor Agents. These dependencies can be used independently, even when reliant on other dependencies.
 
-This module contains dependencies that you can inject within your cloud functions.
-Dependencies that depend on others don't need to be used together. They'll
-work just fine alone.
-
-Note that you can also use the following _typed_ parameters. If the type annotations
-are not present, the injection mechanism cannot resolve the them:
+Note: The injection mechanism necessitates the presence of type annotations for the following parameters to ensure proper resolution.
 
 ```python
 from encord.project import Project
@@ -76,8 +71,8 @@ def dep_single_frame(storage_item: StorageItem, frame_data: FrameData) -> NDArra
     Dependency to inject the first frame of the underlying asset.
 
     The downloaded asset will be named `lr.data_hash.{suffix}`.
-    When the function has finished, the downloaded file will be removed from the file system.
-
+    When the function has finished running, the downloaded file is removed from the file system.
+  
     **Example:**
 
     ```python
@@ -116,11 +111,13 @@ def dep_single_frame(storage_item: StorageItem, frame_data: FrameData) -> NDArra
 
 def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
     """
-    Get a local file path to data asset temporarily stored till end of agent execution.
+    Returns a local file path to the data asset, temporarily stored for the duration of the agent's execution.
 
-    This dependency will fetch the underlying data asset based on a signed url.
-    It will temporarily store the data on disk. Once the task is completed, the
-    asset will be removed from disk again.
+
+    This dependency fetches the underlying data asset using a signed URL.
+
+    The asset is temporarily stored on disk for the duration of the task and is automatically removed once the task 
+    completes.
 
     **Example:**
 
@@ -151,7 +148,7 @@ def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
 
 def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], None, None]:
     """
-    Dependency to inject a video frame iterator for doing things over many frames.
+    Dependency to inject a video frame iterator for performing operations over many frames.
 
     **Example:**
 
@@ -173,7 +170,7 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
         storage_item: Automatically injected storage item dependency.
 
     Raises:
-        NotImplementedError: Will fail for other data types than video.
+        NotImplementedError: Fails for data types other than video.
 
     Yields:
         An iterator.
@@ -190,13 +187,13 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
 
 def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)]) -> DataLookup:
     """
-    Get a lookup to easily retrieve data rows and storage items associated with the given task.
+    Returns a lookup for easily retrieving data rows and storage items associated with the given task.
 
     !!! info
-        If you're just looking to get the associated storage item to a task, consider using `dep_storage_item` instead.
+       If you need the storage item associated with a task, consider using `dep_storage_item` instead.
 
 
-    The lookup can, e.g., be useful for
+    The lookup can be useful for, amongst other things:
 
     * Updating client metadata
     * Downloading data from signed urls
@@ -268,9 +265,9 @@ def dep_object_crops(
     filter_ontology_objects: list[Object | str] | None = None,
 ) -> Callable[[FrameData, LabelRowV2, NDArray[np.uint8]], list[InstanceCrop]]:
     """
-    Get a list of object instances and frame crops associated with each object.
+    Returns a list of object instances and frame crops associated with each object.
 
-    Useful, e.g., to be able to run each crop against a model.
+    One example use-case is to run each crop against a model.
 
     **Example:**
 
@@ -287,7 +284,7 @@ def dep_object_crops(
 
     Args:
         filter_ontology_objects: Specify a list of ontology objects to include.
-            If provided, only instances of these object types will be included.
+            If provided, only instances of these object types are included.
             Strings are matched against `feature_node_hashes`.
 
 
@@ -365,5 +362,5 @@ Get a video frame iterator for doing things over many frames.
 
 DStorageItem = Annotated[StorageItem, Depends(dep_storage_item)]
 """
-Get the storage item associated with the underlying agent task to, e.g., read/write client metadata or read data properties.
+Get the storage item associated with the underlying agent task to, for example, read/write client metadata or read data properties.
 """
