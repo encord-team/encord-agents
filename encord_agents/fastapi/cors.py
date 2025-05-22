@@ -9,6 +9,8 @@ from http import HTTPStatus
 
 from encord.exceptions import AuthorisationError
 
+from encord_agents.core.exceptions import EncordEditorAgentException
+
 try:
     from fastapi import FastAPI, Request
     from fastapi.middleware.cors import CORSMiddleware
@@ -48,7 +50,7 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         app: ASGIApp,
         allow_origins: typing.Sequence[str] = (),
         allow_methods: typing.Sequence[str] = ("POST",),
-        allow_headers: typing.Sequence[str] = (),
+        allow_headers: typing.Sequence[str] = (EDITOR_TEST_REQUEST_HEADER,),
         allow_credentials: bool = False,
         allow_origin_regex: str = ENCORD_DOMAIN_REGEX,
         expose_headers: typing.Sequence[str] = (),
@@ -83,6 +85,23 @@ class EncordTestHeaderMiddleware(BaseHTTPMiddleware):  # type: ignore [misc, unu
                 return JSONResponse(content=None, status_code=200)
 
         return await call_next(request)
+
+
+async def _encord_editor_agent_exception_handler(request: Request, exc: EncordEditorAgentException) -> JSONResponse:
+    """
+    Custom exception handler for encord_agents.core.exceptions.EncordEditorAgentException.
+
+    Args:
+        request: FastAPI request object
+        exc: Exception raised by the agent implementation
+
+    Returns:
+        JSON response with the error message and status code 400
+    """
+    return JSONResponse(
+        status_code=HTTPStatus.BAD_REQUEST,
+        content=exc.json_response_body,
+    )
 
 
 async def _authorization_error_exception_handler(request: Request, exc: AuthorisationError) -> JSONResponse:
@@ -120,4 +139,5 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     )
     app.add_middleware(EncordTestHeaderMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
+    app.exception_handlers[EncordEditorAgentException] = _encord_editor_agent_exception_handler
     return app

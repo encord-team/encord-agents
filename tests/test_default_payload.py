@@ -10,7 +10,7 @@ from encord_agents.fastapi.dependencies import (
 )
 
 try:
-    from fastapi import Depends, FastAPI
+    from fastapi import Depends
     from fastapi.testclient import TestClient
 except Exception:
     exit()
@@ -29,6 +29,19 @@ def test_fastapi_can_handle_placeholder_payload() -> None:
         counter += 1
 
     client = TestClient(app)
+    options_resp = client.options(
+        "/test",
+        headers={
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": EDITOR_TEST_REQUEST_HEADER,
+            "Origin": "https://app.encord.com",
+        },
+    )
+    assert options_resp.status_code == 200, options_resp.content
+    assert "Access-Control-Allow-Origin" in options_resp.headers
+    assert "Access-Control-Allow-Headers" in options_resp.headers
+    assert EDITOR_TEST_REQUEST_HEADER in options_resp.headers["Access-Control-Allow-Headers"]
+
     resp = client.post(
         "/test",
         headers={EDITOR_TEST_REQUEST_HEADER: "test-content"},

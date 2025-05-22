@@ -162,3 +162,14 @@ class InstanceCrop(Frame):
     r"""
     The [ObjectInstance](https://docs.encord.com/sdk-documentation/sdk-references/ObjectInstance#objectinstance){ target="\_blank", rel="noopener noreferrer" } associated to the crop.
     """
+
+
+class EditorAgentResponse(BaseModel):
+    """
+    A base class for all return types of editor agent functions.
+    """
+
+    message: str | None = None
+    """
+    A message to be displayed to the user.
+    """

@@ -1,8 +1,8 @@
 import logging
-import re
 from contextlib import ExitStack
 from functools import wraps
-from typing import Any, Callable, Dict
+from http import HTTPStatus
+from typing import Any, Callable, Dict, cast
 
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
@@ -11,22 +11,24 @@ from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
-from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER
+from encord_agents.core.data_model import EditorAgentResponse, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
+from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.core.utils import get_user_client
 
 AgentFunction = Callable[..., Any]
 
 
-def generate_response() -> Dict[str, Any]:
+def _generate_response(body: dict[str, Any] | None = None, status_code: int | None = None) -> Dict[str, Any]:
     """
     Generate a Lambda response dictionary with a 200 status code.
     """
+    has_body = bool(body)
     return {
-        "statusCode": 204,
-        "body": "",  # Lambda expects a string body, even if empty
+        "statusCode": status_code or (200 if has_body else 204),
+        "body": to_jsonable_python(body) if has_body else "",  # Lambda expects a string body, even if empty
         # "headers": CORS headers are handled by AWS Lambda from the configurations.
     }
 
@@ -48,10 +50,11 @@ def editor_agent(
             headers = event.get("headers", {})
             if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
-                return generate_response()
+                return _generate_response()
 
             try:
                 body = event.get("body")
+                frame_data: FrameData | None = None
                 if not body:
                     return {"statusCode": 400, "body": {"errors": ["No request body"], "message": "No request body"}}
                 if isinstance(body, str):
@@ -70,6 +73,7 @@ def editor_agent(
                         "message": ", ".join([e["msg"] for e in err.errors()]),
                     },
                 }
+            frame_data = cast(FrameData, frame_data)
 
             client = get_user_client()
             try:
@@ -91,15 +95,30 @@ def editor_agent(
                 if label_row is None:
                     label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
                 assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
-                storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                try:
+                    storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                except AuthorisationError:
+                    return {"statusCode": 403, "body": "Forbidden"}
 
             context_obj = Context(
                 project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item
             )
+            result: None | Any | EditorAgentResponse = None
             with ExitStack() as stack:
-                dependencies = solve_dependencies(context=context_obj, dependant=dependant, stack=stack)
-                func(**dependencies.values)
-            return generate_response()
+                try:
+                    dependencies = solve_dependencies(context=context_obj, dependant=dependant, stack=stack)
+                except AuthorisationError:
+                    return {"statusCode": 403, "body": "Forbidden"}
+                try:
+                    result = func(**dependencies.values)
+                    if isinstance(result, EditorAgentResponse):
+                        return _generate_response(result.model_dump())
+                    return _generate_response()
+                except EncordEditorAgentException as exc:
+                    return _generate_response(
+                        exc.json_response_body,
+                        status_code=HTTPStatus.BAD_REQUEST,
+                    )
 
         return wrapper
 
