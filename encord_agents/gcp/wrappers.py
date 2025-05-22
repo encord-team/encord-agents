@@ -19,6 +19,7 @@ from encord_agents.core.data_model import (
 )
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
+from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.core.utils import get_user_client
 
 AgentFunction = Callable[..., Any]
@@ -115,13 +116,19 @@ def editor_agent(
                 storage_item = client.get_storage_item(label_row.backing_item_uuid)
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
+            result: Any | None | EditorAgentResponse = None
             with ExitStack() as stack:
                 dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
-                result = func(**dependencies.values)
-            if isinstance(result, EditorAgentResponse):
-                response = make_response(result.model_dump_json())
-                response.status_code = HTTPStatus.OK
-                return response
+                try:
+                    result = func(**dependencies.values)
+                    if isinstance(result, EditorAgentResponse):
+                        response = make_response(result.model_dump_json())
+                        response.status_code = HTTPStatus.OK
+                        return response
+                except EncordEditorAgentException as exc:
+                    response = make_response(exc.json_response_body)
+                    response.status_code = HTTPStatus.BAD_REQUEST
+                    return response
             return generate_response()
 
         return wrapper
