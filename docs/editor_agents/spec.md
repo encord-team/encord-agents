@@ -25,7 +25,11 @@ This makes your agents more interactive and more informative.
 When, for example, the label state does not conform with the expectation of the editor agent or function of the agent is to check the validity of the current labels, the response type offers a way to communicate that to the annotator.
 ### Error handling
 
-Additionally, if you make use of the `AuthorisationError` handler (via [get_encord_app](../reference/editor_agents.md#encord_agents.fastapi.cors.get_encord_app)), then we will raise appropriate errors depending on issues with the Agent. Most notably, in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include message in the body of the response:
+You can raise an `EncordEditorAgentException` which will be handled and returned via the Agent appropriately e.g: If your agent requires being triggered on polygons and it was triggered on a skeleton, you can return an informative error to the Encord platform.
+
+Additionally in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include the Authorisation message in the body of the response. 
+
+
 
 ```typescript
 type EditorAgentErrorResponse = {
