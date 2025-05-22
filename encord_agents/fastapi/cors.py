@@ -139,4 +139,5 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     )
     app.add_middleware(EncordTestHeaderMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
+    app.exception_handlers[EncordEditorAgentException] = _encord_editor_agent_exception_handler
     return app

@@ -20,6 +20,7 @@ from encord_agents.core.data_model import (
     LabelRowInitialiseLabelsArgs,
     LabelRowMetadataIncludeArgs,
 )
+from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
     dep_client,
@@ -149,6 +150,10 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
     @app.post("/editor-agent-return-type")
     def post_editor_agent_return_type() -> EditorAgentResponse:
         return EditorAgentResponse(message="Hello, world!")
+
+    @app.post("/editor-agent-exception-type")
+    def post_editor_agent_exception_type() -> None:
+        raise EncordEditorAgentException(message="Exception Message")
 
     return app
 
@@ -283,3 +288,8 @@ class TestDependencyResolutionFastapi:
         resp = self.client.post("/editor-agent-return-type")
         assert resp.status_code == 200, resp.content
         assert resp.json() == {"message": "Hello, world!"}
+
+    def test_editor_agent_exception_handling(self) -> None:
+        resp = self.client.post("/editor-agent-exception-type")
+        assert resp.status_code == 400, resp.content
+        assert resp.json() == {"message": "Exception Message"}
