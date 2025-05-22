@@ -21,7 +21,7 @@ from encord_agents.core.utils import get_user_client
 AgentFunction = Callable[..., Any]
 
 
-def generate_response(body: dict[str, Any] | None = None, status_code: int | None = None) -> Dict[str, Any]:
+def _generate_response(body: dict[str, Any] | None = None, status_code: int | None = None) -> Dict[str, Any]:
     """
     Generate a Lambda response dictionary with a 200 status code.
     """
@@ -50,7 +50,7 @@ def editor_agent(
             headers = event.get("headers", {})
             if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
-                return generate_response()
+                return _generate_response()
 
             try:
                 body = event.get("body")
@@ -95,21 +95,27 @@ def editor_agent(
                 if label_row is None:
                     label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
                 assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
-                storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                try:
+                    storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                except AuthorisationError:
+                    return {"statusCode": 403, "body": "Forbidden"}
 
             context_obj = Context(
                 project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item
             )
             result: None | Any | EditorAgentResponse = None
             with ExitStack() as stack:
-                dependencies = solve_dependencies(context=context_obj, dependant=dependant, stack=stack)
+                try:
+                    dependencies = solve_dependencies(context=context_obj, dependant=dependant, stack=stack)
+                except AuthorisationError:
+                    return {"statusCode": 403, "body": "Forbidden"}
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        return generate_response(result.model_dump())
-                    return generate_response()
+                        return _generate_response(result.model_dump())
+                    return _generate_response()
                 except EncordEditorAgentException as exc:
-                    return generate_response(
+                    return _generate_response(
                         exc.json_response_body,
                         status_code=HTTPStatus.BAD_REQUEST,
                     )

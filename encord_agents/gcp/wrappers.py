@@ -26,7 +26,7 @@ from encord_agents.core.utils import get_user_client
 AgentFunction = Callable[..., Any]
 
 
-def generate_response(body: str = "", status_code: HTTPStatus | None = None) -> Response:
+def _generate_response(body: str = "", status_code: HTTPStatus | None = None) -> Response:
     """
     Generate a Response object with status 200 in order to tell the FE that the function has finished successfully.
     :return: Response object with the right CORS settings.
@@ -88,7 +88,7 @@ def editor_agent(
 
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
                 logging.info("Editor test request")
-                return generate_response()
+                return _generate_response()
             if not request.is_json:
                 raise Exception("Request should be JSON. Migrated over to new format")
             frame_data = FrameData.model_validate(request.get_json())
@@ -97,9 +97,8 @@ def editor_agent(
             client = get_user_client()
             try:
                 project = client.get_project(frame_data.project_hash)
-            except AuthorisationError:
-                response = make_response()
-                response.status_code = HTTPStatus.FORBIDDEN
+            except AuthorisationError as err:
+                response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
                 return response
 
             label_row: LabelRowV2 | None = None
@@ -116,21 +115,31 @@ def editor_agent(
                 if label_row is None:
                     label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
                 assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
-                storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                try:
+                    storage_item = client.get_storage_item(label_row.backing_item_uuid)
+                except AuthorisationError as err:
+                    response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
+                    return response
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
             result: Any | None | EditorAgentResponse = None
             with ExitStack() as stack:
-                dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
+                try:
+                    # Solving dependencies can execute arbitrary code including fetch from Encord platform
+                    # e.g: Get storage item which can throw error
+                    dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
+                except AuthorisationError as err:
+                    response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
+                    return response
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        response = generate_response(result.model_dump_json(), HTTPStatus.OK)
+                        response = _generate_response(result.model_dump_json(), HTTPStatus.OK)
                         return response
                 except EncordEditorAgentException as exc:
-                    response = generate_response(to_jsonable_python(exc.json_response_body), HTTPStatus.BAD_REQUEST)
+                    response = _generate_response(to_jsonable_python(exc.json_response_body), HTTPStatus.BAD_REQUEST)
                     return response
-            return generate_response()
+            return _generate_response()
 
         return wrapper
 
