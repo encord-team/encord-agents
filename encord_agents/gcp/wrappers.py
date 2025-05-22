@@ -9,6 +9,7 @@ from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
 from flask import Request, Response, make_response
+from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
@@ -25,12 +26,14 @@ from encord_agents.core.utils import get_user_client
 AgentFunction = Callable[..., Any]
 
 
-def generate_response() -> Response:
+def generate_response(body: str = "", status_code: HTTPStatus | None = None) -> Response:
     """
     Generate a Response object with status 200 in order to tell the FE that the function has finished successfully.
     :return: Response object with the right CORS settings.
     """
-    response = make_response("")
+    response = make_response(body)
+    if status_code:
+        response.status_code = status_code
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
@@ -122,12 +125,10 @@ def editor_agent(
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        response = make_response(result.model_dump_json())
-                        response.status_code = HTTPStatus.OK
+                        response = generate_response(result.model_dump_json(), HTTPStatus.OK)
                         return response
                 except EncordEditorAgentException as exc:
-                    response = make_response(exc.json_response_body)
-                    response.status_code = HTTPStatus.BAD_REQUEST
+                    response = generate_response(to_jsonable_python(exc.json_response_body), HTTPStatus.BAD_REQUEST)
                     return response
             return generate_response()
 
