@@ -79,7 +79,7 @@ def editor_agent(
                 headers = {
                     "Access-Control-Allow-Origin": request.origin,
                     "Access-Control-Allow-Methods": "POST",
-                    "Access-Control-Allow-Headers": "Content-Type",
+                    "Access-Control-Allow-Headers": f"Content-Type, {EDITOR_TEST_REQUEST_HEADER}",
                     "Access-Control-Max-Age": "3600",
                 }
                 response.headers.update(headers)
