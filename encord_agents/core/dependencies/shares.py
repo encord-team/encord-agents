@@ -14,16 +14,16 @@ class DataLookup:
     """
     !!! warning "Deprecated"
         `DataLookup` is deprecated and will be removed in version 0.2.10.
-        
+
         **Migration Guide:**
-        
+
         - For accessing storage items, use `dep_storage_item` instead:
           ```python
           # Old way (deprecated)
           from encord_agents.core.dependencies.shares import DataLookup
           lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
           storage_item = lookup.get_storage_item(data_hash)
-          
+
           # New way (recommended)
           from encord_agents.tasks.dependencies import dep_storage_item
           # or from encord_agents.aws.dependencies import dep_storage_item
@@ -32,7 +32,7 @@ class DataLookup:
           storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
           ```
     """
-    
+
     __instances__: dict[UUID, DataLookup] = {}
 
     def __init__(self, dataset_hashes: list[str | UUID] | None = None) -> None:
@@ -90,7 +90,7 @@ class DataLookup:
     def backing_item_uuids(self) -> list[UUID]:
         """
         Get all backing item uuids for all data rows in the data lookup.
-        
+
         !!! warning "Deprecated"
             This property is deprecated and will be removed in version 0.2.10.
             Use the EncordUserClient directly to access backing item UUIDs from label rows.

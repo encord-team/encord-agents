@@ -381,7 +381,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
 
     """
     import warnings
-    
+
     warnings.warn(
         "dep_data_lookup is deprecated and will be removed in version 0.2.10. "
         "Use 'dep_storage_item' instead for accessing storage items. "

@@ -391,7 +391,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     ) -> str:
         # storage_item is directly available
         client_metadata = storage_item.client_metadata
-        
+
         # Update metadata
         storage_item.update(
             client_metadata={

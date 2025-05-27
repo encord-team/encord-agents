@@ -198,7 +198,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     ```python
     # Old way (deprecated)
     from encord_agents.core.dependencies.serverless import dep_data_lookup, DataLookup
-    
+
     @editor_agent()
     def my_agent(
         frame_data: FrameData,
@@ -230,7 +230,7 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
 
     """
     import warnings
-    
+
     warnings.warn(
         "dep_data_lookup is deprecated and will be removed in version 0.2.10. "
         "Use 'dep_storage_item' instead for accessing storage items. "

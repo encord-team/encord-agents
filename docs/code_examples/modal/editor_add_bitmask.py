@@ -28,15 +28,15 @@ See more [here](https://agents-docs.encord.com/editor_agents/modal/).
 """
 
 import cv2
-import modal
 import numpy as np
 from encord.objects.bitmask import BitmaskCoordinates
 from encord.objects.common import Shape
-from fastapi import Depends
-from typing_extensions import Annotated
-
 from encord_agents import FrameData
 from encord_agents.fastapi.dependencies import LabelRowV2, dep_label_row
+from typing_extensions import Annotated
+
+import modal
+from fastapi import Depends
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
