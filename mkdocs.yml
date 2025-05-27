@@ -53,7 +53,7 @@ nav:
           - "Multi-Processing (Queues)": task_agents/queue_runner.md
       - "Examples":
           - "Prioritize Annotation Tasks": notebooks/task_agent_set_priority.ipynb
-          - "Route dependant on annotator name": notebooks/task_agent_route_on_annotator_name.ipynb
+          - "Route tasks by annotator name": notebooks/task_agent_route_on_annotator_name.ipynb
           - "Transfer Labels to a Twin Project": notebooks/twin_project_label_transfer.ipynb
           - "Pre-Label Videos with Bounding Boxes": notebooks/prelabel_videos_with_bounding_boxes.ipynb
           - "Pre-label Videos with Mask R-CNN": notebooks/mask_rcnn_on_videos.ipynb
