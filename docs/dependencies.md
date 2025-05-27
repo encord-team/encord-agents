@@ -56,4 +56,11 @@ def by_custom_data(
 
 ```
 
-The function itself can also rely on other dependencies if needed, allowing more complicated resource acquisition. See the internals of `dep_video_iterator` for an example of this. 
+The function itself can also rely on other dependencies if needed, allowing more complicated resource acquisition. See the internals of `dep_video_iterator` for an example of this.
+
+## Migration from Deprecated Dependencies
+
+!!! warning "DataLookup Deprecation"
+    The `DataLookup` class and `dep_data_lookup` dependency functions are deprecated and will be removed in version 0.2.10.
+
+If you're currently using `DataLookup` or `dep_data_lookup`, please see the [Migration Guide](./reference/migration_guide.md) for detailed instructions on how to update your code to use the recommended alternatives. 

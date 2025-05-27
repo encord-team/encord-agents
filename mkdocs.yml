@@ -66,6 +66,7 @@ nav:
   - "Pre-built Agents":
       - "Docker Agent Examples": pre_built_agents.md
   - "Reference":
+      - "Migration Guide": reference/migration_guide.md
       - "Editor Agents": reference/editor_agents.md
       - "Task Agents": reference/task_agents.md
       - "Core": reference/core.md

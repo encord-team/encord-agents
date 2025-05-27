@@ -189,37 +189,38 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     """
     Returns a lookup for easily retrieving data rows and storage items associated with the given task.
 
-    !!! info
-       If you need the storage item associated with a task, consider using `dep_storage_item` instead.
+    !!! warning "Deprecated"
+        `dep_data_lookup` is deprecated and will be removed in version 0.2.10.
+        Use `dep_storage_item` instead for accessing storage items.
 
-
-    The lookup can be useful for, amongst other things:
-
-    * Updating client metadata
-    * Downloading data from signed urls
-    * Matching data to other projects
-
-    **Example:**
+    **Migration Guide:**
 
     ```python
-    from typing_extensions import Annotated
-    from encord.storage import StorageItem
-    from encord_agents import FrameData
-    from encord_agents.gcp import editor_agent, Depends
-    from encord_agents.gcp.dependencies import DataLookup, dep_data_lookup
-
+    # Old way (deprecated)
+    from encord_agents.core.dependencies.serverless import dep_data_lookup, DataLookup
+    
     @editor_agent()
     def my_agent(
         frame_data: FrameData,
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ):
-        print("data hash", lookup.get_data_row(frame_data.data_hash))
-        print("storage item", lookup.get_storage_item(frame_data.data_hash))
+        storage_item = lookup.get_storage_item(frame_data.data_hash)
         ...
 
+    # New way (recommended)
+    from encord_agents.gcp.dependencies import dep_storage_item
+    # or from encord_agents.aws.dependencies import dep_storage_item
+    # or from encord_agents.fastapi.dependencies import dep_storage_item
 
+    @editor_agent()
+    def my_agent(
+        frame_data: FrameData,
+        storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
+    ):
+        # storage_item is directly available
+        print(storage_item.client_metadata)
+        ...
     ```
-
 
     Args:
         lookup: The object that you can use to lookup data rows and storage items. Automatically injected.
@@ -228,6 +229,15 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
         The (shared) lookup object.
 
     """
+    import warnings
+    
+    warnings.warn(
+        "dep_data_lookup is deprecated and will be removed in version 0.2.10. "
+        "Use 'dep_storage_item' instead for accessing storage items. "
+        "See the function docstring for migration examples.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return lookup
 
 

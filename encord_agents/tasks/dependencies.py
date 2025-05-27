@@ -362,47 +362,45 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     """
     Get a lookup to easily retrieve data rows and storage items associated with the given task.
 
-    !!! info
-        If you're just looking to get the associated storage item to a task, consider using `dep_storage_item` instead.
+    !!! warning "Deprecated"
+        `dep_data_lookup` is deprecated and will be removed in version 0.2.10.
+        Use `dep_storage_item` instead for accessing storage items.
 
-
-    The lookup can, e.g., be useful for
-
-    * Updating client metadata
-    * Downloading data from signed urls
-    * Matching data to other projects
-
-    **Example:**
+    **Migration Guide:**
 
     ```python
-    from encord.orm.dataset import DataRow
-    from encord.stotage import StorageItem
-    from encord.workflow.stages.agent import AgentTask
+    # Old way (deprecated)
+    from encord_agents.tasks.dependencies import dep_data_lookup, DataLookup
 
     @runner.stage(stage="Agent 1")
     def my_agent(
         task: AgentTask,
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ) -> str:
-        # Data row from the underlying dataset
-        data_row: DataRow = lookup.get_data_row(task.data_hash)
-
-        # Storage item from Encord Index
-        storage_item: StorageItem = lookup.get_storage_item(task.data_hash)
-
-        # Current metadata
+        storage_item = lookup.get_storage_item(task.data_hash)
         client_metadata = storage_item.client_metadata
+        ...
 
+    # New way (recommended)
+    from encord_agents.tasks.dependencies import dep_storage_item
+
+    @runner.stage(stage="Agent 1")
+    def my_agent(
+        task: AgentTask,
+        storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
+    ) -> str:
+        # storage_item is directly available
+        client_metadata = storage_item.client_metadata
+        
         # Update metadata
         storage_item.update(
             client_metadata={
                 "new": "entry",
                 **(client_metadata or {})
             }
-        )  # metadata. Make sure not to update in place!
+        )
         ...
     ```
-
 
     Args:
         lookup: The object that you can use to lookup data rows and storage items. Automatically injected.
@@ -414,8 +412,9 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(DataLookup.sharable)])
     import warnings
 
     warnings.warn(
-        "dep_data_lookup is deprecated and will be removed in a future version. "
-        "Use dep_storage_item instead for accessing storage items.",
+        "dep_data_lookup is deprecated and will be removed in version 0.2.10. "
+        "Use 'dep_storage_item' instead for accessing storage items. "
+        "See the function docstring for migration examples.",
         DeprecationWarning,
         stacklevel=2,
     )

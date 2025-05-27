@@ -343,33 +343,34 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
     """
     Get a lookup to easily retrieve data rows and storage items associated with the given task.
 
-    !!! info
-        If you're just looking to get the associated storage item to a task, consider using `dep_storage_item` instead.
+    !!! warning "Deprecated"
+        `dep_data_lookup` is deprecated and will be removed in version 0.2.10.
+        Use `dep_storage_item` instead for accessing storage items.
 
-
-    The lookup can, e.g., be useful for
-
-    * Updating client metadata
-    * Downloading data from signed urls
-    * Matching data to other projects
-
-    **Example:**
+    **Migration Guide:**
 
     ```python
-    from fastapi import Form
-    from typing_extensions import Annotated
-    from encord_agents import FrameData
+    # Old way (deprecated)
     from encord_agents.fastapi.dependencies import dep_data_lookup, DataLookup
 
-    ...
     @app.post("/my-agent")
     def my_agent(
         frame_data: FrameData,
         lookup: Annotated[DataLookup, Depends(dep_data_lookup)]
     ):
-        # Client will authenticated and ready to use.
-        print(lookup.get_data_row(frame_data.data_hash).title)
-        print(lookup.get_storage_item(frame_data.data_hash).client_metadata)
+        storage_item = lookup.get_storage_item(frame_data.data_hash)
+        print(storage_item.client_metadata)
+
+    # New way (recommended)
+    from encord_agents.fastapi.dependencies import dep_storage_item
+
+    @app.post("/my-agent")
+    def my_agent(
+        frame_data: FrameData,
+        storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
+    ):
+        # storage_item is directly available
+        print(storage_item.client_metadata)
     ```
 
     Args:
@@ -379,6 +380,15 @@ def dep_data_lookup(lookup: Annotated[DataLookup, Depends(_lookup_adapter)]) -> 
         The (shared) lookup object.
 
     """
+    import warnings
+    
+    warnings.warn(
+        "dep_data_lookup is deprecated and will be removed in version 0.2.10. "
+        "Use 'dep_storage_item' instead for accessing storage items. "
+        "See the function docstring for migration examples.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return lookup
 
 
