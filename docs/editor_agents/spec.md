@@ -12,7 +12,7 @@ type EditorAgentPayload = {
 };
 ```
 
-This aligns with the [FrameData](../reference/core.md#encord_agents.core.data_model.FrameData). Notably we use the `objectHashes: string[]` type to represent that the field is either **not present** or **present and a list of strings**.
+This aligns with the [FrameData](../reference/core.md#encord_agents.core.data_model.FrameData). Notably we use the `objectHashes?: string[]` type to represent that the field is either **not provided** or **provided and a list of strings**.
 
 ### Test Payload
 
@@ -29,12 +29,10 @@ You can raise an `EncordEditorAgentException` which will be handled and returned
 
 Additionally in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include the Authorisation message in the body of the response. 
 
-
-
 ```typescript
 type EditorAgentErrorResponse = {
   message?: string;
 }
 ```
 
-We will display this in the platform to allow intuitive usage of your agent.
+We will display this on the platform to allow intuitive usage of your agent.
