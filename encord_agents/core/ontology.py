@@ -44,7 +44,7 @@ class GenericFieldModel(BaseModel):
 
     def set_answer(self, instance: ClassificationInstance) -> None:
         """
-        This function will be called from the parsing loop to allow the model to set it self as answer
+        This function is called from the parsing loop to allow the model to set it self as answer
         on the classification instance.
         """
         ...
@@ -398,8 +398,7 @@ class OntologyDataModel(Generic[OntologyType]):
         Args:
             answer: The json object as a raw string.
 
-        Returns: a list of classification / object instances that you will then
-            have to add to a label row.
+        Returns: a list of classification / object instances that must be added to a label row.
 
         """
         return self.validate_json(answer)
@@ -422,9 +421,7 @@ class OntologyDataModel(Generic[OntologyType]):
         Args:
             answer_str: The json object as a raw string.
 
-        Returns: a list of classification / object instances that you will then
-            have to add to a label row.
-
+        Returns: a list of classification / object instances that must be added to a label row.
         """
         answer = self.DataModel.model_validate_json(answer_str)
         # ^ if classification has a property per top-level classification in the ontology

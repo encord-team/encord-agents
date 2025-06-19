@@ -42,7 +42,7 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
     app.add_middleware(EncordCORSMiddleware)
     ```
 
-    The CORS middleware will allow POST requests from the Encord domain.
+    The CORS middleware allows POST requests from the Encord domain.
     """
 
     def __init__(

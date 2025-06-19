@@ -145,7 +145,7 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
     """
     Download the asset associated to a label row to disk.
 
-    This function is a context manager. Data will be cleaned up when the context is left.
+    This function is a context manager. Data is cleaned up when the context is left.
 
     Example usage:
 
@@ -153,11 +153,9 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
             # In here the file exists
             pixel_values = np.asarray(Image.open(asset_path))
 
-        # outside, it will be cleaned up
-
     Args:
         storage_item: The Storage item for which you want to download the associated asset.
-        frame: The frame that you need. If frame is none for a video, you will get the video path.
+        frame: The frame that you need. If frame is none for a video, you the video path is returned.
 
     Raises:
         NotImplementedError: If you try to get all frames of an image group.

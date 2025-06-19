@@ -30,7 +30,6 @@ You can raise an `EncordEditorAgentException` which will be handled and returned
 Additionally in the event of an Authorisation issue with the Encord platform e.g., A request attempting to access a project that the agent doesn't have access too, then we will additionally include the Authorisation message in the body of the response. 
 
 
-
 ```typescript
 type EditorAgentErrorResponse = {
   message?: string;

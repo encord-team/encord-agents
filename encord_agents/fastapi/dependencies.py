@@ -70,7 +70,7 @@ def dep_client() -> EncordUserClient:
     def my_route(
         client: Annotated[EncordUserClient, Depends(dep_client)]
     ):
-        # Client will authenticated and ready to use.
+        # Client is authenticated and ready to use.
     ```
 
     """
@@ -177,7 +177,7 @@ def dep_storage_item(
     def my_agent(
         storage_item: Annotated[StorageItem, Depends(dep_storage_item)]
     ):
-        # Client will authenticated and ready to use.
+        # Client is authenticated and ready to use.
         print(storage_item.dicom_study_uid)
         print(storage_item.client_metadata)
     ```
@@ -193,8 +193,8 @@ def dep_single_frame(
     """
     Dependency to inject the underlying asset of the frame data.
 
-    The downloaded asset will be named `lr.data_hash.{suffix}`.
-    When the function has finished, the downloaded file will be removed from the file system.
+    The downloaded asset's name had the following format: `lr.data_hash.{suffix}`.
+    When the function has finished, the downloaded file is removed from the file system.
 
     **Example:**
 
@@ -239,9 +239,9 @@ def dep_asset(
     """
     Get a local file path to data asset temporarily stored till end of agent execution.
 
-    This dependency will fetch the underlying data asset based on a signed url.
-    It will temporarily store the data on disk. Once the task is completed, the
-    asset will be removed from disk again.
+    This dependency fetches the underlying data asset based on a signed url.
+    It temporarily stores the data on disk. Once the task is completed, the
+    asset is removed from disk again.
 
     **Example:**
 
@@ -293,7 +293,7 @@ def dep_video_iterator(
         storage_item: Automatically injected storage item dependency.
 
     Raises:
-        NotImplementedError: Will fail for other data types than video.
+        NotImplementedError: Fails for other data types than video.
 
     Yields:
         An iterator.
@@ -320,7 +320,7 @@ def dep_project(frame_data: FrameData, client: Annotated[EncordUserClient, Depen
     def my_route(
         project: Annotated[Project, Depends(dep_project)]
     ):
-        # Project will authenticated and ready to use.
+        # Project is authenticated and ready to use.
         print(project.title)
     ```
 
@@ -420,7 +420,7 @@ def dep_object_crops(
 
     Args:
         filter_ontology_objects: Optional list of ontology objects to filter by.
-            If provided, only instances of these object types will be included.
+            If provided, only instances of these object types are be included.
             Strings are matched against `feature_node_hashes`.
 
     Returns:

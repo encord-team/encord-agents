@@ -58,7 +58,7 @@ def dep_client() -> EncordUserClient:
     def (
         client: Annotated[EncordUserClient, Depends(dep_client)]
     ):
-        # Client will authenticated and ready to use.
+        # Client is authenticated and ready to use.
         client.get_dataset("")
     ```
 
@@ -70,7 +70,7 @@ def dep_single_frame(storage_item: StorageItem, frame_data: FrameData) -> NDArra
     """
     Dependency to inject the first frame of the underlying asset.
 
-    The downloaded asset will be named `lr.data_hash.{suffix}`.
+    The downloaded asset's name has the following format: `lr.data_hash.{suffix}`.
     When the function has finished running, the downloaded file is removed from the file system.
 
     **Example:**

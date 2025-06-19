@@ -34,7 +34,7 @@ def dep_client() -> EncordUserClient:
     def my_agent(
         client: Annotated[EncordUserClient, Depends(dep_client)]
     ) -> str:
-        # Client will authenticated and ready to use.
+        # Client is authenticated and ready to use.
         client.get_dataset("")
     ```
 
@@ -122,8 +122,8 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
 def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
-    This will use OpenCV and the local backend on your machine.
-    Decoding support may vary dependant on the video format, codec and your local configuration
+    This usees OpenCV and the local backend on your machine.
+    Decoding support may vary dependent on the video format, codec and your local configuration
 
     **Intended use**
 
@@ -164,8 +164,8 @@ def dep_video_sampler(
 ) -> Generator[Callable[[float | Sequence[int]], Iterable[Frame]], None, None]:
     """
     Dependency to inject a video sampler for doing things over many frames.
-    This will use OpenCV and the local backend on your machine.
-    Decoding support may vary dependant on the video format, codec and your local configuration.
+    This uses OpenCV and the local backend on your machine.
+    Decoding support may vary dependent on the video format, codec and your local configuration.
 
     Args:
         storage_item: Automatically injected Storage item dependency.
@@ -232,9 +232,9 @@ def dep_asset(storage_item: StorageItem) -> Generator[Path, None, None]:
     """
     Get a local file path to data asset temporarily stored till end of task execution.
 
-    This dependency will fetch the underlying data asset based on a signed url.
-    It will temporarily store the data on disk. Once the task is completed, the
-    asset will be removed from disk again.
+    This dependency fetches the underlying data asset based on a signed url.
+    It temporarily stores the data on disk. Once the task is completed, the
+    asset is removed from disk again.
 
     **Example:**
 

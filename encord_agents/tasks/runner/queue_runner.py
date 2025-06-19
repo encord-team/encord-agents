@@ -106,7 +106,7 @@ class QueueRunner(RunnerBase):
 
         Define your agent as you are used to with dependencies in the method declaration and
         return the pathway from the project workflow that the task should follow upon completion.
-        The function will be wrapped in logic that does the following (in pseudo code):
+        The function should be wrapped in logic that does the following (in pseudo code):
 
         ```
         @runner.stage("stage_name")

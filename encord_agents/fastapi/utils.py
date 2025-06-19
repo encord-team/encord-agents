@@ -18,7 +18,7 @@ def verify_auth() -> None:
         on_startup=[verify_auth]
     ```
 
-    This will make the server fail early if auth is not set up.
+    This makes the server fail early if authentication is not set up.
     """
     from datetime import datetime, timedelta
 

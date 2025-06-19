@@ -45,8 +45,8 @@ class SequentialRunner(RunnerBase):
     """
     Runs agents against Workflow projects.
 
-    When called, it will iteratively run agent stages till they are empty.
-    By default, runner will exit after finishing the tasks identified at the point of trigger.
+    When called, it iteratively runs agent stages until they are empty.
+    By default, runner exits after finishing the tasks identified at the point of trigger.
     To automatically re-run, you can use the `refresh_every` keyword.
 
     **Example:**
@@ -82,8 +82,8 @@ class SequentialRunner(RunnerBase):
         """
         Initialize the runner with an optional project hash.
 
-        The `project_hash` will allow stricter stage validation.
-        If left unspecified, errors will first be raised during execution of the runner.
+        The `project_hash` allows stricter stage validation.
+        If left unspecified, errors are only raised during execution of the runner.
 
         Args:
             project_hash: The project hash that the runner applies to.
@@ -111,8 +111,8 @@ class SequentialRunner(RunnerBase):
         Decorator to associate a function with an agent stage.
 
         A function decorated with a stage is added to the list of stages
-        that will be handled by the runner.
-        The runner will call the function for every task which is in that
+        that is handled by the runner.
+        The runner calls the function for every task which is in that
         stage.
 
 
@@ -343,11 +343,11 @@ def {fn_name}(...):
         ???+ info "Self-updating/Polling runner"
             The runner can continuously poll new tasks in the project and execute the defined stage agents.
             To do so, please set the `refresh_every` parameter.
-            When set, the runner will re-fetch tasks with at least that amount of time in between polls. If you set the time to, e.g., 1 second, but it takes 60 seconds to empty the task queue, the runner will poll again upon completion of the current task queue.
+            When set, the runner re-fetches tasks with at least that amount of time in between polls. If you set the time to, e.g., 1 second, but it takes 60 seconds to empty the task queue, the runner polls again upon completion of the current task queue.
 
         Args:
             refresh_every: Fetch task statuses from the Encord Project every `refresh_every` seconds.
-                If `None`, the runner will exit once task queue is empty.
+                If `None`, the runner exits once task queue is empty.
             num_retries: If an agent fails on a task, how many times should the runner retry it?
             task_batch_size: Number of tasks for which labels are loaded into memory at once.
             project_hash: The project hash if not defined at runner instantiation.

@@ -1,7 +1,7 @@
 """
 Settings used throughout the module.
 
-Note that central settings will be read via environment variables.
+Note that central settings are read using environment variables.
 """
 
 import os
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     The path to the private ssh key file to authenticate with Encord.
 
     Either this or the `ENCORD_SSH_KEY` needs to be set for most use-cases.
-    To setup a key with Encord, please see
+    To setup a key with Encord, see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
     ssh_key_content: Optional[str] = Field(validation_alias="ENCORD_SSH_KEY", default=None)
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     The content of the private ssh key file to authenticate with Encord.
 
     Either this or the `ENCORD_SSH_KEY` needs to be set for most use-cases.
-    To setup a key with Encord, please see
+    To setup a key with Encord, see
     [the platform docs](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys).
     """
     domain: Optional[str] = Field(validation_alias="ENCORD_DOMAIN", default=None)
@@ -72,7 +72,7 @@ class Settings(BaseSettings):
             import warnings
 
             warnings.warn(
-                "You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` will take precedence."
+                "You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` takes precedence."
             )
 
         return self

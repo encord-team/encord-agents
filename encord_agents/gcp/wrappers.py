@@ -47,7 +47,7 @@ def editor_agent(
     """
     Wrapper to make resources available for gcp editor agents.
 
-    The editor agents are intended to be used via dependency injections.
+    The editor agents are intended to be used using dependency injections.
     You can learn more via out [documentation](https://agents-docs.encord.com).
 
     Args:
@@ -55,7 +55,7 @@ def editor_agent(
             on `project.list_label_rows_v2()`.
         label_row_initialise_labels_args: Arguments to overwrite default arguments
             on `label_row.initialise_labels(...)`
-        custom_cors_regex: A regex to use for the CORS settings. If not provided, the default regex will be used.
+        custom_cors_regex: A regex to use for the CORS settings. If not provided, the default regex is used.
             Only required if the agent is not deployed on Encord's platform.
 
     Returns:
