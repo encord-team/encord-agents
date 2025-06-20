@@ -122,7 +122,7 @@ def dep_single_frame(storage_item: StorageItem) -> NDArray[np.uint8]:
 def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], None, None]:
     """
     Dependency to inject a video frame iterator for doing things over many frames.
-    This usees OpenCV and the local backend on your machine.
+    This uses OpenCV and the local backend on your machine.
     Decoding support may vary dependent on the video format, codec and your local configuration
 
     **Intended use**

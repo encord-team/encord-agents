@@ -48,7 +48,7 @@ def test_auth_strategies_key_file(setup: None) -> None:
 def test_auth_strategies_key_content_and_file(setup: None) -> None:
     with pytest.warns(
         UserWarning,
-        match="You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` will take precedence.",
+        match="You have configured both the `ENCORD_SSH_KEY` and `ENCORD_SSH_KEY_FILE`. The `ENCORD_SSH_KEY` takes precedence.",
     ):
         settings = Settings()
     assert settings.ssh_key_file is not None
