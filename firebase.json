@@ -12,6 +12,100 @@
         "source": "!/@(js|css)/**",
         "destination": "/index.html"
       }
+    ],
+    "redirects": [
+        {
+      "source": "https://agents-docs.encord.com/",
+      "destination": "https://docs.encord.com/agents-documentation/Basics/Introduction"
+    },
+    {
+      "source": "https://agents-docs.encord.com/installation/",
+      "destination": "https://docs.encord.com/agents-documentation/Basics/Installation"
+    },
+    {
+      "source": "https://agents-docs.encord.com/authentication/",
+      "destination": "https://docs.encord.com/agents-documentation/Basics/Authentication"
+    },
+    {
+      "source": "https://agents-docs.encord.com/dependencies/",
+      "destination": "https://docs.encord.com/agents-documentation/Basics/Dependencies"
+    },
+    {
+      "source": "https://agents-docs.encord.com/basic_example/",
+      "destination": "https://docs.encord.com/agents-documentation/Basics/Basic-Example"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Overview"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/spec/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Specs"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/gcp/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/GCP-Cloud-Functions"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/aws_lambda/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/AWS-Lambda"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/fastapi/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/FastAPI"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/modal/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Modal"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/custom_domain/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Custom-Domain"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/examples/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/GCP-Examples"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/examples/",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/GCP-Examples"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/examples/#gcp-examples",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/GCP-Examples"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/examples/#fastapi-examples",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/FastAPI-Examples"
+    },
+    {
+      "source": "https://agents-docs.encord.com/editor_agents/examples/#modal-example",
+      "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/Modal-Examples"
+    },
+    {
+      "source": "https://agents-docs.encord.com/task_agents/",
+      "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Overview"
+    },
+    {
+      "source": "https://agents-docs.encord.com/task_agents/custom_domain/",
+      "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Custom-Domain"
+    },
+    {
+      "source": "https://agents-docs.encord.com/task_agents/runner_intro/",
+      "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Runner-Intro"
+    },
+    {
+      "source": "https://agents-docs.encord.com/task_agents/sequential_runner/",
+      "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Sequential-Runner"
+    },
+    {
+      "source": "https://agents-docs.encord.com/task_agents/queue_runner/",
+      "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Multi-Processing"
+    },
+    {
+      "source": "https://agents-docs.encord.com/notebooks/task_agent_set_priority/",
+      "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/task_agent_set_priority.ipynb"
+    }
     ]
   }
 }
