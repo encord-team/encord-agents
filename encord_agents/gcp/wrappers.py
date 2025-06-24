@@ -98,7 +98,7 @@ def editor_agent(
             try:
                 project = client.get_project(frame_data.project_hash)
             except AuthorisationError as err:
-                response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
+                response = _generate_response(to_jsonable_python({"message": err.message}), HTTPStatus.FORBIDDEN)
                 return response
 
             label_row: LabelRowV2 | None = None
@@ -118,7 +118,7 @@ def editor_agent(
                 try:
                     storage_item = client.get_storage_item(label_row.backing_item_uuid)
                 except AuthorisationError as err:
-                    response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
+                    response = _generate_response(to_jsonable_python({"message": err.message}), HTTPStatus.FORBIDDEN)
                     return response
 
             context = Context(project=project, label_row=label_row, frame_data=frame_data, storage_item=storage_item)
@@ -129,7 +129,7 @@ def editor_agent(
                     # e.g: Get storage item which can throw error
                     dependencies = solve_dependencies(context=context, dependant=dependant, stack=stack)
                 except AuthorisationError as err:
-                    response = _generate_response(err.message, HTTPStatus.FORBIDDEN)
+                    response = _generate_response(to_jsonable_python({"message": err.message}), HTTPStatus.FORBIDDEN)
                     return response
                 try:
                     result = func(**dependencies.values)
