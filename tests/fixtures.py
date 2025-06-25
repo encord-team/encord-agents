@@ -13,7 +13,7 @@ from encord.user_client import EncordUserClient
 
 ONTOLOGY_HASH = "6d8bb167-0c9d-43b1-a577-3da0693d664e"
 ONE_OF_EACH_DATASET_HASH = (
-    # dataset with [image, image group, image_sequence, pdf, audio, txt, and video]
+    # dataset with [image, image group, image_sequence, pdf, audio, txt, data_group (Audio, Text) and video]
     "5d06b07b-135a-4c6d-ba5d-fa7048d996da"
 )
 IMAGES_520_DATASET_HASH = (
