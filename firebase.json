@@ -15,177 +15,177 @@
     ],
     "redirects": [
         {
-      "source": "/docs/index",
+      "source": "/index",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Introduction",
       "type": 301
     },
     {
-      "source": "/docs/installation",
+      "source": "/installation",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Installation",
       "type": 301
     },
     {
-      "source": "/docs/authentication",
+      "source": "/authentication",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Authentication",
       "type": 301
     },
     {
-      "source": "/docs/dependencies",
+      "source": "/dependencies",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Dependencies",
       "type": 301
     },
     {
-      "source": "/docs/basic_example",
+      "source": "/basic_example",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Basic-Example",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/index",
+      "source": "/editor_agents/index",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Overview",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/spec",
+      "source": "/editor_agents/spec",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Specs",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/gcp",
+      "source": "/editor_agents/gcp",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/GCP-Cloud-Functions",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/aws_lambda",
+      "source": "/editor_agents/aws_lambda",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/AWS-Lambda",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/fastapi",
+      "source": "/editor_agents/fastapi",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/FastAPI",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/modal",
+      "source": "/editor_agents/modal",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Modal",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/custom_domain",
+      "source": "/editor_agents/custom_domain",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Custom-Domain",
       "type": 301
     },
     {
-      "source": "/docs/editor_agents/examples/index",
+      "source": "/editor_agents/examples/index",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/GCP-Examples",
       "type": 301
     },
     {
-      "source": "/docs/task_agents/index",
+      "source": "/task_agents/index",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Overview",
       "type": 301
     },
     {
-      "source": "/docs/task_agents/custom_domain",
+      "source": "/task_agents/custom_domain",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Custom-Domain",
       "type": 301
     },
     {
-      "source": "/docs/task_agents/runner_intro",
+      "source": "/task_agents/runner_intro",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Runner-Intro",
       "type": 301
     },
     {
-      "source": "/docs/task_agents/sequential_runner",
+      "source": "/task_agents/sequential_runner",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Sequential-Runner",
       "type": 301
     },
     {
-      "source": "/docs/task_agents/queue_runner",
+      "source": "/task_agents/queue_runner",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Execution/Multi-Processing",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/task_agent_set_priority",
+      "source": "/notebooks/task_agent_set_priority",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/task_agent_set_priority.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/task_agent_route_on_annotator_name",
+      "source": "/notebooks/task_agent_route_on_annotator_name",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/task_agent_route_on_annotator_name.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/twin_project_label_transfer",
+      "source": "/notebooks/twin_project_label_transfer",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/twin_project_label_transfer.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/prelabel_videos_with_bounding_boxes",
+      "source": "/notebooks/prelabel_videos_with_bounding_boxes",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/prelabel_videos_with_bounding_boxes.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/mask_rcnn_on_videos",
+      "source": "/notebooks/mask_rcnn_on_videos",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/mask_rcnn_on_videos.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/hugging_face_agent_example",
+      "source": "/notebooks/hugging_face_agent_example",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/hugging_face_agent_example.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/yolo_example",
+      "source": "/notebooks/yolo_example",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/yolo_example.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/audio_transcription_agent_multi_speaker",
+      "source": "/notebooks/audio_transcription_agent_multi_speaker",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/audio_transcription_agent_multi_speaker.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/sentiment_analysis",
+      "source": "/notebooks/sentiment_analysis",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/sentiment_analysis.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/llm_as_a_judge",
+      "source": "/notebooks/llm_as_a_judge",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/llm_as_a_judge.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/multistage_video_summarisation",
+      "source": "/notebooks/multistage_video_summarisation",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/multistage_video_summarisation.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/notebooks/recaption_video",
+      "source": "/notebooks/recaption_video",
       "destination": "https://colab.research.google.com/github/encord-team/encord-agents/blob/main/docs/notebooks/recaption_video.ipynb",
       "type": 301
     },
     {
-      "source": "/docs/pre_built_agents",
+      "source": "/pre_built_agents",
       "destination": "https://docs.encord.com/agents-documentation/Pre-Built%20Agents/Pre-Built-Agents",
       "type": 301
     },
     {
-      "source": "/docs/reference/migration_guide",
+      "source": "/reference/migration_guide",
       "destination": "https://docs.encord.com/agents-documentation/Reference/Migration-Guide",
       "type": 301
     },
     {
-      "source": "/docs/reference/core",
+      "source": "/reference/core",
       "destination": "https://docs.encord.com/agents-documentation/Reference/Core/Agents-Reference-Core",
       "type": 301
     },
     {
-      "source": "/docs/reference/editor_agents",
+      "source": "/reference/editor_agents",
       "destination": "https://docs.encord.com/agents-documentation/Reference/Editor-Agents/Agents-Reference-Editor-Agents",
       "type": 301
     },
     {
-      "source": "/docs/reference/task_agents",
+      "source": "/reference/task_agents",
       "destination": "https://docs.encord.com/agents-documentation/Reference/Task-Agents/Agents-Reference-Task-Agents",
       "type": 301
     }
