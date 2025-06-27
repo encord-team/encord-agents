@@ -24,6 +24,7 @@ class LabelRowMetadataIncludeArgs(BaseModel):
     include_images_data: bool = False
     include_all_label_branches: bool = False
     branch_name: str | None = None
+    include_children: bool = False
 
     @model_validator(mode="after")
     def check_branches_consistent(self) -> Self:
