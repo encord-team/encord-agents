@@ -15,7 +15,7 @@
     ],
     "redirects": [
         {
-      "source": "/index",
+      "source": "/",
       "destination": "https://docs.encord.com/agents-documentation/Basics/Introduction",
       "type": 301
     },
@@ -40,7 +40,7 @@
       "type": 301
     },
     {
-      "source": "/editor_agents/index",
+      "source": "/editor_agents/",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Overview",
       "type": 301
     },
@@ -75,12 +75,12 @@
       "type": 301
     },
     {
-      "source": "/editor_agents/examples/index",
+      "source": "/editor_agents/examples/",
       "destination": "https://docs.encord.com/agents-documentation/Editor-Agents/Examples/GCP-Examples",
       "type": 301
     },
     {
-      "source": "/task_agents/index",
+      "source": "/task_agents/",
       "destination": "https://docs.encord.com/agents-documentation/Task-Agents/Overview",
       "type": 301
     },
