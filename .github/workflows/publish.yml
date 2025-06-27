@@ -23,9 +23,7 @@ jobs:
         uses: ./.github/actions/setup-root-uv-environment
 
       - name: uv Version Bump
-        # TODO: Remove this once this PR is merged / uv 0.7 is released
-        # https://github.com/astral-sh/uv/pull/12349 
-        run: "uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ github.ref_name }}"
+        run: uv version ${{ github.ref_name }}
 
       - name: Module Version Bump
         run: 'sed -i "s/__version__ = \".*\"/__version__ = \"${{ github.ref_name }}\"/g" encord_agents/__init__.py'
