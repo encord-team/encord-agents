@@ -1,6 +1,5 @@
 from typing import Annotated
 
-from cv2 import meanShift
 from encord.user_client import EncordUserClient
 from fastapi import Depends
 from fastapi.testclient import TestClient
