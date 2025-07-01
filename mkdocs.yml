@@ -43,7 +43,6 @@ nav:
       - "FastAPI": editor_agents/fastapi.md
       - "Hosting with Modal": editor_agents/modal.md
       - "Custom Domains": editor_agents/custom_domain.md
-      - "Examples": editor_agents/examples/index.md
   - "Task Agents":
       - "Overview": task_agents/index.md
       - "Custom Domains": task_agents/custom_domain.md
