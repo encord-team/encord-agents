@@ -1,4 +1,3 @@
-````python
 """
 # Modal Queue Runner Example
 
@@ -122,5 +121,3 @@ def main():
         print(stage.title)
         completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
         print(f"Example completion result: {completion_result}")
-
-````

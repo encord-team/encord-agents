@@ -1,4 +1,3 @@
-````python
 """
 Steps to make it work:
 
@@ -93,5 +92,3 @@ def put_ball_on_image(
 
     # Save update
     label_row.save()
-
-````

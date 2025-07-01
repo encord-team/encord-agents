@@ -1,4 +1,3 @@
-````python
 import modal  # tested with modal client version: 0.72.10
 from encord.objects.ontology_labels_impl import LabelRowV2
 from typing_extensions import Annotated
@@ -62,5 +61,3 @@ def main():
         # Example validation of results
         completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
         print(f"Example completion result: {completion_result}")
-
-````

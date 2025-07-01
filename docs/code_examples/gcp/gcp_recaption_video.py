@@ -1,4 +1,3 @@
-````python
 # 1. Set up imports and create a Pydantic model for our LLM's structured output.
 import os
 from typing import Annotated
@@ -7,14 +6,15 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from encord_agents import FrameData
-from encord_agents.fastapi.cors import get_encord_app
-from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
+from encord_agents.gcp import Depends, editor_agent
+from encord_agents.gcp.dependencies import Frame, dep_single_frame
+
+
 
 # The response model for the agent to follow.
 class AgentCaptionResponse(BaseModel):
@@ -70,24 +70,17 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     return llm_structured.invoke(prompt)
 
 
-# 5. Initialize the FastAPI app with the required CORS middleware.
-app = get_encord_app()
-
-
-# 6. Define the agent to handle the recaptioning.
-@app.post("/my_agent")
+# 5. Define the agent to handle the recaptioning. This includes:
+@editor_agent()
 def my_agent(
     frame_data: FrameData,
-    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    label_row: LabelRowV2, # FrameData is automatically received by the agent
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
-    # Get the relevant Ontology information
-    # Recall that we expect
-    # [human annotation, llm recaption 1, llm recaption 2, llm recaption 3]
-    # in the Ontology
+    # Retrieve the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.
     cap, *rs = label_row.ontology_structure.classifications
 
-    # Retrieve the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.
+    # Read the existing human caption
     instances = label_row.get_classification_instances(
         filter_ontology_classification=cap, filter_frames=[0, frame_data.frame]
     )
@@ -121,8 +114,9 @@ def my_agent(
     frame = Frame(frame=0, content=frame_content)
     response = prompt_gpt(caption, frame)
 
-    # Process the LLM's response, which contains three different rephrasings of the original caption.
+    # Process the response from the LLM, which provides three alternative phrasings of the original caption.
     # Update the label row with the new captions, replacing any existing ones.
+    # Upsert the new captions
     for r, t in zip(rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]):
         # Overwrite any existing re-captions
         existing_instances = label_row.get_classification_instances(filter_ontology_classification=r)
@@ -136,4 +130,3 @@ def my_agent(
         label_row.add_classification_instance(ins)
 
     label_row.save()
-````

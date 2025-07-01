@@ -1,4 +1,3 @@
-````python
 """
 You can try this editor agent by running
 
@@ -32,5 +31,3 @@ def add_bounding_box(frame_data: FrameData, label_row: LabelRowV2) -> None:
     )
     label_row.add_object_instance(ins)
     label_row.save()
-
-````

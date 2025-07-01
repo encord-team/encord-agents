@@ -1,4 +1,3 @@
-````python
 # 1. Import dependencies and set up the Project. The CORS middleware is crucial as it allows the Encord platform to make requests to your API.
 import os
 
@@ -85,4 +84,3 @@ async def classify_frame(
 
     # Saves the updated data.
     lr.save()
-````

@@ -1,4 +1,3 @@
-````python
 from typing import Annotated
 from uuid import UUID
 
@@ -52,5 +51,3 @@ def celery_function(task_spec: str) -> str:
         JSON string containing the task completion result
     """
     return agent_stage_name(task_spec)
-
-````

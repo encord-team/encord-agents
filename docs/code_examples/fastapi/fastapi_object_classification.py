@@ -1,4 +1,3 @@
-````python
 # 1. Import dependencies, authenticate with Encord, and set up the Project.
 import os
 
@@ -98,4 +97,3 @@ async def classify_objects(
     # 7. Save Labels.
     if changes: 
         lr.save()
-````

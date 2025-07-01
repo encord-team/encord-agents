@@ -1,4 +1,3 @@
-````python
 # 1. Import dependencies, authenticate with Encord, and set up the Project. Ensure you insert your Project's unique identifier
 import os
 
@@ -87,5 +86,3 @@ def agent(
     # 8. Save the labels with Encord.
     if changes:
         lr.save()
-
-````

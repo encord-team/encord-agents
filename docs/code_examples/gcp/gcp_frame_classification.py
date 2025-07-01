@@ -1,4 +1,3 @@
-````python
 # 1. Import dependencies, authenticate with Encord, and set up the Project. Ensure you insert your Project's unique identifier.
 import os
 
@@ -69,5 +68,3 @@ def agent(
         
     # Saving Results: The new classifications are added to the active label row, and the updated results are saved within the Project.
     lr.save()
-
-````

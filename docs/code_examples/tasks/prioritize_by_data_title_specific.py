@@ -1,4 +1,3 @@
-````python
 from encord.objects.ontology_labels_impl import LabelRowV2
 
 from encord_agents.tasks import Runner
@@ -17,5 +16,3 @@ def by_file_name(lr: LabelRowV2) -> str | None:
 
 if __name__ == "__main__":
     runner.run()
-
-````

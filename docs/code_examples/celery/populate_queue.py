@@ -1,4 +1,3 @@
-````python
 from queue_runner_example import celery_function, runner
 
 
@@ -24,5 +23,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-````
