@@ -42,6 +42,7 @@ Please only respond with valid json.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
+
 # 4. Define the Editor Agent
 @app.post("/frame_classification")
 async def classify_frame(
@@ -55,8 +56,8 @@ async def classify_frame(
 
     """Classify a frame using Claude."""
     # Constructs a `Frame` object with the content.
-    frame = Frame(frame=frame_data.frame, content=content) 
-    
+    frame = Frame(frame=frame_data.frame, content=content)
+
     # Sends the frame image to Claude for analysis.
     message = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20241022",
@@ -71,11 +72,11 @@ async def classify_frame(
     )
     try:
         # Parses Claude's response into classification instances.
-        classifications = data_model(message.content[0].text) 
+        classifications = data_model(message.content[0].text)
         for clf in classifications:
             clf.set_for_frames(frame_data.frame, confidence=0.5, manual_annotation=False)
             # Adds classifications to the label row
-            lr.add_classification_instance(clf) 
+            lr.add_classification_instance(clf)
     except Exception:
         import traceback
 

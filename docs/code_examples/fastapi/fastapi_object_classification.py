@@ -15,13 +15,14 @@ from encord_agents.fastapi.dependencies import (
     dep_label_row,
     dep_object_crops,
 )
+
 # Initialize FastAPI app
 app = get_encord_app()
 
 # User client and ontology setup
 client = get_user_client()
 # Ensure you insert your Project's unique identifier.
-project = client.get_project("<project_id>") 
+project = client.get_project("<project_id>")
 generic_ont_obj, *other_objects = sorted(
     project.ontology_structure.objects,
     key=lambda o: o.title.lower() == "generic",
@@ -85,7 +86,7 @@ async def classify_objects(
                 manual_annotation=False,
             )
             # Updating the label row by removing the original object and adding the newly classified instance.
-            lr.remove_object(crop.instance) 
+            lr.remove_object(crop.instance)
             lr.add_object_instance(instance)
             changes = True
         except Exception:
@@ -95,5 +96,5 @@ async def classify_objects(
             print(f"Response from model: {message.content[0].text}")
 
     # 7. Save Labels.
-    if changes: 
+    if changes:
         lr.save()

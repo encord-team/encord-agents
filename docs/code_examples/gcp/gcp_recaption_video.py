@@ -14,11 +14,13 @@ from encord_agents import FrameData
 from encord_agents.gcp import Depends, editor_agent
 from encord_agents.gcp.dependencies import Frame, dep_single_frame
 
+
 # The response model for the agent to follow.
 class AgentCaptionResponse(BaseModel):
     rephrase_1: str
     rephrase_2: str
     rephrase_3: str
+
 
 # 2. Create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want.
 SYSTEM_PROMPT = """
@@ -51,6 +53,7 @@ You will rephrase the caption in three different ways, as above, the rephrases s
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"])
 llm_structured = llm.with_structured_output(AgentCaptionResponse)
 
+
 # 4. Create a helper function to prompt the model with both text and image.
 def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     prompt = [
@@ -65,11 +68,12 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     ]
     return llm_structured.invoke(prompt)
 
+
 # 5. Define the agent to handle the recaptioning. This includes:
 @editor_agent()
 def my_agent(
     frame_data: FrameData,
-    label_row: LabelRowV2, # FrameData is automatically received by the agent
+    label_row: LabelRowV2,  # FrameData is automatically received by the agent
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
     # Retrieve the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.

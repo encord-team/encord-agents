@@ -29,9 +29,10 @@ according to this schema:
 Please only respond with valid json.
 """
 
-# 3. Set up an Anthropic API client to establish communication with Claude 
+# 3. Set up an Anthropic API client to establish communication with Claude
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
 
 # 4. Define the Editor Agent
 @editor_agent()
@@ -65,6 +66,6 @@ def agent(
 
         traceback.print_exc()
         print(f"Response from model: {message.content[0].text}")
-        
+
     # Saving Results: The new classifications are added to the active label row, and the updated results are saved within the Project.
     lr.save()

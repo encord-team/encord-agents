@@ -15,6 +15,7 @@ from encord_agents import FrameData
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
 
+
 # The response model for the agent to follow.
 class AgentCaptionResponse(BaseModel):
     rephrase_1: str
