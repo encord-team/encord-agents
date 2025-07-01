@@ -184,205 +184,11 @@ The aim is to trigger an agent that transforms a labeling task from Figure A to 
 
 **Create the Agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `agent.py`"
     <!--codeinclude-->
     [agent.py](../../code_examples/gcp/gcp_frame_classification.py) linenums:1
-    <!--/codeinclude-->
-
-
-1. Import dependencies and set up the Project.
-
-    !!! info
-        Ensure you insert your Project's unique identifier.
-
-    <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:1-15
-    <!--/codeinclude-->
-
-2. Create a data model and a system prompt based on the Project Ontology to tell Claude how to structure its response:
-
-    <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:18-29
-    <!--/codeinclude-->
-
-
-    ??? "See the result of `data_model.model_json_schema_str` for the given example"
-        ```json
-        {
-          "$defs": {
-            "IsThereAPersonInTheFrameRadioModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "k3EVexk7",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "k3EVexk7"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "choice": {
-                  "description": "Choose exactly one answer from the given options.",
-                  "discriminator": {
-                    "mapping": {
-                      "37rMLC/v": "#/$defs/NoNestedRadioModel",
-                      "EkGwhcO4": "#/$defs/YesNestedRadioModel"
-                    },
-                    "propertyName": "feature_node_hash"
-                  },
-                  "oneOf": [
-                    {
-                      "$ref": "#/$defs/YesNestedRadioModel"
-                    },
-                    {
-                      "$ref": "#/$defs/NoNestedRadioModel"
-                    }
-                  ],
-                  "title": "Choice"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "choice"
-              ],
-              "title": "IsThereAPersonInTheFrameRadioModel",
-              "type": "object"
-            },
-            "NoNestedRadioModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "37rMLC/v",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "37rMLC/v"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "title": {
-                  "const": "no",
-                  "default": "Constant value - should be included as-is.",
-                  "enum": [
-                    "no"
-                  ],
-                  "title": "Title",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash"
-              ],
-              "title": "NoNestedRadioModel",
-              "type": "object"
-            },
-            "SceneSummaryTextModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "+1g9I9Sg",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "+1g9I9Sg"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "Please describe the image as accurate as possible focusing on 'scene summary'",
-                  "maxLength": 1000,
-                  "minLength": 0,
-                  "title": "Value",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "value"
-              ],
-              "title": "SceneSummaryTextModel",
-              "type": "object"
-            },
-            "WhatIsThePersonDoingTextModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "mj9QCDY4",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "mj9QCDY4"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "Please describe the image as accurate as possible focusing on 'What is the person doing?'",
-                  "maxLength": 1000,
-                  "minLength": 0,
-                  "title": "Value",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "value"
-              ],
-              "title": "WhatIsThePersonDoingTextModel",
-              "type": "object"
-            },
-            "YesNestedRadioModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "EkGwhcO4",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "EkGwhcO4"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "what_is_the_person_doing": {
-                  "$ref": "#/$defs/WhatIsThePersonDoingTextModel",
-                  "description": "A text attribute with carefully crafted text to describe the property."
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "what_is_the_person_doing"
-              ],
-              "title": "YesNestedRadioModel",
-              "type": "object"
-            }
-          },
-          "properties": {
-            "scene_summary": {
-              "$ref": "#/$defs/SceneSummaryTextModel",
-              "description": "A text attribute with carefully crafted text to describe the property."
-            },
-            "is_there_a_person_in_the_frame": {
-              "$ref": "#/$defs/IsThereAPersonInTheFrameRadioModel",
-              "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
-            }
-          },
-          "required": [
-            "scene_summary",
-            "is_there_a_person_in_the_frame"
-          ],
-          "title": "ClassificationModel",
-          "type": "object"
-        }
-        ```
-
-3. Create an Anthropic API client to communicate with Claude.
-
-    <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:32-33
-    <!--/codeinclude-->
-
-
-4. Define the editor agent.
-
-    <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/gcp_frame_classification.py) lines:36-65
     <!--/codeinclude-->
 
 The agent follows these steps:  
@@ -632,363 +438,11 @@ The goal is create an agent that takes a labeling task from Figure A to Figure B
 !!! warning
     Some code blocks in this section have incorrect indentation. If you plan to copy and paste, we **strongly** recommend using the full code below instead of the individual sub-sections.
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `agent.py`"
     <!--codeinclude-->
-
     [agent.py](../../code_examples/gcp/gcp_object_classification.py) linenums:1
-
-    <!--/codeinclude-->
-
-1. Create a file called `"agent.py"`. 
-2. Run the following imports and read the Project Ontology. Ensure that you replace `<project_hash>` with the unique identifier of your Project.
-
-    <!--codeinclude-->
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:1-14
-    <!--/codeinclude-->
-
-3. Extract the generic Ontology object and the Ontology objects that we are interested in. The following code sorts the Ontology objects based on whether they have the title `"generic"` or not.<br><br>We use the generic object to query image crops within the agent. Before doing so, we utilize `other_objects` to communicate the specific information we want Claude to focus on.<br><br>To facilitate this, the [`OntologyDataModel`](../../reference/core.md#encord_agents.core.ontology.OntologyDataModel) class helps translate Encord Ontology [`Objects`](){ target="\_blank", rel="noopener noreferrer" } into a [Pydantic](https://docs.pydantic.dev/latest/){ target="\_blank", rel="noopener noreferrer" } model, as well as convert JSON objects into Encord [`ObjectInstance`](https://docs.encord.com/sdk-documentation/sdk-references/ObjectInstance){ target="\_blank", rel="noopener noreferrer" }s.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:15-19
-
-    <!--/codeinclude-->
-
-
-4. Prepare the system prompt to go along with every object crop.
-For that, we use the `data_model` from above to create the json schema.
-It is worth noticing that we pass in just the `other_objetcs` such that the model
-is only allowed to choose between the object types that are not of the generic one.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:22-30
-
-    <!--/codeinclude-->
-
-    ??? "See the result of `data_model.model_json_schema_str` for the given example"
-        ```json
-        {
-          "$defs": {
-            "ActivityTextModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "aFCN9MMm",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "aFCN9MMm"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "Please describe the image as accurate as possible focusing on 'activity'",
-                  "maxLength": 1000,
-                  "minLength": 0,
-                  "title": "Value",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "value"
-              ],
-              "title": "ActivityTextModel",
-              "type": "object"
-            },
-            "AnimalNestedModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "3y6JxTUX",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "3y6JxTUX"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "type": {
-                  "$ref": "#/$defs/TypeRadioModel",
-                  "description": "A mutually exclusive radio attribute to choose exactly one option that best matches to the give visual input."
-                },
-                "description": {
-                  "$ref": "#/$defs/DescriptionTextModel",
-                  "description": "A text attribute with carefully crafted text to describe the property."
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "type",
-                "description"
-              ],
-              "title": "AnimalNestedModel",
-              "type": "object"
-            },
-            "DescriptionTextModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "5fFgrM+E",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "5fFgrM+E"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "Please describe the image as accurate as possible focusing on 'description'",
-                  "maxLength": 1000,
-                  "minLength": 0,
-                  "title": "Value",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "value"
-              ],
-              "title": "DescriptionTextModel",
-              "type": "object"
-            },
-            "PersonNestedModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "2xlDPPAG",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "2xlDPPAG"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "activity": {
-                  "$ref": "#/$defs/ActivityTextModel",
-                  "description": "A text attribute with carefully crafted text to describe the property."
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "activity"
-              ],
-              "title": "PersonNestedModel",
-              "type": "object"
-            },
-            "TypeRadioEnum": {
-              "enum": [
-                "dolphin",
-                "monkey",
-                "dog",
-                "cat"
-              ],
-              "title": "TypeRadioEnum",
-              "type": "string"
-            },
-            "TypeRadioModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "2P7LTUZA",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "2P7LTUZA"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "choice": {
-                  "$ref": "#/$defs/TypeRadioEnum",
-                  "description": "Choose exactly one answer from the given options."
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "choice"
-              ],
-              "title": "TypeRadioModel",
-              "type": "object"
-            },
-            "TypeShortAndConciseTextModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "79mo1G7Q",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "79mo1G7Q"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "Please describe the image as accurate as possible focusing on 'type - short and concise'",
-                  "maxLength": 1000,
-                  "minLength": 0,
-                  "title": "Value",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "value"
-              ],
-              "title": "TypeShortAndConciseTextModel",
-              "type": "object"
-            },
-            "VehicleNestedModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "llw7qdWW",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "llw7qdWW"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "type__short_and_concise": {
-                  "$ref": "#/$defs/TypeShortAndConciseTextModel",
-                  "description": "A text attribute with carefully crafted text to describe the property."
-                },
-                "visible": {
-                  "$ref": "#/$defs/VisibleChecklistModel",
-                  "description": "A collection of boolean values indicating which concepts are applicable according to the image content."
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "type__short_and_concise",
-                "visible"
-              ],
-              "title": "VehicleNestedModel",
-              "type": "object"
-            },
-            "VisibleChecklistModel": {
-              "properties": {
-                "feature_node_hash": {
-                  "const": "OFrk07Ds",
-                  "description": "UUID for discrimination. Must be included in json as is.",
-                  "enum": [
-                    "OFrk07Ds"
-                  ],
-                  "title": "Feature Node Hash",
-                  "type": "string"
-                },
-                "wheels": {
-                  "description": "Is 'wheels' applicable or not?",
-                  "title": "Wheels",
-                  "type": "boolean"
-                },
-                "frame": {
-                  "description": "Is 'frame' applicable or not?",
-                  "title": "Frame",
-                  "type": "boolean"
-                },
-                "chain": {
-                  "description": "Is 'chain' applicable or not?",
-                  "title": "Chain",
-                  "type": "boolean"
-                },
-                "head_lights": {
-                  "description": "Is 'head lights' applicable or not?",
-                  "title": "Head Lights",
-                  "type": "boolean"
-                },
-                "tail_lights": {
-                  "description": "Is 'tail lights' applicable or not?",
-                  "title": "Tail Lights",
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "feature_node_hash",
-                "wheels",
-                "frame",
-                "chain",
-                "head_lights",
-                "tail_lights"
-              ],
-              "title": "VisibleChecklistModel",
-              "type": "object"
-            }
-          },
-          "properties": {
-            "choice": {
-              "description": "Choose exactly one answer from the given options.",
-              "discriminator": {
-                "mapping": {
-                  "2xlDPPAG": "#/$defs/PersonNestedModel",
-                  "3y6JxTUX": "#/$defs/AnimalNestedModel",
-                  "llw7qdWW": "#/$defs/VehicleNestedModel"
-                },
-                "propertyName": "feature_node_hash"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/PersonNestedModel"
-                },
-                {
-                  "$ref": "#/$defs/AnimalNestedModel"
-                },
-                {
-                  "$ref": "#/$defs/VehicleNestedModel"
-                }
-              ],
-              "title": "Choice"
-            }
-          },
-          "required": [
-            "choice"
-          ],
-          "title": "ObjectsRadioModel",
-          "type": "object"
-        }
-        ```
-
-5. With the system prompt ready, instantiate an API client for Claude.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:33-34
-
-    <!--/codeinclude-->
-
-6. Define the editor agent. 
-
-    * All arguments are automatically injected when the agent is called. For details on dependency injection, see [here](../../dependencies.md).  
-    * The [`dep_object_crops`](../../reference/editor_agents.md#encord_agents.gcp.dependencies.dep_object_crops) dependency allows filtering. In this case, it includes only "generic" object crops, excluding those already converted to actual labels.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:38-46
-
-    <!--/codeinclude-->
-
-
-7. Call Claude using the image crops. Notice how the `crop` variable has a convenient `b64_encoding` method to produce an input that Claude understands.
-
-  <!--codeinclude-->
-
-  [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:47-60
-
-  <!--/codeinclude-->
-
-8. To parse the message from Claude, the `data_model` is again useful.
-When called with a JSON string, it attempts to parse it with respect to the
-the JSON schema we saw above to create an Encord object instance.
-If successful, the old generic object can be removed and the newly classified object added.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:63-80
-
-    <!--/codeinclude-->
-
-9. Save the labels with Encord.
-
-    <!--codeinclude-->
-
-    [agent.py](../../code_examples/gcp/gcp_object_classification.py) lines:83-84
-
     <!--/codeinclude-->
 
 **Test the Agent**
@@ -1160,41 +614,11 @@ Similarly, if the task is rejected during review, it is also sent back for anoth
 
 **Create the Agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
     [main.py](../../code_examples/gcp/gcp_recaption_video.py) linenums:1
-    <!--/codeinclude-->
-
-1. First, we define our imports and create a Pydantic model for our LLM's structured output:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:50-70
-    <!--/codeinclude-->
-
-2. Next, we create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:73-99
-    <!--/codeinclude-->
-
-3. We configure our LLM to use structured outputs based on our model:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:101-104
-    <!--/codeinclude-->
-
-4. We create a helper function to prompt the model with both text and image:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:106-118
-    <!--/codeinclude-->
-
-5. Finally, we define the main agent function:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/gcp/gcp_recaption_video.py) lines:120-186
     <!--/codeinclude-->
 
 The agent follows these steps:
@@ -1340,35 +764,11 @@ The aim is to trigger an agent that transforms a labeling task from Figure A to 
 
 **Create the FastAPI agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
     [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) linenums:1
-    <!--/codeinclude-->
-
-1. Import dependencies and set up the Project. The CORS middleware is crucial as it allows the Encord platform to make requests to your API.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:1-22
-    <!--/codeinclude-->
-
-2. Set up the Project and create a data model based on the Ontology.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:24-27
-    <!--/codeinclude-->
-
-3. Create the system prompt that tells Claude how to structure its response.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:29-42
-    <!--/codeinclude-->
-
-4. Define the endpoint to handle the classification:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_frame_classification.py) lines:44-74
     <!--/codeinclude-->
 
 The endpoint:  
@@ -1454,36 +854,12 @@ The goal is to trigger an agent that takes a labeling task from Figure A to Figu
 
 **Create the FastAPI Agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
     [main.py](../../code_examples/fastapi/fastapi_object_classification.py) linenums:1
     <!--/codeinclude-->
-
-1. Set up the FastAPI app and CORS middleware.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:1-20
-    <!--/codeinclude-->
-
-2. Set up the client, Project, and extract the generic Ontology object.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:23-29
-    <!--/codeinclude-->
-
-3. Create the data model and system prompt for Claude.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:31-44
-    <!--/codeinclude-->
-
-4. Define the attribute endpoint:
-
-<!--codeinclude-->
-[main.py](../../code_examples/fastapi/fastapi_object_classification.py) lines:46-93
-<!--/codeinclude-->
 
 The endpoint:
 
@@ -1666,47 +1042,11 @@ Similarly, if the task is rejected during review, it is also sent back for anoth
 
 **Create the Agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
     [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) linenums:1
-    <!--/codeinclude-->
-
-1. First, we set up our imports and create a Pydantic model for our LLM's structured output:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:50-72
-    <!--/codeinclude-->
-
-2. Next, we create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:74-101
-    <!--/codeinclude-->
-
-3. We configure our LLM to use structured outputs based on our model:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:102-105
-    <!--/codeinclude-->
-
-4. We create a helper function to prompt the model with both text and image:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:107-119
-    <!--/codeinclude-->
-
-5. We initialize the FastAPI app with the required CORS middleware:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:121-124
-    <!--/codeinclude-->
-
-6. Finally, we define the endpoint that will handle the recaptioning:
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/fastapi/fastapi_recaption_video.py) lines:127-189
     <!--/codeinclude-->
 
 The endpoint follows these steps:
@@ -1767,29 +1107,11 @@ Additionally to bring in the cotracker dependency, we found the most straightfor
 
 **Create the Modal Agent**
 
-Here is the full code, but a section-by-section explanation follows.
+Here is the full code.
 
 ??? "The full code for `main.py`"
     <!--codeinclude-->
     [main.py](../../code_examples/modal/editor_cotracker3.py) linenums:1
-    <!--/codeinclude-->
-
-1. Define the Modal image.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:1-38
-    <!--/codeinclude-->
-
-2. Define the modal app.
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:39-41
-    <!--/codeinclude-->
-
-3. Define the endpoint and Cotracker3 usage
-
-    <!--codeinclude-->
-    [main.py](../../code_examples/modal/editor_cotracker3.py) lines:59-108
     <!--/codeinclude-->
 
 **Create the Modal Agent**
