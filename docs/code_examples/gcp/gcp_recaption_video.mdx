@@ -1,53 +1,5 @@
-"""
-This example demonstrate how to use `gpt-4o-mini` to recaption videos.
-
-The example applies to Projects with videos and an
-Ontology with four text classifications:
-
-1. A text classification containing a summary of 
-    what is happening in the video created by a human.
-2-4. Text classification for the LLM to fill in.
-
-The workflow for this agent is as follows:
-
-1. A human sees the video and types in a caption in the first text field.
-2. Then, the agent is triggered and the three other captions are
-    filled in for the human to review and potentially correct.
-
-[Click here](https://agents-docs.encord.com/notebooks/recaption_video/) for a concrete Vision Language Action model use-case.
-
-This example has the following dependencies:
-
-'''file=requirements.txt
-encord-agents
-langchain-openai
-fastapi[standard]
-openai
-'''
-
-You can copy the above requirements to a requirements.txt file
-and run the following commands to test it.
-
-'''shell
-python -m venv venv
-source venv/bin/activate
-python -m pip install -r requirements.txt
-
-ENCORD_SSH_KEY_FILE=/path/to/your_private_key \
-OPENAI_API_KEY=<your-api-key> \
-fastapi dev main.py
-'''
-
-In a separate terminal, you can test the agent by running the following command:
-
-'''shell
-source venv/bin/activate
-encord-agents test local my_agent <url_from_the_label_editor>
-'''
-
-Find more instructions [here](https://agents-docs.encord.com/editor_agents/fastapi/).
-"""
-
+````python
+# 1. Set up imports and create a Pydantic model for our LLM's structured output.
 import os
 from typing import Annotated
 
@@ -55,14 +7,14 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from encord_agents import FrameData
-from encord_agents.fastapi.cors import get_encord_app
-from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
+from encord_agents.gcp import Depends, editor_agent
+from encord_agents.gcp.dependencies import Frame, dep_single_frame
+
 
 
 # The response model for the agent to follow.
@@ -72,8 +24,7 @@ class AgentCaptionResponse(BaseModel):
     rephrase_3: str
 
 
-# System prompt for the LLM to follow.
-# You should tailor this to your needs.
+# 2. Create a detailed system prompt for the LLM that explains exactly what kind of rephrasing we want.
 SYSTEM_PROMPT = """
 You are a helpful assistant that rephrases captions.
 
@@ -100,11 +51,12 @@ You will rephrase the caption in three different ways, as above, the rephrases s
 
 """
 
-# Make an llm instance that follows structured outputs.
+# 3. Configure the LLM to use structured outputs based on our model.
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=os.environ["OPENAI_API_KEY"])
 llm_structured = llm.with_structured_output(AgentCaptionResponse)
 
 
+# 4. Create a helper function to prompt the model with both text and image.
 def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     prompt = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -119,26 +71,17 @@ def prompt_gpt(caption: str, image: Frame) -> AgentCaptionResponse:
     return llm_structured.invoke(prompt)
 
 
-# Define the FastAPI app to host the agent. This is the function
-# that will be running as an API endpoint.
-app = get_encord_app()
-
-
-@app.post("/my_agent")
+# 5. Define the agent to handle the recaptioning. This includes:
+@editor_agent()
 def my_agent(
     frame_data: FrameData,
-    label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    label_row: LabelRowV2, # FrameData is automatically received by the agent
     frame_content: Annotated[NDArray[np.uint8], Depends(dep_single_frame)],
 ) -> None:
-    # Get the relevant Ontology information
-    # Recall that we expect
-    # [human annotation, llm recaption 1, llm recaption 2, llm recaption 3]
-    # in the Ontology
+    # Retrieve the existing human-created caption, prioritizing captions from the current frame or falling back to frame zero.
     cap, *rs = label_row.ontology_structure.classifications
 
-    # Read the existing human caption if there are more captions,
-    # we'll take the one from the current frame if it exists
-    # otherwise the one from frame zero or any caption, in said order.
+    # Read the existing human caption
     instances = label_row.get_classification_instances(
         filter_ontology_classification=cap, filter_frames=[0, frame_data.frame]
     )
@@ -168,11 +111,12 @@ def my_agent(
     # Read the actual string caption
     caption = instance.get_answer()
 
-    # Run the first frame of the video and the human caption
-    # against the llm
+    # Send the first frame of the video along with the human caption to the LLM.
     frame = Frame(frame=0, content=frame_content)
     response = prompt_gpt(caption, frame)
 
+    # Process the response from the LLM, which provides three alternative phrasings of the original caption.
+    # Update the label row with the new captions, replacing any existing ones.
     # Upsert the new captions
     for r, t in zip(rs, [response.rephrase_1, response.rephrase_2, response.rephrase_3]):
         # Overwrite any existing re-captions
@@ -187,3 +131,4 @@ def my_agent(
         label_row.add_classification_instance(ins)
 
     label_row.save()
+````
