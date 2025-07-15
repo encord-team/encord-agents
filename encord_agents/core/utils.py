@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 from contextlib import contextmanager
 from functools import lru_cache
@@ -15,6 +16,8 @@ from encord.user_client import EncordUserClient
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
+
+logger = logging.getLogger(__name__)
 
 DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE = (
     "`frame` parameter set to None for a Native Image Group. "
@@ -87,6 +90,8 @@ _FALLBACK_MIMETYPES: dict[StorageItemType | DataType, str] = {
     DataType.AUDIO: "audio/mp3",
     DataType.PDF: "application/pdf",
     DataType.PLAIN_TEXT: "text/plain",
+    DataType.NIFTI: "application/octet-stream",
+    DataType.DICOM: "application/octet-stream",
     StorageItemType.VIDEO: "video/mp4",
     StorageItemType.AUDIO: "audio/mp3",
     StorageItemType.IMAGE_SEQUENCE: "video/mp4",
@@ -94,6 +99,7 @@ _FALLBACK_MIMETYPES: dict[StorageItemType | DataType, str] = {
     StorageItemType.PDF: "application/pdf",
     StorageItemType.PLAIN_TEXT: "text/plain",
     StorageItemType.IMAGE_GROUP: "image/png",
+    StorageItemType.NIFTI: "application/octet-stream",
 }
 
 
@@ -117,7 +123,7 @@ def _guess_file_suffix(url: str, storage_item: StorageItem) -> tuple[str, str]:
     """
     fallback_mimetype = _FALLBACK_MIMETYPES.get(storage_item.item_type, None)
     if fallback_mimetype is None:
-        raise ValueError(f"No fallback mimetype found for data type {storage_item.item_type}")
+        logger.warning(f"No fallback mimetype found for data type {storage_item.item_type}")
 
     mimetype = next(
         (
