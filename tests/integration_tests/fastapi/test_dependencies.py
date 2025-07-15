@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, NamedTuple
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ from encord_agents.core.data_model import (
 from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
+    dep_asset,
     dep_client,
     dep_label_row,
     dep_label_row_with_args,
@@ -46,6 +48,7 @@ BRANCH_NAME = "BRANCH_NAME"
 class SharedResolutionContext(NamedTuple):
     project: Project
     video_label_row: LabelRowV2
+    nifti_label_row: LabelRowV2
     object_hash: str
 
 
@@ -74,6 +77,11 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert label_row
         assert isinstance(label_row, LabelRowV2)
         assert label_row.data_hash == video_label_row.data_hash
+
+    @app.post("/asset")
+    def post_asset(asset: Annotated[Path, Depends(dep_asset)]) -> None:
+        assert asset
+        assert isinstance(asset, Path)
 
     @app.post("/storage-item")
     def post_storage_item(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> None:
@@ -166,6 +174,9 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     video_label_row = next(
         row for row in label_rows if row.data_type == DataType.VIDEO
     )  # Pick a video such that frame obviously makes sense
+    nifti_label_row = next(
+        row for row in label_rows if row.data_type == DataType.NIFTI
+    )  # Pick a nifti such that frame obviously makes sense
     video_label_row.initialise_labels()
     bbox_object = project.ontology_structure.get_child_by_hash(BBOX_ONTOLOGY_HASH, type_=Object)
     obj_instance = bbox_object.create_instance()
@@ -178,7 +189,10 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     video_label_row.add_object_instance(obj_instance_frame_2)
     video_label_row.save()
     return SharedResolutionContext(
-        project=project, video_label_row=video_label_row, object_hash=obj_instance.object_hash
+        project=project,
+        video_label_row=video_label_row,
+        nifti_label_row=nifti_label_row,
+        object_hash=obj_instance.object_hash,
     )
 
 
@@ -207,6 +221,7 @@ class TestDependencyResolutionFastapi:
             "/storage-item",
             "/label-row-with-args",
             "/custom-label-branch",
+            "/asset",
         ],
     )
     def test_post_dependencies(self, router_path: str) -> None:
@@ -215,6 +230,17 @@ class TestDependencyResolutionFastapi:
             json={
                 "projectHash": self.context.project.project_hash,
                 "dataHash": self.context.video_label_row.data_hash,
+                "frame": 0,
+            },
+        )
+        assert resp.status_code == 200, resp.content
+
+    def test_post_dependencies_nifti(self, router_path: str) -> None:
+        resp = self.client.post(
+            router_path,
+            json={
+                "projectHash": self.context.project.project_hash,
+                "dataHash": self.context.nifti_label_row.data_hash,
                 "frame": 0,
             },
         )
