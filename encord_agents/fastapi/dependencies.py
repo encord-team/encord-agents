@@ -235,6 +235,7 @@ def dep_asset(
         StorageItem,
         Depends(dep_storage_item),
     ],
+    frame_data: FrameData,
 ) -> Generator[Path, None, None]:
     """
     Get a local file path to data asset temporarily stored till end of agent execution.
@@ -265,7 +266,7 @@ def dep_asset(
         ValueError: if the underlying assets are not videos, images, or audio.
         EncordException: if data type not supported by SDK yet.
     """
-    with download_asset(storage_item) as asset:
+    with download_asset(storage_item, frame_data.frame) as asset:
         yield asset
 
 
