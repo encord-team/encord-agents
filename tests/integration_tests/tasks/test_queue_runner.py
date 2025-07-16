@@ -156,7 +156,7 @@ def test_queue_runner_return_struct_object(ephemeral_project_hash: str) -> None:
 
     @queue_runner.stage(AGENT_STAGE_NAME)
     def update_label_row(label_row: LabelRowV2) -> TaskAgentReturnStruct:
-        if label_row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT]:
+        if label_row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT, DataType.GROUP]:
             # TODO: Make instances of objects for these data types
             return TaskAgentReturnStruct(pathway=AGENT_TO_COMPLETE_PATHWAY_HASH, label_row=label_row)
         obj_instance = bbox_object.create_instance()
@@ -192,7 +192,7 @@ def test_queue_runner_return_struct_object(ephemeral_project_hash: str) -> None:
         for row in lrs:
             row.initialise_labels(bundle=bundle)
     for row in lrs:
-        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT]:
+        if row.data_type in [DataType.AUDIO, DataType.PLAIN_TEXT, DataType.GROUP]:
             continue
         assert row.get_object_instances()
 
