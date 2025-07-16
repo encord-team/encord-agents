@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from pathlib import Path
 from typing import Annotated, NamedTuple
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ from encord_agents.core.data_model import (
 from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
+    dep_asset,
     dep_client,
     dep_label_row,
     dep_label_row_with_args,
@@ -74,6 +76,11 @@ def build_app(context: SharedResolutionContext) -> FastAPI:
         assert label_row
         assert isinstance(label_row, LabelRowV2)
         assert label_row.data_hash == video_label_row.data_hash
+
+    @app.post("/asset")
+    def post_asset(asset: Annotated[Path, Depends(dep_asset)]) -> None:
+        assert asset
+        assert isinstance(asset, Path)
 
     @app.post("/storage-item")
     def post_storage_item(storage_item: Annotated[StorageItem, Depends(dep_storage_item)]) -> None:
@@ -178,7 +185,9 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     video_label_row.add_object_instance(obj_instance_frame_2)
     video_label_row.save()
     return SharedResolutionContext(
-        project=project, video_label_row=video_label_row, object_hash=obj_instance.object_hash
+        project=project,
+        video_label_row=video_label_row,
+        object_hash=obj_instance.object_hash,
     )
 
 
@@ -207,6 +216,7 @@ class TestDependencyResolutionFastapi:
             "/storage-item",
             "/label-row-with-args",
             "/custom-label-branch",
+            "/asset",
         ],
     )
     def test_post_dependencies(self, router_path: str) -> None:
@@ -219,6 +229,23 @@ class TestDependencyResolutionFastapi:
             },
         )
         assert resp.status_code == 200, resp.content
+
+    def test_dep_asset(self) -> None:
+        # Include children to test children of data groups
+        for row in self.context.project.list_label_rows_v2(include_children=True):
+            if row.data_type == DataType.GROUP:
+                # Intended behaviour is that triggering dep_asset on a group raises an error
+                # As we want users to trigger agents on individual items from the front end
+                continue
+            resp = self.client.post(
+                "/asset",
+                json={
+                    "projectHash": self.context.project.project_hash,
+                    "dataHash": row.data_hash,
+                    "frame": 0,
+                },
+            )
+            assert resp.status_code == 200, resp.content
 
     def test_objectHash_populated_correctly(self) -> None:
         resp = self.client.post(

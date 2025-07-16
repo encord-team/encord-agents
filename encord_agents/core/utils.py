@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 from contextlib import contextmanager
 from functools import lru_cache
@@ -16,9 +17,18 @@ from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.settings import Settings
 
+logger = logging.getLogger(__name__)
+
 DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE = (
     "`frame` parameter set to None for a Native Image Group. "
     "Downloading entire native image group is currently not supported. "
+    "Please contact Encord at support@encord.com for help or submit a PR with an implementation."
+)
+
+
+DOWNLOAD_GROUP_ERROR_MESSAGE = (
+    "Downloading a group is currently not supported. "
+    "We are considering what interface is most appropriate for combining groups and {editor/task} agents"
     "Please contact Encord at support@encord.com for help or submit a PR with an implementation."
 )
 
@@ -87,6 +97,8 @@ _FALLBACK_MIMETYPES: dict[StorageItemType | DataType, str] = {
     DataType.AUDIO: "audio/mp3",
     DataType.PDF: "application/pdf",
     DataType.PLAIN_TEXT: "text/plain",
+    DataType.NIFTI: "application/octet-stream",
+    DataType.DICOM: "application/octet-stream",
     StorageItemType.VIDEO: "video/mp4",
     StorageItemType.AUDIO: "audio/mp3",
     StorageItemType.IMAGE_SEQUENCE: "video/mp4",
@@ -94,6 +106,7 @@ _FALLBACK_MIMETYPES: dict[StorageItemType | DataType, str] = {
     StorageItemType.PDF: "application/pdf",
     StorageItemType.PLAIN_TEXT: "text/plain",
     StorageItemType.IMAGE_GROUP: "image/png",
+    StorageItemType.NIFTI: "application/octet-stream",
 }
 
 
@@ -117,7 +130,7 @@ def _guess_file_suffix(url: str, storage_item: StorageItem) -> tuple[str, str]:
     """
     fallback_mimetype = _FALLBACK_MIMETYPES.get(storage_item.item_type, None)
     if fallback_mimetype is None:
-        raise ValueError(f"No fallback mimetype found for data type {storage_item.item_type}")
+        logger.warning(f"No fallback mimetype found for data type {storage_item.item_type}")
 
     mimetype = next(
         (
@@ -176,6 +189,8 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
         child_storage_items = list(storage_item.get_child_items(get_signed_urls=True))
         assert len(child_storage_items) > frame, "The requested frame in the Image Group does not exist"
         url = child_storage_items[frame].get_signed_url()
+    elif storage_item.item_type == StorageItemType.GROUP:
+        raise NotImplementedError(DOWNLOAD_GROUP_ERROR_MESSAGE)
 
     if url is None:
         raise ValueError("Failed to get a signed url for the asset")
