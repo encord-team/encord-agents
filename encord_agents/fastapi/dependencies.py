@@ -151,7 +151,9 @@ def dep_label_row(frame_data: FrameData) -> LabelRowV2:
         The initialized label row.
 
     """
-    return get_initialised_label_row(frame_data)
+    # To handle children transparently, we include children by default
+    # as FastAPI agents don't offer configuration straightforwardly
+    return get_initialised_label_row(frame_data, include_args=LabelRowMetadataIncludeArgs(include_children=True))
 
 
 def dep_storage_item(
