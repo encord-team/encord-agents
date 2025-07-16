@@ -93,7 +93,8 @@ def editor_agent(
             storage_item: StorageItem | None = None
             if dependant.needs_storage_item:
                 if label_row is None:
-                    label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash])[0]
+                    # include_children to handle children of data groups
+                    label_row = project.list_label_rows_v2(data_hashes=[frame_data.data_hash], include_children=True)[0]
                 assert label_row.backing_item_uuid, "This is a server response so guaranteed to have this"
                 try:
                     storage_item = client.get_storage_item(label_row.backing_item_uuid)

@@ -26,6 +26,13 @@ DOWNLOAD_NATIVE_IMAGE_GROUP_WO_FRAME_ERROR_MESSAGE = (
 )
 
 
+DOWNLOAD_GROUP_ERROR_MESSAGE = (
+    "Downloading a group is currently not supported. "
+    "We are considering what interface is most appropriate for combining groups and {editor/task} agents"
+    "Please contact Encord at support@encord.com for help or submit a PR with an implementation."
+)
+
+
 def get_user_client(settings: Settings | None = None) -> EncordUserClient:
     """
     Generate an user client to access Encord.
@@ -182,6 +189,8 @@ def download_asset(storage_item: StorageItem, frame: int | None = None) -> Gener
         child_storage_items = list(storage_item.get_child_items(get_signed_urls=True))
         assert len(child_storage_items) > frame, "The requested frame in the Image Group does not exist"
         url = child_storage_items[frame].get_signed_url()
+    elif storage_item.item_type == StorageItemType.GROUP:
+        raise NotImplementedError(DOWNLOAD_GROUP_ERROR_MESSAGE)
 
     if url is None:
         raise ValueError("Failed to get a signed url for the asset")
