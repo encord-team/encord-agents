@@ -48,7 +48,6 @@ BRANCH_NAME = "BRANCH_NAME"
 class SharedResolutionContext(NamedTuple):
     project: Project
     video_label_row: LabelRowV2
-    nifti_label_row: LabelRowV2
     object_hash: str
 
 
@@ -174,9 +173,6 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     video_label_row = next(
         row for row in label_rows if row.data_type == DataType.VIDEO
     )  # Pick a video such that frame obviously makes sense
-    nifti_label_row = next(
-        row for row in label_rows if row.data_type == DataType.NIFTI
-    )  # Pick a nifti such that frame obviously makes sense
     video_label_row.initialise_labels()
     bbox_object = project.ontology_structure.get_child_by_hash(BBOX_ONTOLOGY_HASH, type_=Object)
     obj_instance = bbox_object.create_instance()
@@ -191,7 +187,6 @@ def context(user_client: EncordUserClient, class_level_ephemeral_project_hash: s
     return SharedResolutionContext(
         project=project,
         video_label_row=video_label_row,
-        nifti_label_row=nifti_label_row,
         object_hash=obj_instance.object_hash,
     )
 
@@ -235,16 +230,17 @@ class TestDependencyResolutionFastapi:
         )
         assert resp.status_code == 200, resp.content
 
-    def test_post_dependencies_nifti(self, router_path: str) -> None:
-        resp = self.client.post(
-            router_path,
-            json={
-                "projectHash": self.context.project.project_hash,
-                "dataHash": self.context.nifti_label_row.data_hash,
-                "frame": 0,
-            },
-        )
-        assert resp.status_code == 200, resp.content
+    def test_dep_asset(self) -> None:
+        for row in self.context.project.list_label_rows_v2():
+            resp = self.client.post(
+                "/asset",
+                json={
+                    "projectHash": self.context.project.project_hash,
+                    "dataHash": row.data_hash,
+                    "frame": 0,
+                },
+            )
+            assert resp.status_code == 200, resp.content
 
     def test_objectHash_populated_correctly(self) -> None:
         resp = self.client.post(
