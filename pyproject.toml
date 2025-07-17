@@ -1,6 +1,6 @@
 [project]
 name = "encord-agents"
-version = "0.2.3"
+version = "0.2.4"
 description = "A framework for producing custom agents for the Encord ecosystem."
 authors = [{ name = "Cord Technologies Limited", email = "hello@encord.com" }]
 requires-python = ">=3.10"
