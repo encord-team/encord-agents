@@ -391,7 +391,7 @@ def {fn_name}(...):
         try:
             # Run
             delta = timedelta(seconds=refresh_every) if refresh_every else None
-            next_execution = None
+            next_execution: datetime | bool = True
 
             while True:
                 if isinstance(next_execution, datetime):
@@ -399,7 +399,7 @@ def {fn_name}(...):
                         duration = next_execution - datetime.now()
                         print(f"Sleeping {duration.total_seconds()} secs until next execution time.")
                         time.sleep(duration.total_seconds())
-                elif next_execution is not None:
+                elif next_execution is not True:
                     break
 
                 next_execution = datetime.now() + delta if delta else False

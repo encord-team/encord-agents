@@ -1,4 +1,8 @@
+from datetime import datetime
+from unittest.mock import patch
+
 import pytest
+import time_machine
 
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.runner import SequentialRunner
@@ -57,3 +61,32 @@ def test_max_tasks_per_stage_validation() -> None:
     with pytest.raises(PrintableError):
         runner(max_tasks_per_stage=-1)
     # Actual behaviour checked in integration_tests/tasks/test_queue_runner via integration test
+
+
+def test_runner_refresh_every(ephemeral_project_hash: str) -> None:
+    refresh_every = 5
+    cycles_to_run = 3
+    sleeps: list[int] = []
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    class StopAfterNTasks(Exception):
+        pass
+
+    @runner.stage("Stage1")
+    def method_1() -> None:
+        pass
+
+    with time_machine.travel(datetime(2025, 1, 1, 12, 0, 0), tick=False) as traveller:
+
+        def fake_sleep(secs: int) -> None:
+            sleeps.append(secs)
+            traveller.shift(secs)  # jump the clock forward
+            if len(sleeps) >= cycles_to_run:
+                raise StopAfterNTasks()
+
+        with patch("encord_agents.tasks.runner.sequential_runner.time.sleep", fake_sleep):
+            with pytest.raises(StopAfterNTasks):
+                runner(refresh_every=refresh_every)
+
+    assert len(sleeps) == cycles_to_run
+    assert sum(sleeps) == refresh_every * cycles_to_run
