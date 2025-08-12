@@ -202,7 +202,7 @@ Or in code
 runner(task_batch_size=1)
 ```
 
-Additionally to speed up your label row updates to the encord platform, we allow you to return a struct object and we then handle batch saving the results to ensure that you spend as time as possible running your agent and minimising time spent writing results. To use this speed up, please instead write:
+Additionally to speed up your label row updates to the encord platform, we allow you to return a struct object and we then handle batch saving the results to ensure that you spend as much time as possible running your agent and minimise time spent writing results. To use this speed up, please instead write:
 
 ```python
 from encord_agents.tasks.models import TaskAgentReturnStruct
