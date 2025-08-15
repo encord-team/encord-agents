@@ -40,6 +40,8 @@ from encord_agents.utils.generic_utils import try_coerce_UUID
 
 MAX_LABEL_ROW_BATCH_SIZE = 100
 
+logger = logging.getLogger(__name__)
+
 
 class SequentialRunner(RunnerBase):
     """
@@ -266,7 +268,7 @@ class SequentialRunner(RunnerBase):
                             except PrintableError:
                                 raise
                             except Exception:
-                                print(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
+                                logger.error(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
                                 traceback.print_exc()
 
     def _validate_agent_stages(
@@ -397,7 +399,7 @@ def {fn_name}(...):
                 if isinstance(next_execution, datetime):
                     if next_execution > datetime.now():
                         duration = next_execution - datetime.now()
-                        print(f"Sleeping {duration.total_seconds()} secs until next execution time.")
+                        logger.info(f"Sleeping {duration.total_seconds()} secs until next execution time.")
                         time.sleep(duration.total_seconds())
                 elif next_execution is not None:
                     break

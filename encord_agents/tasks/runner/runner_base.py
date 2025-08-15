@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 from uuid import UUID
 
@@ -19,6 +20,8 @@ from encord_agents.core.dependencies.utils import get_dependant
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import TaskAgentReturnType
+
+logger = logging.getLogger(__name__)
 
 
 class RunnerAgent:
@@ -49,7 +52,7 @@ class RunnerBase:
         try:
             ph = str(UUID(str(ph)))
         except ValueError:
-            print("Could not read project_hash as a UUID")
+            logger.error("Could not read project_hash as a UUID")
             raise Abort()
         return ph
 
