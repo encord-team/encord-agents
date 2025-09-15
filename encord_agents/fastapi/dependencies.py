@@ -40,7 +40,7 @@ from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.vision import crop_to_object
 
 try:
-    from fastapi import Depends, Form
+    from fastapi import Depends, Form, Request
 except ModuleNotFoundError:
     print(
         'To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"'
@@ -55,8 +55,18 @@ from encord_agents.core.utils import (
 )
 from encord_agents.core.video import iter_video
 
+HEADER_CLOUD_TRACE_CONTEXT = "X-Cloud-Trace-Context"
 
-def dep_client() -> EncordUserClient:
+
+def dep_trace_id(request: Request) -> str | None:
+    x_cloud_trace_context = request.headers.get(HEADER_CLOUD_TRACE_CONTEXT)
+    if not x_cloud_trace_context:
+        return None
+    trace_id = x_cloud_trace_context.split("/")[0]
+    return trace_id
+
+
+def dep_client(trace_id: Annotated[str | None, Depends(dep_trace_id)]) -> EncordUserClient:
     """
     Dependency to provide an authenticated user client.
 
@@ -74,7 +84,7 @@ def dep_client() -> EncordUserClient:
     ```
 
     """
-    return get_user_client()
+    return get_user_client(trace_id=trace_id)
 
 
 def dep_label_row_with_args(
