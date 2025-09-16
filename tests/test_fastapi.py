@@ -1,15 +1,15 @@
 from typing import Annotated
 from unittest.mock import MagicMock, patch
-from uuid import uuid4
 
 from encord.user_client import EncordUserClient
 from fastapi import Depends
 from fastapi.testclient import TestClient
 from requests import Session
 
+from encord_agents.core.constants import HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.fastapi.cors import get_encord_app
-from encord_agents.fastapi.dependencies import HEADER_CLOUD_TRACE_CONTEXT, dep_client
+from encord_agents.fastapi.dependencies import dep_client
 
 
 class TestCustomCorsRegex:
@@ -60,7 +60,6 @@ class TestCustomCorsRegex:
         app = get_encord_app()
 
         trace_id = "a7b2e5f5ff29466fa0a787cf931106a9"
-        SPAN_AFTER_REQUEST = 5
 
         @app.post("/client")
         def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
@@ -70,17 +69,14 @@ class TestCustomCorsRegex:
                 mock_response.status_code = 200
                 mock_response.json.return_value = None
                 mock_response.content = "null"
-                mock_response.headers = {HEADER_CLOUD_TRACE_CONTEXT: f"{trace_id}/{SPAN_AFTER_REQUEST};o=1"}
                 send.return_value = mock_response
                 client._api_client.post("/", params=None, payload=None, result_type=None)
                 send.assert_called_once()
                 req = send.call_args.args[0]
                 assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/1;o=1"
-
-                # TODO: Bump Encord dependency and uncomment below behaviour to check that state is recorded appropriately
-                # client._api_client.post("/", params=None, payload=None, result_type=None)
-                # req = send.call_args.args[0]
-                # assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/{SPAN_AFTER_REQUEST+1};o=1"
+                client._api_client.post("/", params=None, payload=None, result_type=None)
+                req = send.call_args.args[0]
+                assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/2;o=1"
 
         client = TestClient(app)
         resp = client.post(

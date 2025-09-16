@@ -33,21 +33,18 @@ DOWNLOAD_GROUP_ERROR_MESSAGE = (
 )
 
 
-@lru_cache(maxsize=1)
-def stateful_trace_provider(trace_id: str) -> tuple[Callable[[], str], Callable[[int], None]]:
-    span_id = 1
+def stateful_trace_provider(trace_id: str) -> Callable[[], str]:
+    span_id = 0
 
     def trace_id_provider() -> str:
+        nonlocal span_id
+        span_id += 1
         return f"{trace_id}/{span_id};o=1"
 
-    def update_trace_id_provider(new_span_id: int) -> None:
-        nonlocal span_id
-        span_id = new_span_id
-
-    return trace_id_provider, update_trace_id_provider
+    return trace_id_provider
 
 
-def get_user_client(settings: Settings | None = None, trace_id: str | None = None) -> EncordUserClient:
+def get_user_client(settings: Settings | None = None, *, trace_id: str | None = None) -> EncordUserClient:
     """
     Generate an user client to access Encord.
 
@@ -58,10 +55,8 @@ def get_user_client(settings: Settings | None = None, trace_id: str | None = Non
     settings = settings or Settings()
     user_client = get_user_client_from_settings(settings)
     if trace_id is not None:
-        trace_id_provider, update_trace_id_provider = stateful_trace_provider(trace_id)
+        trace_id_provider = stateful_trace_provider(trace_id=trace_id)
         user_client._config.requests_settings.trace_id_provider = trace_id_provider
-        # TODO: Remove type ignore once consolidated how to mutate span state
-        user_client._config.requests_settings.update_trace_id_provider = update_trace_id_provider  # type: ignore[attr-defined]
     return user_client
 
 

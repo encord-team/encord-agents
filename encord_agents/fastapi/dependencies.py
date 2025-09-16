@@ -35,6 +35,7 @@ from encord.storage import StorageItem
 from encord.user_client import EncordUserClient
 from numpy.typing import NDArray
 
+from encord_agents.core.constants import HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.shares import DataLookup
 from encord_agents.core.vision import crop_to_object
@@ -54,8 +55,6 @@ from encord_agents.core.utils import (
     get_user_client,
 )
 from encord_agents.core.video import iter_video
-
-HEADER_CLOUD_TRACE_CONTEXT = "X-Cloud-Trace-Context"
 
 
 def dep_trace_id(request: Request) -> str | None:
