@@ -12,7 +12,7 @@ from flask import Request, Response, make_response
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.data_model import (
     EditorAgentResponse,
     LabelRowInitialiseLabelsArgs,
@@ -89,12 +89,16 @@ def editor_agent(
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
                 logging.info("Editor test request")
                 return _generate_response()
+            trace_id: str | None = None
+            if x_cloud_trace_context := request.headers.get(HEADER_CLOUD_TRACE_CONTEXT):
+                trace_id = x_cloud_trace_context.split("/")[0]
+                logging.info(f"Trace id: {trace_id}")
             if not request.is_json:
                 raise Exception("Request should be JSON. Migrated over to new format")
             frame_data = FrameData.model_validate(request.get_json())
             logging.info(f"Request: {frame_data}")
 
-            client = get_user_client()
+            client = get_user_client(trace_id=trace_id)
             try:
                 project = client.get_project(frame_data.project_hash)
             except AuthorisationError as err:
