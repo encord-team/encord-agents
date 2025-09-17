@@ -1,10 +1,11 @@
 import logging
 import mimetypes
+import random
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Generator, Iterable, List, TypeVar, cast
+from typing import Any, Callable, Generator, Iterable, List, TypeVar
 
 import requests
 from encord.constants.enums import DataType
@@ -33,7 +34,15 @@ DOWNLOAD_GROUP_ERROR_MESSAGE = (
 )
 
 
-def get_user_client(settings: Settings | None = None) -> EncordUserClient:
+def trace_provider(trace_id: str) -> Callable[[], str]:
+    def trace_id_provider() -> str:
+        span_id = random.getrandbits(64)
+        return f"{trace_id}/{span_id:x};o=1"
+
+    return trace_id_provider
+
+
+def get_user_client(settings: Settings | None = None, *, trace_id: str | None = None) -> EncordUserClient:
     """
     Generate an user client to access Encord.
 
@@ -42,7 +51,11 @@ def get_user_client(settings: Settings | None = None) -> EncordUserClient:
 
     """
     settings = settings or Settings()
-    return get_user_client_from_settings(settings)
+    user_client = get_user_client_from_settings(settings)
+    if trace_id is not None:
+        trace_id_provider = trace_provider(trace_id=trace_id)
+        user_client._config.requests_settings.trace_id_provider = trace_id_provider
+    return user_client
 
 
 @lru_cache(maxsize=1)

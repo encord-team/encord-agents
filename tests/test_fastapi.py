@@ -1,10 +1,12 @@
 from typing import Annotated
+from unittest.mock import MagicMock, patch
 
-from cv2 import meanShift
 from encord.user_client import EncordUserClient
 from fastapi import Depends
 from fastapi.testclient import TestClient
+from requests import Session
 
+from encord_agents.core.constants import HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.exceptions import EncordEditorAgentException
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import dep_client
@@ -51,3 +53,44 @@ class TestCustomCorsRegex:
         resp = client.post("/client-throws", headers={"Origin": "https://app.encord.com"})
         assert resp.status_code == 400, resp.content
         assert resp.headers["Access-Control-Allow-Origin"] == "https://app.encord.com"
+
+    def test_trace_id_used_appropriately(
+        self,
+    ) -> None:
+        app = get_encord_app()
+
+        trace_id = "a7b2e5f5ff29466fa0a787cf931106a9"
+
+        state = iter([1, 2])
+
+        def fake_randbits(_: int) -> int:
+            nonlocal state
+            return next(state)
+
+        @app.post("/client")
+        def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
+            assert isinstance(client, EncordUserClient)
+            with (
+                patch.object(Session, "send") as send,
+                patch("encord_agents.core.utils.random.getrandbits", side_effect=fake_randbits) as rand_seed,
+            ):
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = None
+                mock_response.content = "null"
+                send.return_value = mock_response
+                client._api_client.post("/", params=None, payload=None, result_type=None)
+                send.assert_called_once()
+                rand_seed.assert_called_once()
+                req = send.call_args.args[0]
+                assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/1;o=1"
+                client._api_client.post("/", params=None, payload=None, result_type=None)
+                assert rand_seed.call_count == 2
+                req = send.call_args.args[0]
+                assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/2;o=1"
+
+        client = TestClient(app)
+        resp = client.post(
+            "/client", headers={"Origin": "https://app.encord.com", HEADER_CLOUD_TRACE_CONTEXT: f"{trace_id}/1;o=1"}
+        )
+        assert resp.status_code == 200

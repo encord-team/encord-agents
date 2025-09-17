@@ -7,11 +7,12 @@ from typing import Any, Callable, Dict, cast
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
+from flask import request
 from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.data_model import EditorAgentResponse, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
@@ -51,7 +52,10 @@ def editor_agent(
             if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
                 return _generate_response()
-
+            trace_id: str | None = None
+            if x_cloud_trace_context := headers.get(HEADER_CLOUD_TRACE_CONTEXT):
+                trace_id = x_cloud_trace_context.split("/")[0]
+                logging.info(f"Trace id: {trace_id}")
             try:
                 body = event.get("body")
                 frame_data: FrameData | None = None
@@ -75,7 +79,7 @@ def editor_agent(
                 }
             frame_data = cast(FrameData, frame_data)
 
-            client = get_user_client()
+            client = get_user_client(trace_id=trace_id)
             try:
                 project = client.get_project(frame_data.project_hash)
             except AuthorisationError:
