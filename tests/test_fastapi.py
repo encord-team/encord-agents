@@ -1,3 +1,4 @@
+import re
 from typing import Annotated
 from unittest.mock import MagicMock, patch
 
@@ -61,6 +62,10 @@ class TestCustomCorsRegex:
 
         trace_id = "a7b2e5f5ff29466fa0a787cf931106a9"
 
+        CLOUD_TRACE_CONTEXT_RE = re.compile(
+            r"^(?P<trace_id>[0-9a-f]{32})/(?P<span_id>[0-9]{1,20});o=(?P<options>[01])$"
+        )
+
         state = iter([1, 2])
 
         def fake_randbits(_: int) -> int:
@@ -70,24 +75,28 @@ class TestCustomCorsRegex:
         @app.post("/client")
         def post_client(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
             assert isinstance(client, EncordUserClient)
-            with (
-                patch.object(Session, "send") as send,
-                patch("encord_agents.core.utils.random.getrandbits", side_effect=fake_randbits) as rand_seed,
-            ):
+            with patch.object(Session, "send") as send:
                 mock_response = MagicMock()
                 mock_response.status_code = 200
                 mock_response.json.return_value = None
                 mock_response.content = "null"
                 send.return_value = mock_response
+                with patch("encord_agents.core.utils.random.getrandbits", side_effect=fake_randbits) as rand_seed:
+                    client._api_client.post("/", params=None, payload=None, result_type=None)
+                    send.assert_called_once()
+                    rand_seed.assert_called_once()
+                    req = send.call_args.args[0]
+                    assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/1;o=1"
+                    client._api_client.post("/", params=None, payload=None, result_type=None)
+                    assert rand_seed.call_count == 2
+                    req = send.call_args.args[0]
+                    assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/2;o=1"
+
+                # Check for unpatched randomness matches regex
                 client._api_client.post("/", params=None, payload=None, result_type=None)
-                send.assert_called_once()
-                rand_seed.assert_called_once()
                 req = send.call_args.args[0]
-                assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/1;o=1"
-                client._api_client.post("/", params=None, payload=None, result_type=None)
-                assert rand_seed.call_count == 2
-                req = send.call_args.args[0]
-                assert req.headers.get(HEADER_CLOUD_TRACE_CONTEXT) == f"{trace_id}/2;o=1"
+                x_cloud_trace_context = req.headers.get(HEADER_CLOUD_TRACE_CONTEXT)
+                assert CLOUD_TRACE_CONTEXT_RE.match(x_cloud_trace_context)
 
         client = TestClient(app)
         resp = client.post(

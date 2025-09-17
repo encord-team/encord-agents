@@ -36,8 +36,15 @@ DOWNLOAD_GROUP_ERROR_MESSAGE = (
 
 def trace_provider(trace_id: str) -> Callable[[], str]:
     def trace_id_provider() -> str:
+        # https://cloud.google.com/trace/docs/trace-context#:~:text=The%20fields%20of,parent%20was%20sampled
+        # X-Cloud-Trace-Context: TRACE_ID/SPAN_ID;o=OPTIONS
+        # The fields of header are defined as follows:
+
+        # TRACE_ID is a 32-character hexadecimal value representing a 128-bit number.
+        # SPAN_ID is a 64-bit decimal representation of the unsigned span ID.
+        # OPTIONS supports 0 (parent not sampled) and 1 (parent was sampled).
         span_id = random.getrandbits(64)
-        return f"{trace_id}/{span_id:x};o=1"
+        return f"{trace_id}/{str(span_id)};o=1"
 
     return trace_id_provider
 
