@@ -2,7 +2,7 @@ from typing import Annotated
 
 from encord.objects.ontology_labels_impl import LabelRowV2
 
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, HEADER_CLOUD_TRACE_CONTEXT
 from encord_agents.core.data_model import FrameData
 from encord_agents.fastapi.cors import get_encord_app
 from encord_agents.fastapi.dependencies import (
@@ -53,3 +53,28 @@ def test_fastapi_can_handle_placeholder_payload() -> None:
     )
     assert resp.status_code == 200, resp.content
     assert counter == 0
+
+
+def test_fastapi_can_handle_cloud_trace() -> None:
+    app = get_encord_app()
+
+    @app.post("/test")
+    def frame_data(
+        frame_data: FrameData,
+        label_row: Annotated[LabelRowV2, Depends(dep_label_row)],
+    ) -> None:
+        pass
+
+    client = TestClient(app)
+    options_resp = client.options(
+        "/test",
+        headers={
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": ", ".join([HEADER_CLOUD_TRACE_CONTEXT, EDITOR_TEST_REQUEST_HEADER]),
+            "Origin": "https://app.encord.com",
+        },
+    )
+    assert options_resp.status_code == 200, options_resp.read()
+    assert "Access-Control-Allow-Origin" in options_resp.headers
+    assert "Access-Control-Allow-Headers" in options_resp.headers
+    assert HEADER_CLOUD_TRACE_CONTEXT in options_resp.headers["Access-Control-Allow-Headers"]
