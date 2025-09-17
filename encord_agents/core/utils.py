@@ -1,5 +1,6 @@
 import logging
 import mimetypes
+import random
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
@@ -33,13 +34,10 @@ DOWNLOAD_GROUP_ERROR_MESSAGE = (
 )
 
 
-def stateful_trace_provider(trace_id: str) -> Callable[[], str]:
-    span_id = 0
-
+def trace_provider(trace_id: str) -> Callable[[], str]:
     def trace_id_provider() -> str:
-        nonlocal span_id
-        span_id += 1
-        return f"{trace_id}/{span_id};o=1"
+        span_id = random.getrandbits(64)
+        return f"{trace_id}/{span_id:x};o=1"
 
     return trace_id_provider
 
@@ -55,7 +53,7 @@ def get_user_client(settings: Settings | None = None, *, trace_id: str | None = 
     settings = settings or Settings()
     user_client = get_user_client_from_settings(settings)
     if trace_id is not None:
-        trace_id_provider = stateful_trace_provider(trace_id=trace_id)
+        trace_id_provider = trace_provider(trace_id=trace_id)
         user_client._config.requests_settings.trace_id_provider = trace_id_provider
     return user_client
 
