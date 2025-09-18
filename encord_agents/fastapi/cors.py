@@ -23,7 +23,7 @@ except ModuleNotFoundError:
     )
     exit()
 
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
+from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
 
 
 # Type checking does not work here because we do not enforce people to
@@ -50,7 +50,7 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         app: ASGIApp,
         allow_origins: typing.Sequence[str] = (),
         allow_methods: typing.Sequence[str] = ("POST",),
-        allow_headers: typing.Sequence[str] = (EDITOR_TEST_REQUEST_HEADER,),
+        allow_headers: typing.Sequence[str] = (EDITOR_TEST_REQUEST_HEADER, HEADER_CLOUD_TRACE_CONTEXT),
         allow_credentials: bool = False,
         allow_origin_regex: str = ENCORD_DOMAIN_REGEX,
         expose_headers: typing.Sequence[str] = (),
