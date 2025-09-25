@@ -178,7 +178,7 @@ def dep_video_iterator(storage_item: StorageItem) -> Generator[Iterator[Frame], 
     """
     from encord_agents.core.video import iter_video
 
-    if not storage_item.item_type == StorageItemType.VIDEO:
+    if storage_item.item_type not in [StorageItemType.VIDEO, StorageItemType.IMAGE_SEQUENCE]:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
 
     with download_asset(storage_item, None) as asset:
