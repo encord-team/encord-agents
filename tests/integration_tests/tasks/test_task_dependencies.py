@@ -176,6 +176,13 @@ class TestDependencyResolution:
         dep_single_frame_frame = dep_single_frame(self.context.video_storage_item)
         assert np.array_equal(first_frame.content, dep_single_frame_frame)
 
+        image_sequence_video_gen = dep_video_iterator(self.context.image_sequence_storage_item)
+        image_sequence_iter = next(image_sequence_video_gen)
+        idx: int = 0
+        for idx, _ in enumerate(image_sequence_iter):
+            continue
+        assert idx > 0
+
     def test_dep_video_sampler(self) -> None:
         video_sampler_gen = dep_video_sampler(self.context.video_storage_item)
         video_sampler = next(video_sampler_gen)
