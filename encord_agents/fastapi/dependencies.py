@@ -311,7 +311,7 @@ def dep_video_iterator(
         An iterator.
 
     """
-    if not storage_item.item_type == StorageItemType.VIDEO:
+    if storage_item.item_type not in [StorageItemType.VIDEO, StorageItemType.IMAGE_SEQUENCE]:
         raise NotImplementedError("`dep_video_iterator` only supported for video label rows")
     with download_asset(storage_item, None) as asset:
         yield iter_video(asset)
