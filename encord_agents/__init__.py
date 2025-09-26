@@ -5,6 +5,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 from .core.data_model import FrameData
 
-__version__ = "v0.2.4"
+__version__ = "v0.2.5"
 
 __all__ = ["FrameData"]
