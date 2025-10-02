@@ -1,9 +1,11 @@
 import traceback
 from contextlib import ExitStack
+from dataclasses import dataclass
 from functools import wraps
 from typing import Any, Callable, Iterable
 from uuid import UUID
 
+from encord.http.bundle import Bundle
 from encord.project import Project
 from encord.workflow.stages.agent import AgentStage, AgentTask
 
@@ -15,12 +17,22 @@ from encord_agents.tasks.runner.runner_base import RunnerBase
 from encord_agents.utils.generic_utils import try_coerce_UUID
 
 
+@dataclass
+class _FlatTaskCompletionResult:
+    task_uuid: UUID
+    stage_uuid: UUID | None
+    success: bool
+    pathway: UUID | None
+
+
 def handle_pathway(
     task: AgentTask,
     pathway_to_follow: UUID | str | None,
     pathway_lookup: dict[UUID, str],
     name_lookup: dict[str, UUID],
     stage: AgentStage,
+    *,
+    bundle: Bundle | None = None,
 ) -> UUID | None:
     next_stage_uuid: UUID | None = None
     if pathway_to_follow is None:
@@ -31,13 +43,13 @@ def handle_pathway(
             raise PrintableError(
                 f"Runner responded with pathway UUID: {next_stage_uuid}, only accept: {[pathway.uuid for pathway in stage.pathways]}"
             )
-        task.proceed(pathway_uuid=str(next_stage_uuid))
+        task.proceed(pathway_uuid=str(next_stage_uuid), bundle=bundle)
     else:
         if pathway_to_follow not in [pathway.name for pathway in stage.pathways]:
             raise PrintableError(
                 f"Runner responded with pathway name: {pathway_to_follow}, only accept: {[pathway.name for pathway in stage.pathways]}"
             )
-        task.proceed(pathway_name=str(pathway_to_follow))
+        task.proceed(pathway_name=str(pathway_to_follow), bundle=bundle)
         next_stage_uuid = name_lookup[str(pathway_to_follow)]
     return next_stage_uuid
 
@@ -100,7 +112,7 @@ class QueueRunner(RunnerBase):
         label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
         label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
         will_set_priority: bool = False,
-    ) -> Callable[[Callable[..., TaskAgentReturnType]], Callable[[str], str]]:
+    ) -> Callable[[Callable[..., TaskAgentReturnType]], Callable[[str | list[str]], str]]:
         """
         Agent wrapper intended for queueing systems and distributed workloads.
 
@@ -148,7 +160,7 @@ class QueueRunner(RunnerBase):
         """
         stage_uuid, printable_name = self._validate_stage(stage)
 
-        def decorator(func: Callable[..., TaskAgentReturnType]) -> Callable[[str], str]:
+        def decorator(func: Callable[..., TaskAgentReturnType]) -> Callable[[str | list[str]], str]:
             runner_agent = self._add_stage_agent(
                 stage_uuid,
                 func,
@@ -167,10 +179,11 @@ class QueueRunner(RunnerBase):
                 error = err
 
                 @wraps(func)
-                def null_wrapper(json_str: str) -> str:
-                    conf = AgentTaskConfig.model_validate_json(json_str)
+                def null_wrapper(json_str: str | list[str]) -> str:
+                    json_strs = [json_str] if isinstance(json_str, str) else json_str
+                    confs = [AgentTaskConfig.model_validate_json(js) for js in json_strs]
                     return TaskCompletionResult(
-                        task_uuid=conf.task_uuid,
+                        task_uuid=[conf.task_uuid for conf in confs] if len(confs) > 1 else confs[0].task_uuid,
                         success=False,
                         error=str(error),
                     ).model_dump_json()
@@ -180,22 +193,17 @@ class QueueRunner(RunnerBase):
             name_lookup = {pathway.name: pathway.uuid for pathway in stage.pathways}
 
             @wraps(func)
-            def wrapper(json_str: str) -> str:
-                conf = AgentTaskConfig.model_validate_json(json_str)
+            def wrapper(json_strs: str | list[str]) -> str:
+                if isinstance(json_strs, str):
+                    json_strs = [json_strs]
+                confs = [AgentTaskConfig.model_validate_json(json_str) for json_str in json_strs]
 
-                task = next((s for s in stage.get_tasks(data_hash=conf.data_hash)), None)
-                if task is None:
-                    # TODO logging?
-                    return TaskCompletionResult(
-                        task_uuid=conf.task_uuid,
-                        stage_uuid=stage.uuid,
-                        success=False,
-                        error="Failed to obtain task from Encord",
-                    ).model_dump_json()
-
+                tasks = [s for s in stage.get_tasks(data_hash=[conf.data_hash for conf in confs])]
+                # TODO: Handle missing tasks better
+                assert len(tasks) == len(confs), "Could not find all tasks from Encord"
                 try:
-                    context = self._assemble_context(
-                        task=task,
+                    contexts = self._assemble_contexts(
+                        task_batch=tasks,
                         runner_agent=runner_agent,
                         project=self._project,
                         include_args=include_args,
@@ -203,37 +211,56 @@ class QueueRunner(RunnerBase):
                         stage=stage,
                         client=self.client,
                     )
-
-                    with ExitStack() as stack:
-                        dependencies = solve_dependencies(
-                            context=context, dependant=runner_agent.dependant, stack=stack
-                        )
-                        agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
-                    pathway_to_follow: UUID | str | None = None
-                    if isinstance(agent_response, TaskAgentReturnStruct):
-                        # Can't batch handle updates for Queue Runner
-                        if agent_response.label_row:
-                            # If the user has returned a struct, we should save in case they haven't actually updated
-                            agent_response.label_row.save()
-                        if agent_response.pathway:
-                            pathway_to_follow = agent_response.pathway
-                        if agent_response.label_row_priority:
-                            assert (
-                                context.label_row is not None
-                            ), f"Label row is not set for task {task} setting the priority requires either setting the `will_set_priority` to True on the stage decorator or depending on the label row."
-                            context.label_row.set_priority(agent_response.label_row_priority)
-                    else:
-                        pathway_to_follow = agent_response
-                    next_stage_uuid = handle_pathway(task, pathway_to_follow, pathway_lookup, name_lookup, stage=stage)
-                    return TaskCompletionResult(
-                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage_uuid
+                    task_completion_results: list[_FlatTaskCompletionResult] = []
+                    assert self.project is not None
+                    with self.project.create_bundle() as bundle:
+                        for task, context in zip(tasks, contexts, strict=True):
+                            with ExitStack() as stack:
+                                dependencies = solve_dependencies(
+                                    context=context, dependant=runner_agent.dependant, stack=stack
+                                )
+                                agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
+                            pathway_to_follow: UUID | str | None = None
+                            if isinstance(agent_response, TaskAgentReturnStruct):
+                                if agent_response.label_row:
+                                    agent_response.label_row.save(bundle=bundle)
+                                if agent_response.pathway:
+                                    pathway_to_follow = agent_response.pathway
+                                if agent_response.label_row_priority:
+                                    assert context.label_row is not None
+                                    context.label_row.set_priority(agent_response.label_row_priority)
+                            else:
+                                pathway_to_follow = agent_response
+                            next_stage_uuid = handle_pathway(
+                                task, pathway_to_follow, pathway_lookup, name_lookup, stage=stage, bundle=bundle
+                            )
+                            result = _FlatTaskCompletionResult(
+                                task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage_uuid
+                            )
+                            task_completion_results.append(result)
+                    if len(task_completion_results) == 1:
+                        return TaskCompletionResult(
+                            task_uuid=task_completion_results[0].task_uuid,
+                            stage_uuid=stage.uuid,
+                            success=task_completion_results[0].success,
+                            pathway=task_completion_results[0].pathway,
+                        ).model_dump_json()
+                    full_task_completion_results = TaskCompletionResult(
+                        task_uuid=[result.task_uuid for result in task_completion_results],
+                        stage_uuid=stage.uuid,
+                        success=[result.task_uuid for result in task_completion_results if result.success],
+                        pathway=[result.pathway for result in task_completion_results if result.pathway is not None],
                     ).model_dump_json()
+                    return full_task_completion_results
                 except PrintableError:
                     raise
                 except Exception:
                     # TODO logging?
                     return TaskCompletionResult(
-                        task_uuid=task.uuid, stage_uuid=stage.uuid, success=False, error=traceback.format_exc()
+                        task_uuid=[task.uuid for task in tasks] if len(tasks) > 1 else tasks[0].uuid,
+                        stage_uuid=stage.uuid,
+                        success=False,
+                        error=traceback.format_exc(),
                     ).model_dump_json()
 
             return wrapper

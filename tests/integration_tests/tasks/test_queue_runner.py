@@ -82,6 +82,53 @@ def test_queue_runner_e2e(ephemeral_project_hash: str, mock_agent: MagicMock) ->
     assert mock_agent.call_count == N_items
 
 
+def test_queue_runner_worker_batches(ephemeral_project_hash: str, mock_agent: MagicMock) -> None:
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
+
+    @queue_runner.stage(AGENT_STAGE_NAME)
+    def agent_func(agent_task: AgentTask) -> str:
+        mock_agent(agent_task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    queue: list[str] = []
+    for stage in queue_runner.get_agent_stages():
+        for task in stage.get_tasks():
+            queue.append(task.model_dump_json())
+    assert queue_runner.project
+    N_items = len(queue_runner.project.list_label_rows_v2())
+    assert len(queue) == N_items
+
+    BATCH_SIZE = 5
+
+    agent_stage = queue_runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    # Haven't actually moved the tasks yet
+    assert len(agent_stage_tasks) == N_items
+    final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    final_stage_tasks = list(final_stage.get_tasks())
+    assert len(final_stage_tasks) == 0
+
+    for _batch_start in range(0, N_items, BATCH_SIZE):
+        batch_end = min(_batch_start + BATCH_SIZE, N_items)
+        batch_task_specs = queue[_batch_start:batch_end]
+        task_specs = [AgentTask.model_validate_json(ts) for ts in batch_task_specs]
+        result_json = agent_func(batch_task_specs)
+        result = TaskCompletionResult.model_validate_json(result_json)
+        assert result.success
+        assert not result.error
+        assert result.pathway == [UUID(AGENT_TO_COMPLETE_PATHWAY_HASH) for _ in task_specs]
+        assert result.stage_uuid == agent_stage.uuid
+        assert result.task_uuid == [task_spec.uuid for task_spec in task_specs]
+
+    # Have moved the tasks
+    agent_stage_tasks = list(agent_stage.get_tasks())
+    assert len(agent_stage_tasks) == 0
+    final_stage_tasks = list(final_stage.get_tasks())
+    assert len(final_stage_tasks) == N_items
+
+    assert mock_agent.call_count == N_items
+
+
 def test_queue_runner_passes_errors_appropriately(ephemeral_project_hash: str) -> None:
     queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
 
