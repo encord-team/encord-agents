@@ -198,12 +198,11 @@ class QueueRunner(RunnerBase):
                     json_strs = [json_strs]
                 confs = [AgentTaskConfig.model_validate_json(json_str) for json_str in json_strs]
 
-                tasks = [s for s in stage.get_tasks(data_hash=[conf.data_hash for conf in confs])]
-                # TODO: Handle missing tasks better
-                assert len(tasks) == len(confs), "Could not find all tasks from Encord"
+                task_dict = {s.data_hash: s for s in stage.get_tasks(data_hash=[conf.data_hash for conf in confs])}
+                tasks = [task_dict.get(conf.data_hash, None) for conf in confs]
                 try:
                     contexts = self._assemble_contexts(
-                        task_batch=tasks,
+                        task_batch=[task for task in tasks if task is not None],
                         runner_agent=runner_agent,
                         project=self._project,
                         include_args=include_args,
@@ -214,7 +213,17 @@ class QueueRunner(RunnerBase):
                     task_completion_results: list[_FlatTaskCompletionResult] = []
                     assert self.project is not None
                     with self.project.create_bundle() as bundle:
-                        for task, context in zip(tasks, contexts, strict=True):
+                        for conf, task, context in zip(confs, tasks, contexts, strict=True):
+                            if task is None:
+                                task_completion_results.append(
+                                    _FlatTaskCompletionResult(
+                                        task_uuid=conf.task_uuid,
+                                        stage_uuid=stage.uuid,
+                                        success=False,
+                                        pathway=None,
+                                    )
+                                )
+                                continue
                             with ExitStack() as stack:
                                 dependencies = solve_dependencies(
                                     context=context, dependant=runner_agent.dependant, stack=stack
@@ -257,7 +266,7 @@ class QueueRunner(RunnerBase):
                 except Exception:
                     # TODO logging?
                     return TaskCompletionResult(
-                        task_uuid=[task.uuid for task in tasks] if len(tasks) > 1 else tasks[0].uuid,
+                        task_uuid=[conf.task_uuid for conf in confs] if len(confs) > 1 else confs[0].task_uuid,
                         stage_uuid=stage.uuid,
                         success=False,
                         error=traceback.format_exc(),
