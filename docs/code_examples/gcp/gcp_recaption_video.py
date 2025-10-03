@@ -6,13 +6,12 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from langchain_openai import ChatOpenAI
-from numpy.typing import NDArray
-from pydantic import BaseModel
-
 from encord_agents import FrameData
 from encord_agents.gcp import Depends, editor_agent
 from encord_agents.gcp.dependencies import Frame, dep_single_frame
+from langchain_openai import ChatOpenAI
+from numpy.typing import NDArray
+from pydantic import BaseModel
 
 
 # The response model for the agent to follow.

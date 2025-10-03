@@ -1,20 +1,20 @@
 from pathlib import Path
 
-import modal
 from encord.objects.coordinates import (
     PointCoordinate,
 )
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object_instance import ObjectInstance
-from fastapi import Depends
-from typing_extensions import Annotated
-
 from encord_agents.fastapi.dependencies import (
     FrameData,
     dep_asset,
     dep_label_row,
     dep_objects,
 )
+from typing_extensions import Annotated
+
+import modal
+from fastapi import Depends
 
 # 1. Define the Modal Image
 image = (

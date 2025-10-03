@@ -1,5 +1,4 @@
 from encord.objects.ontology_labels_impl import LabelRowV2
-
 from encord_agents.tasks import Runner
 
 runner = Runner(project_hash="<your_project_hash>")

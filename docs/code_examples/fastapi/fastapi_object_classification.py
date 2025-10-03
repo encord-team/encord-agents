@@ -3,9 +3,6 @@ import os
 
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
-from fastapi import Depends
-from typing_extensions import Annotated
-
 from encord_agents.core.data_model import InstanceCrop
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
@@ -15,6 +12,9 @@ from encord_agents.fastapi.dependencies import (
     dep_label_row,
     dep_object_crops,
 )
+from typing_extensions import Annotated
+
+from fastapi import Depends
 
 # Initialize FastAPI app
 app = get_encord_app()

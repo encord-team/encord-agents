@@ -3,14 +3,13 @@ import os
 
 from anthropic import Anthropic
 from encord.objects.ontology_labels_impl import LabelRowV2
-from numpy.typing import NDArray
-from typing_extensions import Annotated
-
 from encord_agents.core.ontology import OntologyDataModel
 from encord_agents.core.utils import get_user_client
 from encord_agents.core.video import Frame
 from encord_agents.gcp import Depends, editor_agent
 from encord_agents.gcp.dependencies import FrameData, dep_single_frame
+from numpy.typing import NDArray
+from typing_extensions import Annotated
 
 client = get_user_client()
 project = client.get_project("<your_project_hash>")
