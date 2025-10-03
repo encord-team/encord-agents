@@ -237,7 +237,7 @@ class QueueRunner(RunnerBase):
                                     pathway_to_follow = agent_response.pathway
                                 if agent_response.label_row_priority:
                                     assert context.label_row is not None
-                                    context.label_row.set_priority(agent_response.label_row_priority)
+                                    context.label_row.set_priority(agent_response.label_row_priority, bundle=bundle)
                             else:
                                 pathway_to_follow = agent_response
                             next_stage_uuid = handle_pathway(
