@@ -606,7 +606,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">2.1.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.5.2,<3" },
     { name = "requests", specifier = ">=2.32.3,<3" },
-    { name = "typer", specifier = ">=0.12.5,<0.13" },
+    { name = "typer", specifier = ">=0.12.5" },
     { name = "typing-extensions", specifier = ">=4.8.0" },
 ]
 provides-extras = ["vision"]
