@@ -43,7 +43,7 @@ if __name__ == "__main__":
         project_hash="<your_project_hash">,
         refresh_every=3600,  # seconds
         num_retries = 1,
-        task_batch_size = 1,
+        task_batch_size = 10,
     )
 ```
 
