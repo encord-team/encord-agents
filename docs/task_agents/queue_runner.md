@@ -50,6 +50,45 @@ if __name__ == "__main__":
 !!! tip
     To avoid mixing up the agent implementations, we recommend to use a dedicated queue runner for each agent.
 
+## Batched processing on workers
+
+To reduce the overhead of fetching and uploading data, you can add multiple tasks to the queue at once. Simply pass a `list[str]` object to your chosen queue. For example:
+
+```python title="batched_queue_agent.py"
+from encord.objects.ontology_labels_impl import LabelRowV2
+from encord_agents.tasks import QueueRunner
+from encord.workflow.stages.agent import AgentTask
+
+runner = QueueRunner(project_hash="<your_project_hash>")
+
+# Agent code stays exactly the same
+@runner.stage("my_stage_name")  # or stage="<stage_uuid>"
+def process_task(task: AgentTask, lr: LabelRowV2) -> str:
+    # No need to change anything about your agent :racing_car:
+    lr.set_priority(0.5)
+    return "next_stage"
+
+BATCH_SIZE = 10
+
+
+# Step 3 & 4: Queue and execute tasks
+if __name__ == "__main__":
+    # Get all tasks that need processing
+    for stage in runner.get_agent_stages():
+        # Your queue implementation
+        task_queue = []
+        
+        # Only need to change code here <--
+        all_tasks = list(stage.get_tasks())
+        batched_tasks = [all_tasks[i:i+BATCH_SIZE] for i in range(0,len(all_tasks), BATCH_SIZE)]
+        for batch in batched_tasks:
+            task_queue.append([task.model_dump_json() for task in batch])
+        
+        while task_queue:
+            task_spec = task_queue.pop()
+            result_json = process_task(task_spec)
+```
+
 ## Integration with Queue Systems
 
 The `QueueRunner` is designed to work with various queue systems. Here are examples with popular frameworks:

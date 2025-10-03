@@ -110,13 +110,20 @@ def stage_1(prefix: Annotated[str, Depends(last_eight)]):
     return "<path-name-to-follow>"
 
 
+# Chunk tasks to batch process on individual workers
+CHUNK_SIZE = 5
+
+
 # Define the main function to be executed when the modal is run
 # to populate the queue with tasks
 @app.local_entrypoint()
 def main():
     for stage in runner.get_agent_stages():
         # Remote execution of function on tasks
-        result_strings: list[str] = list(stage_1.map([t.model_dump_json() for t in stage.get_tasks()]))
+        result_strings: list[str] = list([t.model_dump_json() for t in stage.get_tasks()])
+        grouped_result_strings = [result_strings[i : i + CHUNK_SIZE] for i in range(0, len(result_strings), CHUNK_SIZE)]
+        for batch in grouped_result_strings:
+            stage_1.map(batch)
 
         print(stage.title)
         completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
