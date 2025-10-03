@@ -66,6 +66,7 @@ Update the following values for your use case:
 - `concurrency_limit`: Number of parallel executions (default: 5)
 """
 
+from itertools import islice
 from typing import Iterable
 from uuid import UUID
 
@@ -75,6 +76,15 @@ from typing_extensions import Annotated
 
 from encord_agents.tasks import Depends, QueueRunner
 from encord_agents.tasks.models import TaskCompletionResult
+
+
+def batched(iterable, size):
+    it = iter(iterable)
+    batch = list(islice(it, size))
+    while batch:
+        yield batch
+        batch = list(islice(it, size))
+
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -120,11 +130,11 @@ CHUNK_SIZE = 5
 def main():
     for stage in runner.get_agent_stages():
         # Remote execution of function on tasks
-        result_strings: list[str] = list([t.model_dump_json() for t in stage.get_tasks()])
-        grouped_result_strings = [result_strings[i : i + CHUNK_SIZE] for i in range(0, len(result_strings), CHUNK_SIZE)]
-        for batch in grouped_result_strings:
-            stage_1.map(batch)
+        for batch_tasks in batched(stage.get_tasks(), CHUNK_SIZE):
+            task_specs = [t.model_dump_json() for t in batch_tasks]
+            for batch in batched(task_specs, CHUNK_SIZE):
+                result_string = stage_1.map(batch)
 
         print(stage.title)
-        completion_result = TaskCompletionResult.model_validate_json(result_strings[0])
+        completion_result = TaskCompletionResult.model_validate_json(result_string)
         print(f"Example completion result: {completion_result}")

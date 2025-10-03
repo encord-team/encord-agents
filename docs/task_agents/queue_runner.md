@@ -55,11 +55,20 @@ if __name__ == "__main__":
 To reduce the overhead of fetching and uploading data, you can add multiple tasks to the queue at once. Simply pass a `list[str]` object to your chosen queue. For example:
 
 ```python title="batched_queue_agent.py"
+from itertools import islice
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord_agents.tasks import QueueRunner
 from encord.workflow.stages.agent import AgentTask
 
 runner = QueueRunner(project_hash="<your_project_hash>")
+
+# Little batching helper :)
+def batched(iterable, size):
+    it = iter(iterable)
+    batch = list(islice(it, size))
+    while batch:
+        yield batch
+        batch = list(islice(it, size))
 
 # Agent code stays exactly the same
 @runner.stage("my_stage_name")  # or stage="<stage_uuid>"
@@ -79,9 +88,7 @@ if __name__ == "__main__":
         task_queue = []
         
         # Only need to change code here <--
-        all_tasks = list(stage.get_tasks())
-        batched_tasks = [all_tasks[i:i+BATCH_SIZE] for i in range(0,len(all_tasks), BATCH_SIZE)]
-        for batch in batched_tasks:
+        for batch_tasks in batched(stage.get_tasks(), BATCH_SIZE):
             task_queue.append([task.model_dump_json() for task in batch])
         
         while task_queue:
