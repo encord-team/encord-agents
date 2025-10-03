@@ -69,12 +69,12 @@ Update the following values for your use case:
 from typing import Iterable
 from uuid import UUID
 
+import modal
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents.tasks import Depends, QueueRunner
-from encord_agents.tasks.models import TaskCompletionResult
 from typing_extensions import Annotated
 
-import modal
+from encord_agents.tasks import Depends, QueueRunner
+from encord_agents.tasks.models import TaskCompletionResult
 
 image = (
     modal.Image.debian_slim(python_version="3.12")

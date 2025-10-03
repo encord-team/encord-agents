@@ -6,14 +6,14 @@ import numpy as np
 from encord.exceptions import LabelRowError
 from encord.objects.classification_instance import ClassificationInstance
 from encord.objects.ontology_labels_impl import LabelRowV2
-from encord_agents import FrameData
-from encord_agents.fastapi.cors import get_encord_app
-from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
+from fastapi import Depends
 from langchain_openai import ChatOpenAI
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
-from fastapi import Depends
+from encord_agents import FrameData
+from encord_agents.fastapi.cors import get_encord_app
+from encord_agents.fastapi.dependencies import Frame, dep_label_row, dep_single_frame
 
 
 # The response model for the agent to follow.
