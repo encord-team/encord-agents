@@ -23,7 +23,7 @@ def main():
     for stage in runner.get_agent_stages():
         print(f"Processing stage: {stage.title} ({stage.uuid})")
         # Get all tasks for this stage
-        for task in batched(stage.get_tasks(), 5 * CHUNK_SIZE):
+        for task in batched(stage.get_tasks(), CHUNK_SIZE):
             # Convert task to JSON spec and send to Celery queue
             task_specs = [task.model_dump_json() for task in task]
 

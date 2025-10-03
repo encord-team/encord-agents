@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
 ## Batched processing on workers
 
-To help minimise overhead on fetching and uploading data from the Encord platform, we also allow you to put multiple tasks on the queue as an individual task. In order to do as such, it's a simple as putting a `list[str]` like object on your chosen queue. For example:
+To reduce the overhead of fetching and uploading data, you can add multiple tasks to the queue at once. Simply pass a `list[str]` object to your chosen queue. For example:
 
 ```python title="batched_queue_agent.py"
 from encord.objects.ontology_labels_impl import LabelRowV2
