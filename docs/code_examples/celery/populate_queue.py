@@ -23,12 +23,12 @@ def main():
     for stage in runner.get_agent_stages():
         print(f"Processing stage: {stage.title} ({stage.uuid})")
         # Get all tasks for this stage
-        for task in batched(stage.get_tasks(), CHUNK_SIZE):
+        for task_batch in batched(stage.get_tasks(), CHUNK_SIZE):
             # Convert task to JSON spec and send to Celery queue
-            task_specs = [task.model_dump_json() for task in task]
+            task_specs = [task.model_dump_json() for task in task_batch]
 
             # Send task to Celery worker
-            celery_function.chunks(task_specs, CHUNK_SIZE).apply_async()
+            celery_function.chunks(task_specs, min(CHUNK_SIZE, len(task_specs))).apply_async()
             print(f"Queued {len(task_specs)} tasks")
 
         break
