@@ -4,6 +4,7 @@ with the appropriate CORS Middleware to allow
 interactions from the Encord platform.
 """
 
+import logging
 import typing
 from http import HTTPStatus
 
@@ -24,6 +25,8 @@ except ModuleNotFoundError:
     exit()
 
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
+
+logger = logging.getLogger(__name__)
 
 
 # Type checking does not work here because we do not enforce people to

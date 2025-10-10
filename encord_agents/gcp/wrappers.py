@@ -144,6 +144,13 @@ def editor_agent(
                 except EncordEditorAgentException as exc:
                     response = _generate_response(to_jsonable_python(exc.json_response_body), HTTPStatus.BAD_REQUEST)
                     return response
+                except Exception as exc:
+                    logging.exception(f"Exception when executing agent function: {frame_data=}", exc_info=exc)
+                    response = _generate_response(
+                        to_jsonable_python({"message": f"Internal server error: {str(exc)}"}),
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                    )
+                    return response
             return _generate_response()
 
         return wrapper
