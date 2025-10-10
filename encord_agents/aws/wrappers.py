@@ -124,6 +124,13 @@ def editor_agent(
                         exc.json_response_body,
                         status_code=HTTPStatus.BAD_REQUEST,
                     )
+                except Exception as exc:
+                    logging.exception(f"Exception when executing agent function: {frame_data=}", exc_info=exc)
+                    response = _generate_response(
+                        to_jsonable_python({"message": f"Internal server error: {str(exc)}"}),
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                    )
+                    return response
 
         return wrapper
 
