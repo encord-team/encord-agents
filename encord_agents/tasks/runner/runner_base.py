@@ -150,6 +150,13 @@ class RunnerBase:
                 # Fetch LRs as a reference to the backing_item_uuids. Note not passing args nor passing into context.
                 batch_lrs = RunnerBase._get_ordered_label_rows_from_tasks(task_batch, None, project)
             storage_items = client.get_storage_items([lr.backing_item_uuid or "" for lr in batch_lrs], sign_url=True)
+            if len(storage_items) != len(contexts):
+                batch_lr_backing_item_uuids = set(lr.backing_item_uuid for lr in batch_lrs)
+                storage_item_backing_item_uuids = set(storage_item.uuid for storage_item in storage_items)
+                missing_backing_item_uuids = list(batch_lr_backing_item_uuids - storage_item_backing_item_uuids)
+                raise ValueError(
+                    f"Failed to get the storage items for: {missing_backing_item_uuids}. Please ensure that the account used to execute the agent has the appropriate permissions"
+                )
             for storage_item, context in zip(storage_items, contexts, strict=True):
                 context.storage_item = storage_item
 
