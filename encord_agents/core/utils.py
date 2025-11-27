@@ -80,7 +80,7 @@ def get_initialised_label_row(
     init_args: LabelRowInitialiseLabelsArgs | None = None,
 ) -> LabelRowV2:
     """
-    Get an initialised label row from the frame_data information.
+    Get an initialized label row from the frame_data information.
 
     Args:
         frame_data: The data pointing to the data asset.
