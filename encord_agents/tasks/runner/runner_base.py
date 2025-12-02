@@ -165,6 +165,8 @@ class RunnerBase:
     def __init__(
         self,
         project_hash: str | UUID | None = None,
+        *,
+        user_client: EncordUserClient | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -178,7 +180,7 @@ class RunnerBase:
                 Can be left unspecified to be able to reuse same runner on multiple projects.
         """
         self.project_hash = self._verify_project_hash(project_hash) if project_hash else None
-        self.client = get_user_client()
+        self.client = user_client or get_user_client()
 
         self.project: Project | None = self.client.get_project(self.project_hash) if self.project_hash else None
         self._validate_project(self.project)

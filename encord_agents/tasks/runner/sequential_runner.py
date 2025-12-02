@@ -10,6 +10,7 @@ from uuid import UUID
 import rich
 from encord.http.bundle import Bundle
 from encord.orm.workflow import WorkflowStageType
+from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage
 from rich.live import Live
 from rich.panel import Panel
@@ -80,6 +81,7 @@ class SequentialRunner(RunnerBase):
         project_hash: str | None = None,
         *,
         pre_execution_callback: Callable[[Self], None] | None = None,
+        user_client: EncordUserClient | None = None,
     ):
         """
         Initialize the runner with an optional project hash.
@@ -95,7 +97,7 @@ class SequentialRunner(RunnerBase):
 
                 Allows for optional additional validation e.g. Check specific Ontology form
         """
-        super().__init__(project_hash)
+        super().__init__(project_hash, user_client=user_client)
         self.agents: list[RunnerAgent] = []
         self.was_called_from_cli = False
         self.pre_execution_callback = pre_execution_callback

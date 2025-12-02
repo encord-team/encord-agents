@@ -7,6 +7,7 @@ from uuid import UUID
 
 from encord.http.bundle import Bundle
 from encord.project import Project
+from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
 
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
@@ -85,7 +86,12 @@ class QueueRunner(RunnerBase):
     ```
     """
 
-    def __init__(self, project_hash: str | UUID):
+    def __init__(
+        self,
+        project_hash: str | UUID,
+        *,
+        user_client: EncordUserClient | None = None,
+    ):
         """
         Initialize the QueueRunner with a project hash.
 
@@ -94,7 +100,7 @@ class QueueRunner(RunnerBase):
         Args:
             project_hash: The hash of the project to run the tasks on.
         """
-        super().__init__(project_hash)
+        super().__init__(project_hash, user_client=user_client)
         assert self.project is not None
         self._project: Project = self.project
 
