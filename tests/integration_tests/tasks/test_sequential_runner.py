@@ -2,7 +2,10 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID, uuid4
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from encord.client import EncordClientProject
+from encord.exceptions import AuthorisationError
 from encord.objects.coordinates import BoundingBoxCoordinates
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.objects.ontology_object import Object
@@ -389,3 +392,18 @@ def test_runner_can_request_specific_branch(ephemeral_project_hash: str) -> None
         assert label_row.branch_name == BRANCH_NAME
 
     runner()
+
+
+def test_runner_can_take_user_client(ephemeral_project_hash: str) -> None:
+    SequentialRunner(project_hash=ephemeral_project_hash)
+
+    PRIVATE_KEY = Ed25519PrivateKey.generate()
+
+    PRIVATE_KEY_PEM = PRIVATE_KEY.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.OpenSSH,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+    mock_user_client = EncordUserClient.create_with_ssh_private_key(PRIVATE_KEY_PEM)
+    with pytest.raises(AuthorisationError):
+        SequentialRunner(project_hash=ephemeral_project_hash, user_client=mock_user_client)
