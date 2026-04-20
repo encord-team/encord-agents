@@ -195,8 +195,8 @@ def test_mask_to_bbox_mask_one_pixel_from_edge() -> None:
 def test_mask_to_bbox_l_shape_on_rectangular_image() -> None:
     """An L-shaped (irregular) mask on a rectangular image — bbox must span the union."""
     mask = np.zeros((100, 200), dtype=bool)  # h=100, w=200
-    mask[20:80, 40:60] = True      # vertical arm
-    mask[70:90, 40:140] = True     # horizontal arm
+    mask[20:80, 40:60] = True  # vertical arm
+    mask[70:90, 40:140] = True  # horizontal arm
 
     bbox = mask_to_bbox(_mask_to_coords(mask))
 
