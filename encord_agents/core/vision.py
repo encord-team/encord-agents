@@ -91,14 +91,17 @@ def rbbox_to_surrounding_bbox(rbb: RotatableBoundingBoxCoordinates, img_w: int, 
 def mask_to_bbox(coords: BitmaskCoordinates) -> BoundingBoxCoordinates:
     mask = np.array(coords)
     img_height, img_width = mask.shape
-    pixel_coords = np.array(np.where(mask))
-    x_min, y_min = pixel_coords.min(axis=1)
-    x_max, y_max = (pixel_coords + 1).min(axis=1)
-    width = (x_max - x_min) / img_width
-    height = (y_max - y_min) / img_height
-    x_min /= img_width
-    y_min /= img_height
-    return BoundingBoxCoordinates(top_left_x=x_min, top_left_y=y_min, width=width, height=height)
+    ys, xs = np.where(mask)
+    if xs.size == 0:
+        raise ValueError("Cannot compute bounding box from an empty bitmask")
+    x_min, x_max = int(xs.min()), int(xs.max()) + 1
+    y_min, y_max = int(ys.min()), int(ys.max()) + 1
+    return BoundingBoxCoordinates(
+        top_left_x=x_min / img_width,
+        top_left_y=y_min / img_height,
+        width=(x_max - x_min) / img_width,
+        height=(y_max - y_min) / img_height,
+    )
 
 
 def crop_to_object(image: NDArray[np.uint8], coordinates: CroppableCoordinates) -> NDArray[np.uint8]:
