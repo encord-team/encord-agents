@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
 from encord.objects.bitmask import BitmaskCoordinates
+from numpy.typing import NDArray
 
 from encord_agents.core.vision import mask_to_bbox
 
 
-def _mask_to_coords(mask: np.ndarray) -> BitmaskCoordinates:
+def _mask_to_coords(mask: NDArray[np.bool_]) -> BitmaskCoordinates:
     return BitmaskCoordinates(mask.astype(bool))
 
 
