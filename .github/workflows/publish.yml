@@ -13,10 +13,19 @@ jobs:
     name: Build and publish Encord Agents
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repositories: "encord-agents"
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.AUTOMATION_BOT_ACCESS_TOKEN }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
           ref: main
 
       - name: Setup root uv environment
