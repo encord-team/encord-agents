@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'darwin'",
@@ -535,7 +535,7 @@ wheels = [
 
 [[package]]
 name = "encord"
-version = "0.1.169"
+version = "0.1.193"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -545,9 +545,9 @@ dependencies = [
     { name = "requests" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2d/68/92f17148ea3795f1db4fd5008d7b1cecd0d69771f5f3b48084024f1d2059/encord-0.1.169.tar.gz", hash = "sha256:7913ca0fa9b3d396550fdeefcf9cf772112c47097540e20818462e970f07939e", size = 205399, upload-time = "2025-06-24T09:09:04.976Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/ae/5c131f75704c14b98b0f79f79a678dbfb9dd6db571d5b41245fc836de8b3/encord-0.1.193.tar.gz", hash = "sha256:44929083d860861870bdb5405faaa73affdd030e4571b998073478ebbe062979", size = 262443, upload-time = "2026-04-17T13:05:51.841Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/41/ca9685a7e900d312bff58af212dcf2747dbbb15da9a8b0cb6798f3365974/encord-0.1.169-py3-none-any.whl", hash = "sha256:9440cfc1908b3249f4be1b1f3cc982c70bf6d38dcc5a787c60243b15270c7f54", size = 255030, upload-time = "2025-06-24T09:09:03.543Z" },
+    { url = "https://files.pythonhosted.org/packages/76/70/c9d1be1405636a76257709409df1ac1c56bf7ade2338f41a2ee92e11bcc6/encord-0.1.193-py3-none-any.whl", hash = "sha256:7fb3d8c6b07a48e267769f80c09b1e5fc9e22103af285db14c4537cd33e54a18", size = 334915, upload-time = "2026-04-17T13:05:50.159Z" },
 ]
 
 [[package]]
