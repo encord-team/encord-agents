@@ -31,15 +31,15 @@ Before running the example, you need to set up authentication:
 
 1. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 2. Start RabbitMQ (using Docker):
 
-```bash
-docker run -d --hostname my-rabbit --name my-rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
-```
+   ```bash
+   docker run -d --hostname my-rabbit --name my-rabbit -p 5672:5672 -p 15672:15672 rabbitmq:management
+   ```
 
 3. Update the Project hash in `queue_runner_example.py` with your Encord Project hash.
 
@@ -47,21 +47,21 @@ docker run -d --hostname my-rabbit --name my-rabbit -p 5672:5672 -p 15672:15672 
 
 1. Start one or more Celery workers:
 
-```bash
-python worker.py
-```
+   ```bash
+   python worker.py
+   ```
 
 2. In a separate terminal, populate the queue with tasks:
 
-```bash
-python populate_queue.py
-```
+   ```bash
+   python populate_queue.py
+   ```
 
 The workers automatically start processing tasks as they are added to the queue.
 
 ## Monitoring
 
-You can monitor the RabbitMQ queue through the management interface at http://localhost:15672
+You can monitor the RabbitMQ queue through the management interface at <http://localhost:15672>
 (default credentials: guest/guest). This interface allows you to:
 
 - Track queue lengths and processing rates

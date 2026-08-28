@@ -31,8 +31,22 @@ Task agents move tasks through a project workflow.
 | `modal/`                               | `QueueRunner` on Modal, and a batch job-processing variant           |
 | `prioritize_by_data_title_specific.py` | A minimal local `Runner` that sets task priority from the data title |
 
+## `docker/`
+
+Pre-built agents packaged as container images — each directory has a `Dockerfile`,
+a `requirements.txt` and its own README with build and run instructions.
+
+| Directory                      | What it does                     |
+| ------------------------------ | -------------------------------- |
+| `clip-image-classification/`   | Classifies images with CLIP      |
+| `detr-video-labeling/`         | Labels video frames with DETR    |
+| `gemma-3-routing/`             | Routes tasks with Gemma 3        |
+| `llm-document-classification/` | Classifies documents with an LLM |
+| `llm-image-captioning/`        | Captions images with an LLM      |
+
 ## Notes
 
 - `ruff.toml` narrows the line length for this directory; it extends the root `pyproject.toml`.
-- `examples/` is excluded from `mypy` — these files are illustrative and use placeholder
-  identifiers rather than real ones.
+- `notebooks/`, `editor_agents/` and `task_agents/` are excluded from `mypy` — they are
+  illustrative and use placeholder identifiers rather than real ones. `docker/` is type
+  checked like the rest of the repo.
