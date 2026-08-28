@@ -25,15 +25,38 @@ def print_agent_nodes(project_hash: str) -> None:
 
     """
     import rich
-    from encord.exceptions import AuthorisationError
-    from encord.user_client import EncordUserClient
+    from encord.configs import ENCORD_DOMAIN
+    from encord.exceptions import AuthenticationError, AuthorisationError
+    from rich.markup import escape
 
-    _ = Settings()
-    client = EncordUserClient.create_with_ssh_private_key()
+    from encord_agents.core.utils import get_user_client
+
+    settings = Settings()
+    client = get_user_client(settings)
+    # Report the domain we actually talked to, so a wrong-environment failure cannot
+    # masquerade as a permissions or key problem.
+    domain = settings.domain or ENCORD_DOMAIN
+
     try:
         project = client.get_project(project_hash)
     except AuthorisationError:
-        rich.print(f"You do not seem to have access to project with project hash `[purple]{project_hash}[/purple]`")
+        rich.print(
+            f"You do not seem to have access to project with project hash "
+            f"`[purple]{project_hash}[/purple]` on domain `[blue]{domain}[/blue]`."
+        )
+        rich.print(
+            "If the project lives in a different Encord environment, set the "
+            "`[blue]ENCORD_DOMAIN[/blue]` environment variable (for example "
+            "`https://api.us.encord.com`) and try again."
+        )
+        exit()
+    except AuthenticationError as e:
+        rich.print(f"Could not authenticate against domain `[blue]{domain}[/blue]`: {escape(str(e))}")
+        rich.print(
+            "If your ssh key belongs to a different Encord environment, set the "
+            "`[blue]ENCORD_DOMAIN[/blue]` environment variable (for example "
+            "`https://api.us.encord.com`) and try again."
+        )
         exit()
 
     agent_nodes = [
