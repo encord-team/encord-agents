@@ -12,7 +12,7 @@ python -m pip install modal "encord-agents[vision]" "fastapi[standard]"
 modal setup
 ```
 
-# 3. Configure the Modal secret as described in the Encord Agents documentation.
+# 3. Configure secret [see here](https://docs.encord.com/agents-documentation/Custom-Agents/Modal#step-1-authentication).
 
 # 4. Execute with modal
 ```
@@ -24,7 +24,7 @@ modal serve editor_add_bitmask.py
 encord-agents test custom '<url_that_modal_printed>' '<editor_url>'
 ```
 
-See the Modal section of the Encord Agents documentation for more.
+See more [here](https://docs.encord.com/agents-documentation/Custom-Agents/Modal).
 """
 
 import cv2
