@@ -48,7 +48,7 @@ def editor_agent(
     Wrapper to make resources available for gcp editor agents.
 
     The editor agents are intended to be used using dependency injections.
-    You can learn more via out [documentation](https://agents-docs.encord.com).
+    You can learn more via out [documentation](https://docs.encord.com/platform-documentation/).
 
     Args:
         label_row_metadata_include_args: arguments to overwrite default arguments

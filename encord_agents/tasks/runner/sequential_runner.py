@@ -29,9 +29,8 @@ from typing_extensions import Annotated, Self
 from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import (
     Context,
-    Dependant,
 )
-from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
+from encord_agents.core.dependencies.utils import solve_dependencies
 from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
@@ -539,7 +538,7 @@ def {fn_name}(...):
         self.was_called_from_cli = True
         app = Typer(add_completion=False, rich_markup_mode="rich")
         app.command(
-            help=f"Execute the runner.{os.linesep * 2}Full documentation here: https://agents-docs.encord.com/task_agents/runner",
+            help=f"Execute the runner.{os.linesep * 2}See the Encord Agents documentation for the full runner reference.",
             short_help="Execute the runner as a CLI.",
         )(self.__call__)
         app()

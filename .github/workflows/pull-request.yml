@@ -39,20 +39,6 @@ jobs:
           extra_args: "--all-files --hook-stage=push"
         timeout-minutes: 10
 
-  check-docs:
-    needs: [setup-venv]
-    name: Check docs build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup root uv environment
-        uses: ./.github/actions/setup-root-uv-environment
-
-      - name: Build Docs
-        run: |
-          uv run mkdocs build
-
   tests:
     needs: [setup-venv]
     name: Run tests

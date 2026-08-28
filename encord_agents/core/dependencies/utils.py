@@ -204,7 +204,7 @@ def get_field_values(
             raise ValueError(
                 f"Agent function is specifying a field `{param_field.name}` with type `{param_field.type_annotation}` "
                 "which is not supported. Consider wrapping it in a `encord_agents.core.dependencies.Depends` to define "
-                "how this value should be obtained. More info here: `https://agents-docs.encord.com/dependencies`"
+                "how this value should be obtained. See the dependencies section of the Encord Agents documentation for details."
             )
     return values
 

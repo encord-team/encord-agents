@@ -1,4 +1,0 @@
-/* Hack to make code in markdown cells of notebooks look similar to actual code */
-div.jp-MarkdownCell pre {
-  font-size: var(--jp-code-font-size);
-}
