@@ -114,4 +114,3 @@ Please visit our [📖 Documentation][docs-url] for a complete reference to how 
 
 [docs-url]: https://docs.encord.com/platform-documentation/
 [encord_sdk]: https://pypi.org/project/encord/
-[fastapi]: https://fastapi.tiangolo.com/
