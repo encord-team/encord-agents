@@ -57,6 +57,8 @@ python -m pip install encord-agents
 > 💡 For the full documentation and end-to-end examples, please see [here][docs-url].
 
 For help choosing between an editor agent and a task agent, see the [documentation][docs-url].
+Runnable examples — Colab notebooks plus GCP, FastAPI, Modal and Celery deployments — live in
+[`examples/`](./examples).
 
 Here's how to build an Agent:
 
