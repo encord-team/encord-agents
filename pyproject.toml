@@ -75,7 +75,7 @@ dev = [
     "pytest-env>=1.1.5,<2",
     "pytest-xdist>=3.6.1",
     "notebook>=7.3.2,<8",
-    "fastapi>=0.115.0,<0.116",
+    "fastapi>=0.115.0",
     "opencv-python>=4.1",
     "functions-framework>=3.1.0",
 ]
@@ -96,6 +96,7 @@ ignore = ["F401", "E402", "W291"]
 plugins = ['pydantic.mypy']
 exclude = [
     'encord_agents/core/ontology.py',
+    'scratches/',
     'examples/notebooks/',
     'examples/editor_agents/',
     'examples/task_agents/',
