@@ -43,8 +43,6 @@ jobs:
     needs: [setup-venv]
     name: Run tests
     runs-on: ubuntu-latest
-    env:
-      ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
     steps:
       - uses: actions/checkout@v3
 
@@ -52,9 +50,9 @@ jobs:
         uses: ./.github/actions/setup-root-uv-environment
 
       - name: Run tests
-        run: |
-          export ENCORD_SSH_KEY='${{ env.ENCORD_SSH_KEY }}'
-          uv run pytest -n auto tests --verbose --junitxml=${{ env.TEST_REPORT }}
+        env:
+          ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
+        run: uv run pytest -n auto tests --verbose --junitxml=${{ env.TEST_REPORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v4
@@ -85,6 +83,8 @@ jobs:
         run: uv run python -c "import fastapi, starlette; print(f'fastapi {fastapi.__version__} / starlette {starlette.__version__}')"
 
       - name: Run fastapi tests
+        env:
+          ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
         run: uv run pytest tests/test_cors.py tests/test_fastapi.py tests/test_default_payload.py --verbose
 
   publish-test-reports:
