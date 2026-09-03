@@ -43,8 +43,6 @@ jobs:
     needs: [setup-venv]
     name: Run tests
     runs-on: ubuntu-latest
-    env:
-      ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
     steps:
       - uses: actions/checkout@v3
 
@@ -52,9 +50,9 @@ jobs:
         uses: ./.github/actions/setup-root-uv-environment
 
       - name: Run tests
-        run: |
-          export ENCORD_SSH_KEY='${{ env.ENCORD_SSH_KEY }}'
-          uv run pytest -n auto tests --verbose --junitxml=${{ env.TEST_REPORT }}
+        env:
+          ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
+        run: uv run pytest -n auto tests --verbose --junitxml=${{ env.TEST_REPORT }}
 
       - name: Upload report
         uses: actions/upload-artifact@v4
@@ -62,6 +60,32 @@ jobs:
         with:
           name: ${{ env.TEST_REPORT }}
           path: ${{ env.TEST_REPORT }}
+
+  # The lockfile pins the oldest supported fastapi (and therefore an old starlette),
+  # so the job above never exercises newer starlette signatures. That is how
+  # https://github.com/encord-team/encord-agents/issues/201 reached users: starlette
+  # 0.51.0 inserted a parameter into `CORSMiddleware.__init__`. This job resolves the
+  # newest fastapi/starlette and re-runs the fastapi-facing tests.
+  tests-latest-fastapi:
+    needs: [setup-venv]
+    name: Run fastapi tests against the newest fastapi/starlette
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup root uv environment
+        uses: ./.github/actions/setup-root-uv-environment
+
+      - name: Resolve the newest fastapi/starlette
+        run: uv lock --upgrade-package fastapi --upgrade-package starlette
+
+      - name: Report resolved versions
+        run: uv run python -c "import fastapi, starlette; print(f'fastapi {fastapi.__version__} / starlette {starlette.__version__}')"
+
+      - name: Run fastapi tests
+        env:
+          ENCORD_SSH_KEY: ${{ secrets.ENCORD_SSH_KEY }}
+        run: uv run pytest tests/test_cors.py tests/test_fastapi.py tests/test_default_payload.py --verbose
 
   publish-test-reports:
     name: Publish test reports

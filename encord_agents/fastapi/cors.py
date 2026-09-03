@@ -58,16 +58,20 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         allow_origin_regex: str = ENCORD_DOMAIN_REGEX,
         expose_headers: typing.Sequence[str] = (),
         max_age: int = 3600,
+        **kwargs: typing.Any,
     ) -> None:
+        # Extra keyword arguments are passed straight through to Starlette so that
+        # options only available in newer versions remain usable.
         super().__init__(
             app,
-            allow_origins,
-            allow_methods,
-            allow_headers,
-            allow_credentials,
-            allow_origin_regex,
-            expose_headers,
-            max_age,
+            allow_origins=allow_origins,
+            allow_methods=allow_methods,
+            allow_headers=allow_headers,
+            allow_credentials=allow_credentials,
+            allow_origin_regex=allow_origin_regex,
+            expose_headers=expose_headers,
+            max_age=max_age,
+            **kwargs,
         )
 
 
