@@ -1,3 +1,4 @@
+import json
 import logging
 from contextlib import ExitStack
 from functools import wraps
@@ -7,7 +8,6 @@ from typing import Any, Callable, Dict, cast
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
-from flask import request
 from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 
@@ -24,12 +24,16 @@ AgentFunction = Callable[..., Any]
 
 def _generate_response(body: dict[str, Any] | None = None, status_code: int | None = None) -> Dict[str, Any]:
     """
-    Generate a Lambda response dictionary with a 200 status code.
+    Generate a Lambda proxy response dictionary.
+
+    The body is serialised here: API Gateway requires the `body` of a proxy response to
+    be a string and discards the response otherwise, so handing it a dict means the
+    agent's response never reaches Encord.
     """
     has_body = bool(body)
     return {
         "statusCode": status_code or (200 if has_body else 204),
-        "body": to_jsonable_python(body) if has_body else "",  # Lambda expects a string body, even if empty
+        "body": json.dumps(to_jsonable_python(body)) if has_body else "",
         # "headers": CORS headers are handled by AWS Lambda from the configurations.
     }
 
@@ -60,7 +64,10 @@ def editor_agent(
                 body = event.get("body")
                 frame_data: FrameData | None = None
                 if not body:
-                    return {"statusCode": 400, "body": {"errors": ["No request body"], "message": "No request body"}}
+                    return _generate_response(
+                        body={"errors": ["No request body"], "message": "No request body"},
+                        status_code=HTTPStatus.BAD_REQUEST,
+                    )
                 if isinstance(body, str):
                     logging.info("Parsing body as string json")
                     frame_data = FrameData.model_validate_json(body)
@@ -70,13 +77,13 @@ def editor_agent(
                 logging.info(f"Request: {frame_data}")
             except ValidationError as err:
                 logging.error(f"Error parsing request: {err}")
-                return {
-                    "statusCode": 400,
-                    "body": {
+                return _generate_response(
+                    body={
                         "errors": err.errors(),
                         "message": ", ".join([e["msg"] for e in err.errors()]),
                     },
-                }
+                    status_code=HTTPStatus.BAD_REQUEST,
+                )
             frame_data = cast(FrameData, frame_data)
 
             client = get_user_client(trace_id=trace_id)
@@ -117,7 +124,7 @@ def editor_agent(
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        return _generate_response(result.model_dump())
+                        return _generate_response(result.model_dump(mode="json", exclude_none=True))
                     return _generate_response()
                 except EncordEditorAgentException as exc:
                     return _generate_response(
