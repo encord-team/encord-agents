@@ -26,7 +26,7 @@ def _generate_response(body: dict[str, Any] | None = None, status_code: int | No
     """
     Generate a Lambda proxy response dictionary.
 
-    The body is serialised here: API Gateway requires the `body` of a proxy response to
+    The body is serialized here: API Gateway requires the `body` of a proxy response to
     be a string and discards the response otherwise, so handing it a dict means the
     agent's response never reaches Encord.
     """
@@ -124,7 +124,7 @@ def editor_agent(
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        return _generate_response(result.model_dump(mode="json", exclude_none=True))
+                        return _generate_response(result.model_dump(mode="json"))
                     return _generate_response()
                 except EncordEditorAgentException as exc:
                     return _generate_response(

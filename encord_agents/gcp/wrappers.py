@@ -139,7 +139,7 @@ def editor_agent(
                 try:
                     result = func(**dependencies.values)
                     if isinstance(result, EditorAgentResponse):
-                        response = _generate_response(result.model_dump_json(exclude_none=True), HTTPStatus.OK)
+                        response = _generate_response(result.model_dump_json(), HTTPStatus.OK)
                         return response
                 except EncordEditorAgentException as exc:
                     response = _generate_response(to_jsonable_python(exc.json_response_body), HTTPStatus.BAD_REQUEST)

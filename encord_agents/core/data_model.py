@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Literal, overload
+from typing import Any, Literal, overload
 from uuid import UUID
 
 import numpy as np
 from encord.objects.ontology_object_instance import ObjectInstance
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
+from pydantic.functional_serializers import SerializerFunctionWrapHandler
 from typing_extensions import Self
 
 from encord_agents.core.constants import MAX_DECISION_LENGTH
@@ -201,3 +202,11 @@ class EditorAgentResponse(BaseModel):
         if value is None:
             return None
         return value.strip() or None
+
+    @model_serializer(mode="wrap")
+    def _omit_unset(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # Encord reads absent and null identically, so an unset field is noise on the
+        # wire. Doing this on the model rather than at each call site keeps the three
+        # deployment paths identical: FastAPI serializes this model itself, so a
+        # wrapper-level `exclude_none` would never reach that path.
+        return {key: value for key, value in handler(self).items() if value is not None}

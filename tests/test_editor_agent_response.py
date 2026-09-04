@@ -65,7 +65,7 @@ def _aws_response(response: EditorAgentResponse) -> dict[str, Any]:
         return agent({"headers": {}, "body": json.dumps(PAYLOAD)}, None)
 
 
-def test_gcp_serialises_decision_and_omits_unset_fields() -> None:
+def test_gcp_serializes_decision_and_omits_unset_fields() -> None:
     body = _gcp_response_body(EditorAgentResponse(decision="accept"))
     assert body == {"decision": "accept"}
 
