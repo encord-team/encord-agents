@@ -407,3 +407,39 @@ def test_runner_can_take_user_client(ephemeral_project_hash: str) -> None:
     mock_user_client = EncordUserClient.create_with_ssh_private_key(PRIVATE_KEY_PEM)
     with pytest.raises((AuthenticationError, AuthorisationError)):
         SequentialRunner(project_hash=ephemeral_project_hash, user_client=mock_user_client)
+
+
+def test_run_stage_matches_call_for_a_single_stage(ephemeral_image_project_hash: str, mock_agent: MagicMock) -> None:
+    """`run_stage` executes the same work as `__call__` does for one stage.
+
+    Mirrors `test_runner_stage_execution_with_max_tasks` so the two entry points can be
+    compared directly: same registration, same limit, same expected outcome.
+    """
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        mock_agent(task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    max_tasks = 2
+    runner.run_stage(AGENT_STAGE_NAME, max_tasks=max_tasks)
+
+    assert mock_agent.call_count == max_tasks
+
+    project = runner.project
+    assert project
+    N_items = len(project.list_label_rows_v2())
+    complete_stage = project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    assert len(list(complete_stage.get_tasks())) == max_tasks
+
+    agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    assert len(list(agent_stage.get_tasks())) == N_items - max_tasks
+
+
+def test_run_stage_rejects_a_stage_with_no_implementation(ephemeral_project_hash: str) -> None:
+    """Naming a stage that has no registered function is an error, not a silent no-op."""
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    with pytest.raises(PrintableError, match="No agent implementation is registered"):
+        runner.run_stage(AGENT_STAGE_NAME)
