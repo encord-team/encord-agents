@@ -1,12 +1,21 @@
 from dataclasses import dataclass
-from typing import Literal, overload
+from typing import Any, Literal, overload
 from uuid import UUID
 
 import numpy as np
 from encord.objects.ontology_object_instance import ObjectInstance
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    SerializerFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from typing_extensions import Self
+
+from encord_agents.core.constants import MAX_DECISION_LENGTH
 
 Base64Formats = Literal[".jpeg", ".jpg", ".png"]
 
@@ -173,4 +182,37 @@ class EditorAgentResponse(BaseModel):
     message: str | None = None
     """
     A message to be displayed to the user.
+
+    Purely informational: it never affects routing or labels. Encord truncates
+    messages longer than 256 characters.
     """
+    decision: str | None = Field(default=None, max_length=MAX_DECISION_LENGTH)
+    """
+    The name of the workflow pathway that the task should follow.
+
+    Only honoured for workflow-triggered agents. An agent invoked from the Label
+    Editor has no task to route, so Encord ignores the field there.
+
+    The value must match one of the agent stage's configured pathway names. An
+    unmatched name fails the execution rather than falling back, and the name is
+    matched verbatim -- a pathway UUID is not accepted. When omitted, the stage's
+    default pathway is used, or its only pathway if it has exactly one.
+    """
+
+    @field_validator("message", "decision", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value: str | None) -> str | None:
+        # Encord strips both fields and treats blank as absent. Mirroring that keeps a
+        # blank `decision` on the default-pathway branch instead of making it look like
+        # a routing instruction that silently does nothing.
+        if value is None:
+            return None
+        return value.strip() or None
+
+    @model_serializer(mode="wrap")
+    def _omit_unset(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # Encord reads absent and null identically, so an unset field is noise on the
+        # wire. Doing this on the model rather than at each call site keeps the three
+        # deployment paths identical: FastAPI serializes this model itself, so a
+        # wrapper-level `exclude_none` would never reach that path.
+        return {key: value for key, value in handler(self).items() if value is not None}

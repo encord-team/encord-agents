@@ -5,3 +5,6 @@ ENCORD_DOMAIN_REGEX = (
 EDITOR_URL_PARTS_REGEX = r"(?P<domain>https://app\.(us\.)?encord\.com)/label_editor/(?P<projectHash>[\w\d-]{36})/(?P<dataHash>[\w\d-]{36})(/(?P<frame>\d+))?(/(?P<additional_path>[^?]*))?(\?(?P<query>.*))?"
 EDITOR_TEST_REQUEST_HEADER = "X-Encord-Editor-Agent"
 HEADER_CLOUD_TRACE_CONTEXT = "X-Cloud-Trace-Context"
+# Cap on `decision`, the pathway name a custom agent returns to route its task.
+# Encord silently drops a longer one and takes the default pathway; fail loudly here.
+MAX_DECISION_LENGTH = 256

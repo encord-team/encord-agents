@@ -73,7 +73,7 @@ def editor_agent(
                 response.headers["Vary"] = "Origin"
 
                 if not cors_regex.fullmatch(request.origin):
-                    response.status_code = 403
+                    response.status_code = HTTPStatus.FORBIDDEN
                     return response
 
                 headers = {
@@ -83,7 +83,7 @@ def editor_agent(
                     "Access-Control-Max-Age": "3600",
                 }
                 response.headers.update(headers)
-                response.status_code = 204
+                response.status_code = HTTPStatus.NO_CONTENT
                 return response
 
             if request.headers.get(EDITOR_TEST_REQUEST_HEADER):
