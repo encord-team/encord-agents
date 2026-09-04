@@ -5,8 +5,14 @@ from uuid import UUID
 import numpy as np
 from encord.objects.ontology_object_instance import ObjectInstance
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
-from pydantic.functional_serializers import SerializerFunctionWrapHandler
+from pydantic import (
+    BaseModel,
+    Field,
+    SerializerFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from typing_extensions import Self
 
 from encord_agents.core.constants import MAX_DECISION_LENGTH
