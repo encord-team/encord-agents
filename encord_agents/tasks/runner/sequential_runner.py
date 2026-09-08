@@ -514,13 +514,11 @@ def {fn_name}(...):
                             description=batch_task_format.format(batch_num=batch_num),
                         )
 
-                    def on_batch_done(total: int, agent_name: str = str(runner_agent.printable_name)) -> None:
-                        # `agent_name` is bound as a default so it does not late-bind to the
-                        # last agent in the loop.
+                    def on_batch_done(total: int) -> None:
                         global_pbar.update(
                             global_task,
                             advance=1,
-                            description=global_task_format.format(agent_name=agent_name, total=total),
+                            description=global_task_format.format(agent_name=runner_agent.printable_name, total=total),
                         )
 
                     with Live(progress_table, refresh_per_second=1):
