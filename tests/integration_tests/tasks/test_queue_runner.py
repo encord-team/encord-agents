@@ -261,3 +261,86 @@ def test_queue_runner_return_struct_object(ephemeral_project_hash: str) -> None:
     final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
     final_stage_tasks = list(final_stage.get_tasks())
     assert len(final_stage_tasks) == N_items
+
+
+def test_queue_runner_batch_survives_a_task_gone_before_it_starts(ephemeral_project_hash: str) -> None:
+    """A task that left the stage before the batch is picked up must not fail the batch.
+
+    Only tasks still at the stage get a context, so the missing one has to be reported and
+    skipped rather than knocking the batch's task and context lists out of alignment.
+    """
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
+
+    @queue_runner.stage(AGENT_STAGE_NAME)
+    def agent_func(agent_task: AgentTask) -> str:
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    queue: list[str] = []
+    for stage in queue_runner.get_agent_stages():
+        for task in stage.get_tasks():
+            queue.append(task.model_dump_json())
+    assert len(queue) > 1, "This test needs at least two tasks to create the overlap"
+
+    assert queue_runner.project
+    agent_stage = queue_runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+
+    # Another worker routes the first task before this batch is picked up. Re-fetched from
+    # the stage because a task deserialised from the queue carries no client to act with.
+    stolen_uuid = AgentTask.model_validate_json(queue[0]).uuid
+    next(task for task in agent_stage.get_tasks() if task.uuid == stolen_uuid).proceed(
+        pathway_name=AGENT_TO_COMPLETE_PATHWAY_NAME
+    )
+
+    result = TaskCompletionResult.model_validate_json(agent_func(queue))
+
+    assert not result.error
+    assert isinstance(result.success, list)
+    assert stolen_uuid not in result.success
+    assert len(result.success) == len(queue) - 1
+
+    final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    assert len(list(final_stage.get_tasks())) == len(queue)
+    assert len(list(agent_stage.get_tasks())) == 0
+
+
+def test_queue_runner_batch_survives_a_task_routed_mid_batch(ephemeral_project_hash: str) -> None:
+    """A task routed after the batch was picked up must not strand the rest of it.
+
+    Pathway actions for a batch reach Encord as one request, and it rejects the whole
+    request if any task in it has already left the stage. Distributed workers sharing a
+    stage make that overlap ordinary rather than exceptional.
+    """
+    queue_runner = QueueRunner(project_hash=ephemeral_project_hash)
+    assert queue_runner.project
+    agent_stage = queue_runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+
+    routed_elsewhere: list[UUID] = []
+
+    @queue_runner.stage(AGENT_STAGE_NAME)
+    def agent_func(agent_task: AgentTask) -> str:
+        if not routed_elsewhere:
+            other = next(task for task in agent_stage.get_tasks() if task.uuid != agent_task.uuid)
+            other.proceed(pathway_name=AGENT_TO_COMPLETE_PATHWAY_NAME)
+            routed_elsewhere.append(other.uuid)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    queue: list[str] = []
+    for stage in queue_runner.get_agent_stages():
+        for task in stage.get_tasks():
+            queue.append(task.model_dump_json())
+    assert len(queue) > 1, "This test needs at least two tasks to create the overlap"
+
+    result = TaskCompletionResult.model_validate_json(agent_func(queue))
+
+    assert routed_elsewhere, "No task was routed mid-batch, so the conflict never happened"
+    assert not result.error
+    assert isinstance(result.success, list)
+    assert len(result.success) == len(queue)
+
+    # Every task moved, but this run does not claim the pathway it did not set.
+    assert isinstance(result.pathway, list)
+    assert len(result.pathway) == len(queue) - 1
+
+    final_stage = queue_runner.project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    assert len(list(final_stage.get_tasks())) == len(queue)
+    assert len(list(agent_stage.get_tasks())) == 0
