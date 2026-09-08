@@ -10,6 +10,7 @@ from uuid import UUID
 import rich
 from encord.http.bundle import Bundle
 from encord.orm.workflow import WorkflowStageType
+from encord.project import Project
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage
 from rich.live import Live
@@ -316,6 +317,95 @@ def {fn_name}(...):
 [{agent_stage_names}]."""
                 )
 
+    def _prepare(self, project_hash: str | UUID | None) -> tuple[Project, dict[str | UUID, AgentStage]]:
+        """Resolve and validate the project and its agent stages before any execution.
+
+        Shared by `__call__` and `run_stage` so both apply the same validation and fire
+        the `pre_execution_callback` exactly once per execution.
+        """
+        # Verify Project
+        if project_hash is not None:
+            project_hash = self._verify_project_hash(project_hash)
+            project = self.client.get_project(project_hash)
+        elif self.project is not None:
+            project = self.project
+        else:
+            # Should not happen. Validated above but mypy doesn't understand.
+            raise ValueError("Have no project to execute the runner on. Please specify it.")
+
+        if project is None:
+            import sys
+
+            raise PrintableError(
+                f"""Please specify project hash in one of the following ways:  
+* At instantiation: [blue]`runner = Runner(project_hash="[green]<project_hash>[/green]")`[/blue]
+* When called directly: [blue]`runner(project_hash="[green]<project_hash>[/green]")`[/blue]
+* When called from CLI: [blue]`python {sys.argv[0]} --project-hash [green]<project_hash>[/green]`[/blue]
+"""
+            )
+
+        self._validate_project(project)
+        # Verify stages
+        valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
+        agent_stages: dict[str | UUID, AgentStage] = {
+            **{s.title: s for s in valid_stages},
+            **{s.uuid: s for s in valid_stages},
+        }
+        self._validate_agent_stages(valid_stages, agent_stages)
+        if self.pre_execution_callback:
+            self.pre_execution_callback(self)  # type: ignore  [arg-type]
+        return project, agent_stages
+
+    def _drain_stage(
+        self,
+        runner_agent: RunnerAgent,
+        stage: AgentStage,
+        project: Project,
+        *,
+        num_retries: int,
+        task_batch_size: int,
+        max_tasks: int | None,
+        on_batch_start: Callable[[int, int], None] | None = None,
+        on_task_done: Callable[[float | None], bool | None] | None = None,
+        on_batch_done: Callable[[int], None] | None = None,
+    ) -> None:
+        """One pass over the tasks currently queued at `stage`.
+
+        Produces no output of its own; the callbacks exist so `__call__` can drive its
+        progress bars without this method knowing about them.
+        """
+        include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
+        init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
+
+        total = 0
+        tasks = stage.get_tasks()
+        batch_size = min(task_batch_size, max_tasks) if max_tasks else task_batch_size
+
+        for batch_num, task_batch in enumerate(batch_iterator(tasks, batch_size)):
+            if on_batch_start is not None:
+                on_batch_start(batch_num, len(task_batch))
+            contexts = self._assemble_contexts(
+                task_batch=task_batch,
+                runner_agent=runner_agent,
+                project=project,
+                include_args=include_args,
+                init_args=init_args,
+                stage=stage,
+                client=self.client,
+            )
+            self._execute_tasks(
+                contexts,
+                runner_agent,
+                stage,
+                num_retries,
+                pbar_update=on_task_done,
+            )
+            total += len(task_batch)
+            if on_batch_done is not None:
+                on_batch_done(total)
+            if max_tasks and total >= max_tasks:
+                break
+
     def __call__(
         self,
         refresh_every: Annotated[
@@ -359,38 +449,8 @@ def {fn_name}(...):
         """
         # Verify args that don't depend on external service first
         max_tasks_per_stage = self._validate_max_tasks_per_stage(max_tasks_per_stage)
+        project, agent_stages = self._prepare(project_hash)
 
-        # Verify Project
-        if project_hash is not None:
-            project_hash = self._verify_project_hash(project_hash)
-            project = self.client.get_project(project_hash)
-        elif self.project is not None:
-            project = self.project
-        else:
-            # Should not happen. Validated above but mypy doesn't understand.
-            raise ValueError("Have no project to execute the runner on. Please specify it.")
-
-        if project is None:
-            import sys
-
-            raise PrintableError(
-                f"""Please specify project hash in one of the following ways:  
-* At instantiation: [blue]`runner = Runner(project_hash="[green]<project_hash>[/green]")`[/blue]
-* When called directly: [blue]`runner(project_hash="[green]<project_hash>[/green]")`[/blue]
-* When called from CLI: [blue]`python {sys.argv[0]} --project-hash [green]<project_hash>[/green]`[/blue]
-"""
-            )
-
-        self._validate_project(project)
-        # Verify stages
-        valid_stages = [s for s in project.workflow.stages if s.stage_type == WorkflowStageType.AGENT]
-        agent_stages: dict[str | UUID, AgentStage] = {
-            **{s.title: s for s in valid_stages},
-            **{s.uuid: s for s in valid_stages},
-        }
-        self._validate_agent_stages(valid_stages, agent_stages)
-        if self.pre_execution_callback:
-            self.pre_execution_callback(self)  # type: ignore  [arg-type]
         try:
             # Run
             delta = timedelta(seconds=refresh_every) if refresh_every else None
@@ -438,8 +498,6 @@ def {fn_name}(...):
                 progress_table.add_row(batch_pbar)
 
                 for runner_agent in self.agents:
-                    include_args = runner_agent.label_row_metadata_include_args or LabelRowMetadataIncludeArgs()
-                    init_args = runner_agent.label_row_initialise_labels_args or LabelRowInitialiseLabelsArgs()
                     stage = agent_stages[runner_agent.identity]
 
                     # Set the progress bar description to display the agent name and total tasks completed
@@ -448,45 +506,33 @@ def {fn_name}(...):
                         description=global_task_format.format(agent_name=runner_agent.printable_name, total=0),
                     )
 
-                    total = 0
-                    tasks = stage.get_tasks()
-                    batch_size = min(task_batch_size, max_tasks_per_stage) if max_tasks_per_stage else task_batch_size
+                    def on_batch_start(batch_num: int, batch_len: int) -> None:
+                        # Reset the batch progress bar to display the current batch number and total tasks
+                        batch_pbar.reset(
+                            batch_task,
+                            total=batch_len,
+                            description=batch_task_format.format(batch_num=batch_num),
+                        )
+
+                    def on_batch_done(total: int) -> None:
+                        global_pbar.update(
+                            global_task,
+                            advance=1,
+                            description=global_task_format.format(agent_name=runner_agent.printable_name, total=total),
+                        )
 
                     with Live(progress_table, refresh_per_second=1):
-                        for batch_num, task_batch in enumerate(batch_iterator(tasks, batch_size)):
-                            # Reset the batch progress bar to display the current batch number and total tasks
-                            batch_pbar.reset(
-                                batch_task,
-                                total=len(task_batch),
-                                description=batch_task_format.format(batch_num=batch_num),
-                            )
-                            contexts = self._assemble_contexts(
-                                task_batch=task_batch,
-                                runner_agent=runner_agent,
-                                project=project,
-                                include_args=include_args,
-                                init_args=init_args,
-                                stage=stage,
-                                client=self.client,
-                            )
-                            self._execute_tasks(
-                                contexts,
-                                runner_agent,
-                                stage,
-                                num_retries,
-                                pbar_update=lambda x: batch_pbar.advance(batch_task, x or 1),
-                            )
-                            total += len(task_batch)
-
-                            global_pbar.update(
-                                global_task,
-                                advance=1,
-                                description=global_task_format.format(
-                                    agent_name=runner_agent.printable_name, total=total
-                                ),
-                            )
-                            if max_tasks_per_stage and total >= max_tasks_per_stage:
-                                break
+                        self._drain_stage(
+                            runner_agent,
+                            stage,
+                            project,
+                            num_retries=num_retries,
+                            task_batch_size=task_batch_size,
+                            max_tasks=max_tasks_per_stage,
+                            on_batch_start=on_batch_start,
+                            on_task_done=lambda x: batch_pbar.advance(batch_task, x or 1),
+                            on_batch_done=on_batch_done,
+                        )
 
                     global_pbar.stop()
                     batch_pbar.stop()
@@ -502,6 +548,69 @@ def {fn_name}(...):
                     plain_text = Text.from_markup(err.args[0]).plain
                     err.args = (plain_text,)
                 raise
+
+    def run_stage(
+        self,
+        stage: str | UUID,
+        *,
+        project_hash: str | UUID | None = None,
+        num_retries: int = 3,
+        task_batch_size: int = 300,
+        max_tasks: int | None = None,
+    ) -> None:
+        """Execute one agent stage once, without polling or terminal output.
+
+        `__call__` is a foreground CLI tool: it loops over every registered stage, draws
+        progress bars and can sleep between polls. This is the same execution against a
+        single stage, suitable for calling from a server or a job — for example from a
+        handler that has just been told there is work waiting at that stage.
+
+        **Example:**
+
+        ```python
+        runner = Runner(project_hash="<project_hash>")
+
+        @runner.stage("<stage_name_or_uuid>")
+        def my_agent() -> str:
+            return "<pathway_name>"
+
+        runner.run_stage("<stage_name_or_uuid>")
+        ```
+
+        Args:
+            stage: The name or uuid of the stage to execute. An implementation must
+                already be registered for it via `runner.stage(...)`.
+            project_hash: The project hash, if not given at runner instantiation.
+            num_retries: If an agent fails on a task, how many times to retry it.
+            task_batch_size: Number of tasks for which labels are loaded into memory at once.
+            max_tasks: Max number of tasks to process on this run. If `None`, all queued
+                tasks are attempted.
+
+        Raises:
+            PrintableError: If no implementation is registered for `stage`.
+
+        Returns:
+            None
+        """
+        max_tasks = self._validate_max_tasks_per_stage(max_tasks)
+        project, agent_stages = self._prepare(project_hash)
+
+        stage_uuid, printable_name = self._validate_stage(stage)
+        runner_agent = next((agent for agent in self.agents if agent.identity == stage_uuid), None)
+        if runner_agent is None:
+            raise PrintableError(
+                f"No agent implementation is registered for stage [blue]`{printable_name}`[/blue]. "
+                "Decorate a function with [magenta]@runner.stage(...)[/magenta] for it first."
+            )
+
+        self._drain_stage(
+            runner_agent,
+            agent_stages[runner_agent.identity],
+            project,
+            num_retries=num_retries,
+            task_batch_size=task_batch_size,
+            max_tasks=max_tasks,
+        )
 
     def run(self) -> None:
         """
