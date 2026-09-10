@@ -443,3 +443,37 @@ def test_run_stage_rejects_a_stage_with_no_implementation(ephemeral_project_hash
 
     with pytest.raises(PrintableError, match="No agent implementation is registered"):
         runner.run_stage(AGENT_STAGE_NAME)
+
+
+def test_a_task_advanced_mid_run_does_not_strand_the_batch(ephemeral_image_project_hash: str) -> None:
+    """A task moved out of the stage by someone else must not block the rest of the batch.
+
+    Pathway actions are applied in one bundled request, and Encord rejects the whole
+    request if any task in it has already left the stage. Advancing one task from inside
+    the agent reproduces the race that a second runner -- or a person working in the app --
+    creates between fetching the queue and applying the pathways.
+    """
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
+    project = runner.project
+    assert project
+    agent_stage = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
+    total_tasks = len(list(agent_stage.get_tasks()))
+    assert total_tasks > 1, "This test needs at least two tasks to create the race"
+
+    advanced_out_of_band: list[UUID] = []
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        if not advanced_out_of_band:
+            other = next(t for t in agent_stage.get_tasks() if t.uuid != task.uuid)
+            other.proceed(pathway_name=AGENT_TO_COMPLETE_PATHWAY_NAME)
+            advanced_out_of_band.append(other.uuid)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    runner()
+
+    assert advanced_out_of_band, "No task was advanced out of band, so the race never happened"
+
+    complete_stage = project.workflow.get_stage(name=COMPLETE_STAGE_NAME, type_=FinalStage)
+    assert len(list(complete_stage.get_tasks())) == total_tasks
+    assert len(list(agent_stage.get_tasks())) == 0
