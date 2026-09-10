@@ -285,7 +285,7 @@ def test_queue_runner_batch_survives_a_task_gone_before_it_starts(ephemeral_proj
     agent_stage = queue_runner.project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage)
 
     # Another worker routes the first task before this batch is picked up. Re-fetched from
-    # the stage because a task deserialised from the queue carries no client to act with.
+    # the stage because a task deserialized from the queue carries no client to act with.
     stolen_uuid = AgentTask.model_validate_json(queue[0]).uuid
     next(task for task in agent_stage.get_tasks() if task.uuid == stolen_uuid).proceed(
         pathway_name=AGENT_TO_COMPLETE_PATHWAY_NAME
