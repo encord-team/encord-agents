@@ -44,10 +44,10 @@ def task_ready(
     """Acknowledge the notification, then drain the stage out of band.
 
     Verification shows the request came from Encord. It does not show the request
-    concerns a project this deployment serves: the signing secret belongs to the URL,
-    and whoever configured a webhook there chose the `project_hash` in the body. So
-    the project is checked here, and `run_stage` is left to use the runner's own --
-    a notification never decides which project this service acts on.
+    concerns a project this deployment serves: the signing secret belongs to the URL
+    rather than to a project. So the project is checked here, and `run_stage` is left
+    to use the runner's own -- a notification never decides which project this
+    service acts on, only when to look.
     """
     if notification.project_hash != PROJECT_HASH:
         return

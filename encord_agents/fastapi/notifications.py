@@ -25,11 +25,10 @@ def task_ready(
     background.add_task(runner.run_stage, notification.stage_uuid, project_hash=notification.project_hash)
 ```
 
-Note the check. A verified request came from Encord; it does not follow that it came from
-a project this deployment is meant to serve, because the signing secret belongs to the URL
-rather than to a project. Anyone who can configure a webhook at this URL, or read its
-secret, chooses the `project_hash` in the body -- and the receiver acts with its own
-credentials, not theirs. Decide which projects a deployment serves, and act only on those.
+Note the check. A notification says where work is waiting; it does not say what this
+deployment is allowed to do. The signing secret belongs to the URL rather than to a
+project, so `project_hash` is an input to check rather than an instruction to follow --
+decide which projects a deployment serves, and act only on those.
 
 Returning `None` answers 200, which is what Encord expects; it records any other
 status as a failed delivery. Answer before doing the work, as above: Encord gives a
@@ -74,8 +73,8 @@ async def dep_task_notification(request: Request) -> TaskNotification:
     re-encoded body is an equivalent object with a different signature.
 
     Verification is authentication, not authorization: it shows the request came from
-    Encord, not that `project_hash` names a project this deployment should act on. Check
-    that before doing any work -- see the example above.
+    Encord, not that `project_hash` names a project this deployment serves. Check that
+    before doing any work -- see the example above.
 
     The signing secret comes from `ENCORD_WEBHOOK_SECRET`. To pass one explicitly, or
     to widen the timestamp tolerance, call
