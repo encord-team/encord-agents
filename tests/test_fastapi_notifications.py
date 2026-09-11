@@ -19,7 +19,12 @@ from fastapi.testclient import TestClient
 
 from encord_agents.core.constants import WEBHOOK_SIGNATURE_HEADER, WEBHOOK_TIMESTAMP_HEADER
 from encord_agents.core.webhooks import SUPPORTED_NOTIFICATION_VERSION, TaskNotification
-from encord_agents.fastapi import add_notification_handlers, dep_task_notification, get_encord_app
+from encord_agents.fastapi import (
+    add_notification_handlers,
+    dep_task_notification,
+    dep_task_notification_with_args,
+    get_encord_app,
+)
 
 SECRET = "5cbf0f7d3a1e4b2c9f8a6d5e4c3b2a1908f7e6d5c4b3a2910f8e7d6c5b4a3921"
 STAGE_UUID = "22222222-2222-2222-2222-222222222222"
@@ -134,3 +139,24 @@ def test_an_app_without_the_handlers_does_not_refuse_quietly() -> None:
 
     assert client.post("/encord/task-ready", content=body, headers=sign(body)).status_code == 200
     assert client.post("/encord/task-ready", content=body, headers=sign(body, secret="nope")).status_code == 500
+
+
+def test_a_secret_can_be_given_instead_of_read_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """One service can serve two Encord URLs, and one env var cannot hold both secrets."""
+    monkeypatch.delenv("ENCORD_WEBHOOK_SECRET", raising=False)
+    other_secret = "a-secret-for-this-route-only"
+    app = get_encord_app()
+    received: list[TaskNotification] = []
+
+    @app.post("/encord/task-ready")
+    def task_ready(
+        notification: Annotated[TaskNotification, Depends(dep_task_notification_with_args(secret=other_secret))],
+    ) -> None:
+        received.append(notification)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    body = serialize(ENVELOPE)
+
+    assert client.post("/encord/task-ready", content=body, headers=sign(body, secret=other_secret)).status_code == 200
+    assert client.post("/encord/task-ready", content=body, headers=sign(body)).status_code == 401
+    assert len(received) == 1
