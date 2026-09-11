@@ -43,9 +43,11 @@ instead, or they surface as unhandled errors.
 """
 
 import logging
+from collections.abc import Awaitable, Callable
 from http import HTTPStatus
 
 from encord_agents.core.webhooks import (
+    DEFAULT_TIMESTAMP_TOLERANCE_SECONDS,
     TaskNotification,
     UnexpectedEventType,
     UnsupportedNotificationVersion,
@@ -86,6 +88,50 @@ async def dep_task_notification(request: Request) -> TaskNotification:
         UnsupportedNotificationVersion: It is on an envelope version this package cannot read.
     """
     return verify_and_parse_notification(await request.body(), request.headers)
+
+
+def dep_task_notification_with_args(
+    secret: str | None = None,
+    tolerance_seconds: int = DEFAULT_TIMESTAMP_TOLERANCE_SECONDS,
+) -> Callable[[Request], Awaitable[TaskNotification]]:
+    """Build a notification dependency that does not read its secret from the environment.
+
+    `ENCORD_WEBHOOK_SECRET` holds one secret, which is enough for one URL. A service that
+    serves two URLs Encord calls -- a notification receiver and a custom agent endpoint,
+    say -- has two secrets and needs to say which is which.
+
+    **Example:**
+
+    ```python
+    @app.post("/encord/task-ready")
+    def task_ready(
+        notification: Annotated[
+            TaskNotification,
+            Depends(dep_task_notification_with_args(secret=os.environ["STAGE_WEBHOOK_SECRET"])),
+        ],
+    ) -> None:
+        ...
+    ```
+
+    Args:
+        secret: The signing secret for the URL this route serves. Read from
+            `ENCORD_WEBHOOK_SECRET` when not given.
+        tolerance_seconds: How far the signed timestamp may be from now. Widen it only
+            for a deployment whose clock cannot be kept closer than the default.
+
+    Returns:
+        A dependency to pass to `Depends`.
+    """
+
+    async def dependency(request: Request) -> TaskNotification:
+        return verify_and_parse_notification(
+            await request.body(),
+            request.headers,
+            secret=secret,
+            tolerance_seconds=tolerance_seconds,
+        )
+
+    return dependency
 
 
 async def _webhook_verification_exception_handler(request: Request, exc: WebhookVerificationError) -> JSONResponse:
