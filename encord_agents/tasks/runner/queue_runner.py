@@ -1,11 +1,11 @@
 import traceback
+from collections import Counter
 from contextlib import ExitStack
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import wraps
 from typing import Any, Callable, Iterable
 from uuid import UUID
 
-from encord.http.bundle import Bundle
 from encord.project import Project
 from encord.user_client import EncordUserClient
 from encord.workflow.stages.agent import AgentStage, AgentTask
@@ -14,8 +14,7 @@ from encord_agents.core.data_model import LabelRowInitialiseLabelsArgs, LabelRow
 from encord_agents.core.dependencies.utils import solve_dependencies
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import AgentTaskConfig, TaskAgentReturnStruct, TaskAgentReturnType, TaskCompletionResult
-from encord_agents.tasks.runner.runner_base import RunnerBase
-from encord_agents.utils.generic_utils import try_coerce_UUID
+from encord_agents.tasks.runner.runner_base import PendingPathway, RunnerBase, StagePathways
 
 
 @dataclass
@@ -24,35 +23,6 @@ class _FlatTaskCompletionResult:
     stage_uuid: UUID | None
     success: bool
     pathway: UUID | None
-
-
-def handle_pathway(
-    task: AgentTask,
-    pathway_to_follow: UUID | str | None,
-    pathway_lookup: dict[UUID, str],
-    name_lookup: dict[str, UUID],
-    stage: AgentStage,
-    *,
-    bundle: Bundle | None = None,
-) -> UUID | None:
-    next_stage_uuid: UUID | None = None
-    if pathway_to_follow is None:
-        # TODO: Should we log that task didn't continue?
-        pass
-    elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
-        if next_stage_uuid not in pathway_lookup.keys():
-            raise PrintableError(
-                f"Runner responded with pathway UUID: {next_stage_uuid}, only accept: {[pathway.uuid for pathway in stage.pathways]}"
-            )
-        task.proceed(pathway_uuid=str(next_stage_uuid), bundle=bundle)
-    else:
-        if pathway_to_follow not in [pathway.name for pathway in stage.pathways]:
-            raise PrintableError(
-                f"Runner responded with pathway name: {pathway_to_follow}, only accept: {[pathway.name for pathway in stage.pathways]}"
-            )
-        task.proceed(pathway_name=str(pathway_to_follow), bundle=bundle)
-        next_stage_uuid = name_lookup[str(pathway_to_follow)]
-    return next_stage_uuid
 
 
 class QueueRunner(RunnerBase):
@@ -195,8 +165,7 @@ class QueueRunner(RunnerBase):
                     ).model_dump_json()
 
                 return null_wrapper
-            pathway_lookup = {pathway.uuid: pathway.name for pathway in stage.pathways}
-            name_lookup = {pathway.name: pathway.uuid for pathway in stage.pathways}
+            pathways = StagePathways.from_stage(stage)
 
             @wraps(func)
             def wrapper(json_strs: str | list[str]) -> str:
@@ -204,19 +173,42 @@ class QueueRunner(RunnerBase):
                     json_strs = [json_strs]
                 confs = [AgentTaskConfig.model_validate_json(json_str) for json_str in json_strs]
 
-                task_dict = {s.data_hash: s for s in stage.get_tasks(data_hash=[conf.data_hash for conf in confs])}
+                tasks_at_stage = list(stage.get_tasks(data_hash=[conf.data_hash for conf in confs]))
+                duplicated = [
+                    data_hash
+                    for data_hash, count in Counter(task.data_hash for task in tasks_at_stage).items()
+                    if count > 1
+                ]
+                if duplicated:
+                    raise PrintableError(
+                        f"Stage [blue]`{stage.title}`[/blue] holds more than one task for data unit(s) "
+                        f"{duplicated}. Queue entries are matched to tasks by data hash, so this cannot be "
+                        "resolved here; it usually means the same data unit reached the project twice."
+                    )
+                task_dict = {task.data_hash: task for task in tasks_at_stage}
                 tasks = [task_dict.get(conf.data_hash, None) for conf in confs]
                 try:
-                    contexts = self._assemble_contexts(
-                        task_batch=[task for task in tasks if task is not None],
-                        runner_agent=runner_agent,
-                        project=self._project,
-                        include_args=include_args,
-                        init_args=init_args,
-                        stage=stage,
-                        client=self.client,
+                    # TODO: `confs`, `tasks` and `contexts` are three lists held in lockstep,
+                    # which is how they came to fall out of alignment in the first place.
+                    # One record per task -- conf, task and context together, partitioned
+                    # into runnable and missing up front -- would remove the strict zip, the
+                    # `None` threading and the assert below.
+                    assembled_contexts = iter(
+                        self._assemble_contexts(
+                            task_batch=[task for task in tasks if task is not None],
+                            runner_agent=runner_agent,
+                            project=self._project,
+                            include_args=include_args,
+                            init_args=init_args,
+                            stage=stage,
+                            client=self.client,
+                        )
                     )
+                    # `_assemble_contexts` covers only the tasks still at the stage, in
+                    # order, so re-align it with `confs`: the three are indexed together below.
+                    contexts = [next(assembled_contexts) if task is not None else None for task in tasks]
                     task_completion_results: list[_FlatTaskCompletionResult] = []
+                    pending_pathways: list[PendingPathway] = []
                     assert self.project is not None
                     with self.project.create_bundle() as bundle:
                         for conf, task, context in zip(confs, tasks, contexts, strict=True):
@@ -230,6 +222,7 @@ class QueueRunner(RunnerBase):
                                     )
                                 )
                                 continue
+                            assert context is not None  # aligned with `tasks` above
                             with ExitStack() as stack:
                                 dependencies = solve_dependencies(
                                     context=context, dependant=runner_agent.dependant, stack=stack
@@ -246,13 +239,27 @@ class QueueRunner(RunnerBase):
                                     context.label_row.set_priority(agent_response.label_row_priority, bundle=bundle)
                             else:
                                 pathway_to_follow = agent_response
-                            next_stage_uuid = handle_pathway(
-                                task, pathway_to_follow, pathway_lookup, name_lookup, stage=stage, bundle=bundle
-                            )
+                            pending_pathway = RunnerBase._resolve_pathway(task, pathway_to_follow, pathways)
+                            if pending_pathway is not None:
+                                pending_pathways.append(pending_pathway)
                             result = _FlatTaskCompletionResult(
-                                task_uuid=task.uuid, stage_uuid=stage.uuid, success=True, pathway=next_stage_uuid
+                                task_uuid=task.uuid,
+                                stage_uuid=stage.uuid,
+                                success=True,
+                                pathway=pending_pathway.pathway_uuid if pending_pathway else None,
                             )
                             task_completion_results.append(result)
+
+                    already_advanced, could_not_move = RunnerBase._apply_pathway_actions(pending_pathways)
+                    for index, result in enumerate(task_completion_results):
+                        if result.task_uuid in could_not_move:
+                            # The pathway never reached Encord, so the task is still here.
+                            task_completion_results[index] = replace(result, success=False, pathway=None)
+                        elif result.task_uuid in already_advanced:
+                            # The agent ran and the task has left the stage, so this is not a
+                            # failure -- but this run did not choose the pathway it took.
+                            task_completion_results[index] = replace(result, pathway=None)
+
                     if len(task_completion_results) == 1:
                         return TaskCompletionResult(
                             task_uuid=task_completion_results[0].task_uuid,
