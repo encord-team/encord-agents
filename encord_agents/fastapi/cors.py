@@ -25,6 +25,7 @@ except ModuleNotFoundError:
     exit()
 
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
+from encord_agents.fastapi.notifications import add_notification_handlers
 
 logger = logging.getLogger(__name__)
 
@@ -147,4 +148,5 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     app.add_middleware(EncordTestHeaderMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
     app.exception_handlers[EncordEditorAgentException] = _encord_editor_agent_exception_handler
+    add_notification_handlers(app)
     return app

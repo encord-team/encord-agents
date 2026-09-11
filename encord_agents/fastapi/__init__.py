@@ -1,6 +1,7 @@
 from ..core.exceptions import EncordEditorAgentException
 from .cors import get_encord_app
 from .dependencies import dep_client, dep_label_row, dep_single_frame
+from .notifications import add_notification_handlers, dep_task_notification
 from .utils import verify_auth
 
 __all__ = [
@@ -9,5 +10,7 @@ __all__ = [
     "dep_client",
     "verify_auth",
     "get_encord_app",
+    "dep_task_notification",
+    "add_notification_handlers",
     "EncordEditorAgentException",
 ]
