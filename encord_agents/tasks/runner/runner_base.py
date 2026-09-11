@@ -1,7 +1,9 @@
 import logging
-from typing import Callable
+from typing import Callable, NamedTuple
 from uuid import UUID
 
+from encord.exceptions import InvalidArgumentsError
+from encord.http.bundle import Bundle
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.project import ProjectType
 from encord.orm.workflow import WorkflowStageType
@@ -20,8 +22,39 @@ from encord_agents.core.dependencies.utils import get_dependant
 from encord_agents.core.utils import get_user_client
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import TaskAgentReturnType
+from encord_agents.utils.generic_utils import try_coerce_UUID
 
 logger = logging.getLogger(__name__)
+
+
+class StagePathways(NamedTuple):
+    """The pathways of one agent stage, indexed both ways for lookup.
+
+    Built once per stage rather than per task: validating an agent's answer needs
+    membership by uuid and resolution by name, and rebuilding either from
+    `stage.pathways` inside the task loop is wasted work.
+    """
+
+    uuid_by_name: dict[str, UUID]
+    name_by_uuid: dict[UUID, str]
+
+    @classmethod
+    def from_stage(cls, stage: AgentStage) -> "StagePathways":
+        return cls(
+            uuid_by_name={pathway.name: pathway.uuid for pathway in stage.pathways},
+            name_by_uuid={pathway.uuid: pathway.name for pathway in stage.pathways},
+        )
+
+
+class PendingPathway(NamedTuple):
+    """A pathway action resolved for a task but not yet applied to it.
+
+    A pathway an agent named is resolved to its uuid before it gets here, so there is no
+    state in which neither field is set -- which `AgentTask.proceed` rejects at runtime.
+    """
+
+    task: AgentTask
+    pathway_uuid: UUID
 
 
 class RunnerAgent:
@@ -47,6 +80,90 @@ class RunnerAgent:
 
 
 class RunnerBase:
+    @staticmethod
+    def _resolve_pathway(
+        task: AgentTask,
+        pathway_to_follow: UUID | str | None,
+        pathways: StagePathways,
+    ) -> PendingPathway | None:
+        """Validate the pathway an agent chose and return the action that applies it.
+
+        Applying is deferred to `_apply_pathway_actions` so a batch of tasks can be moved
+        in one request. A pathway the agent named is resolved to its uuid here, so every
+        action carries the destination and both runners send the same field.
+
+        Returns:
+            The action to apply, or None if the agent returned no pathway.
+
+        Raises:
+            PrintableError: If the pathway is not one of the stage's.
+        """
+        if pathway_to_follow is None:
+            # TODO: Should we log that task didn't continue?
+            return None
+
+        if next_stage_uuid := try_coerce_UUID(pathway_to_follow):
+            if next_stage_uuid not in pathways.name_by_uuid:
+                raise PrintableError(
+                    f"No pathway with UUID: {next_stage_uuid} found. "
+                    f"Accepted pathway UUIDs are: {list(pathways.name_by_uuid)}"
+                )
+            return PendingPathway(task, next_stage_uuid)
+
+        if pathway_to_follow not in pathways.uuid_by_name:
+            raise PrintableError(
+                f"No pathway with name: {pathway_to_follow} found. "
+                f"Accepted pathway names are: {list(pathways.uuid_by_name)}"
+            )
+        return PendingPathway(task, pathways.uuid_by_name[str(pathway_to_follow)])
+
+    @staticmethod
+    def _apply_pathway_actions(pending_pathways: list[PendingPathway]) -> tuple[set[UUID], set[UUID]]:
+        """Move tasks along their chosen pathways, in a single request where possible.
+
+        Encord rejects the entire request if any task in it has already left the stage, so
+        one task advanced by someone else -- a concurrent run, or a person in the app --
+        would otherwise strand every other task batched with it. On any rejection the
+        actions are replayed one at a time, which costs a request per task but keeps the
+        outcome per task rather than losing the batch.
+
+        Returns:
+            The uuids of the tasks that had already left the stage, and the uuids of those
+            this call could not move for any other reason. Tasks in neither set were moved.
+        """
+        if not pending_pathways:
+            return set(), set()
+
+        try:
+            with Bundle() as task_bundle:
+                for pending in pending_pathways:
+                    pending.task.proceed(pathway_uuid=pending.pathway_uuid, bundle=task_bundle)
+            return set(), set()
+        except InvalidArgumentsError:
+            # The expected rejection: at least one task in the request has moved on.
+            logger.warning(f"Bundled pathway update rejected; replaying {len(pending_pathways)} task(s) individually.")
+        except Exception as exc:
+            # Anything else is unexplained, so replay too rather than lose the whole batch
+            # to it. Each task then gets its own outcome below.
+            logger.warning(
+                f"Bundled pathway update failed with {type(exc).__name__}; "
+                f"replaying {len(pending_pathways)} task(s) individually.",
+                exc_info=exc,
+            )
+
+        already_advanced: set[UUID] = set()
+        could_not_move: set[UUID] = set()
+        for pending in pending_pathways:
+            try:
+                pending.task.proceed(pathway_uuid=pending.pathway_uuid)
+            except InvalidArgumentsError:
+                logger.info(f"Task {pending.task.uuid} has already left this stage; leaving it where it is.")
+                already_advanced.add(pending.task.uuid)
+            except Exception:
+                logger.exception(f"Could not move task {pending.task.uuid} along its pathway.")
+                could_not_move.add(pending.task.uuid)
+        return already_advanced, could_not_move
+
     @staticmethod
     def _verify_project_hash(ph: str | UUID) -> str:
         try:

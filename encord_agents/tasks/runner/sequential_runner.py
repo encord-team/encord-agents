@@ -36,8 +36,7 @@ from encord_agents.core.rich_columns import TaskSpeedColumn
 from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks.models import DecoratedCallable, TaskAgentReturnStruct, TaskAgentReturnType
-from encord_agents.tasks.runner.runner_base import RunnerAgent, RunnerBase
-from encord_agents.utils.generic_utils import try_coerce_UUID
+from encord_agents.tasks.runner.runner_base import PendingPathway, RunnerAgent, RunnerBase, StagePathways
 
 MAX_LABEL_ROW_BATCH_SIZE = 100
 
@@ -222,56 +221,51 @@ class SequentialRunner(RunnerBase):
         """
         INVARIANT: Tasks should always be for the stage that the runner_agent is associated too
         """
-        with Bundle() as task_bundle:
-            with Bundle(bundle_size=min(MAX_LABEL_ROW_BATCH_SIZE, len(list(contexts)))) as label_bundle:
-                for context in contexts:
-                    assert context.task
-                    with ExitStack() as stack:
-                        task = context.task
-                        dependencies = solve_dependencies(
-                            context=context, dependant=runner_agent.dependant, stack=stack
-                        )
-                        for attempt in range(num_retries + 1):
-                            try:
-                                agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
-                                if isinstance(agent_response, TaskAgentReturnStruct):
-                                    pathway_to_follow = agent_response.pathway
-                                    if agent_response.label_row:
-                                        agent_response.label_row.save(bundle=label_bundle)
-                                    if agent_response.label_row_priority:
-                                        assert (
-                                            context.label_row is not None
-                                        ), f"Label row is not set for task {task} setting the priority requires either setting the `will_set_priority` to True on the stage decorator or depending on the label row."
-                                        context.label_row.set_priority(
-                                            agent_response.label_row_priority, bundle=label_bundle
-                                        )
-                                else:
-                                    pathway_to_follow = agent_response
-                                if pathway_to_follow is None:
-                                    pass
-                                elif next_stage_uuid := try_coerce_UUID(pathway_to_follow):
-                                    if next_stage_uuid not in [pathway.uuid for pathway in stage.pathways]:
-                                        raise PrintableError(
-                                            f"No pathway with UUID: {next_stage_uuid} found. Accepted pathway UUIDs are: {[pathway.uuid for pathway in stage.pathways]}"
-                                        )
-                                    task.proceed(pathway_uuid=str(next_stage_uuid), bundle=task_bundle)
-                                else:
-                                    if pathway_to_follow not in [str(pathway.name) for pathway in stage.pathways]:
-                                        raise PrintableError(
-                                            f"No pathway with name: {pathway_to_follow} found. Accepted pathway names are: {[pathway.name for pathway in stage.pathways]}"
-                                        )
-                                    task.proceed(pathway_name=str(pathway_to_follow), bundle=task_bundle)
-                                if pbar_update is not None:
-                                    pbar_update(1.0)
-                                break
+        # Collected rather than queued directly onto a bundle: the pathway actions are
+        # applied together once the labels are saved, so that a rejection can be retried
+        # per task. See `_apply_pathway_actions`.
+        pending_pathways: list[PendingPathway] = []
+        pathways = StagePathways.from_stage(stage)
 
-                            except KeyboardInterrupt:
-                                raise
-                            except PrintableError:
-                                raise
-                            except Exception:
-                                logger.error(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
-                                traceback.print_exc()
+        with Bundle(bundle_size=min(MAX_LABEL_ROW_BATCH_SIZE, len(list(contexts)))) as label_bundle:
+            for context in contexts:
+                assert context.task
+                with ExitStack() as stack:
+                    task = context.task
+                    dependencies = solve_dependencies(context=context, dependant=runner_agent.dependant, stack=stack)
+                    for attempt in range(num_retries + 1):
+                        try:
+                            agent_response: TaskAgentReturnType = runner_agent.callable(**dependencies.values)
+                            if isinstance(agent_response, TaskAgentReturnStruct):
+                                pathway_to_follow = agent_response.pathway
+                                if agent_response.label_row:
+                                    agent_response.label_row.save(bundle=label_bundle)
+                                if agent_response.label_row_priority:
+                                    assert (
+                                        context.label_row is not None
+                                    ), f"Label row is not set for task {task} setting the priority requires either setting the `will_set_priority` to True on the stage decorator or depending on the label row."
+                                    context.label_row.set_priority(
+                                        agent_response.label_row_priority, bundle=label_bundle
+                                    )
+                            else:
+                                pathway_to_follow = agent_response
+                            pending_pathway = RunnerBase._resolve_pathway(task, pathway_to_follow, pathways)
+                            if pending_pathway is not None:
+                                pending_pathways.append(pending_pathway)
+                            if pbar_update is not None:
+                                pbar_update(1.0)
+                            break
+
+                        except KeyboardInterrupt:
+                            raise
+                        except PrintableError:
+                            raise
+                        except Exception:
+                            logger.error(f"[attempt {attempt+1}/{num_retries+1}] Agent failed with error: ")
+                            traceback.print_exc()
+
+        # Outcomes are logged inside; this runner has no per-task result to carry them.
+        RunnerBase._apply_pathway_actions(pending_pathways)
 
     def _validate_agent_stages(
         self, valid_stages: list[AgentStage], agent_stages: dict[str | UUID, AgentStage]
