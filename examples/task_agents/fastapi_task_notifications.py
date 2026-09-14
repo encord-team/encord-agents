@@ -1,8 +1,8 @@
 """Drain an agent stage when Encord says there is work waiting, instead of polling.
 
-Configure this endpoint's URL on the agent stage, read the signing secret the app
-shows next to it, and set it as `ENCORD_WEBHOOK_SECRET`. Encord then calls here when
-the stage's batch-size or max-wait condition is met.
+Configure this endpoint's URL on the agent stage, set `ENCORD_WEBHOOK_SECRET` to the
+signing secret the app shows there, and Encord calls here when the stage's batch-size
+or max-wait condition is met.
 
 Run it with:
 
@@ -44,10 +44,9 @@ def task_ready(
     """Acknowledge the notification, then drain the stage out of band.
 
     Verification shows the request came from Encord. It does not show the request
-    concerns a project this deployment serves: the signing secret belongs to the URL
-    rather than to a project. So the project is checked here, and `run_stage` is left
-    to use the runner's own -- a notification never decides which project this
-    service acts on, only when to look.
+    concerns a project this deployment serves, so the project is checked here, and
+    `run_stage` is left to use the runner's own -- a notification never decides which
+    project this service acts on, only when to look.
     """
     if notification.project_hash != PROJECT_HASH:
         return

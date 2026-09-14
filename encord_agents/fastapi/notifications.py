@@ -26,9 +26,9 @@ def task_ready(
 ```
 
 Note the check. A notification says where work is waiting; it does not say what this
-deployment is allowed to do. The signing secret belongs to the URL rather than to a
-project, so `project_hash` is an input to check rather than an instruction to follow --
-decide which projects a deployment serves, and act only on those.
+deployment is allowed to do, so `project_hash` is an input to check rather than an
+instruction to follow. Decide which projects a deployment serves, and act only on
+those.
 
 Returning `None` answers 200, which is what Encord expects; it records any other
 status as a failed delivery. Answer before doing the work, as above: Encord gives a
@@ -95,9 +95,9 @@ def dep_task_notification_with_args(
 ) -> Callable[[Request], Awaitable[TaskNotification]]:
     """Build a notification dependency that does not read its secret from the environment.
 
-    `ENCORD_WEBHOOK_SECRET` holds one secret, which is enough for one URL. A service that
-    serves two URLs Encord calls -- a notification receiver and a custom agent endpoint,
-    say -- has two secrets and needs to say which is which.
+    `ENCORD_WEBHOOK_SECRET` holds one secret. Use this where a single secret does not
+    cover everything a deployment verifies: it gives one route the secret to verify
+    against, rather than taking it from the environment.
 
     **Example:**
 
@@ -113,7 +113,7 @@ def dep_task_notification_with_args(
     ```
 
     Args:
-        secret: The signing secret for the URL this route serves. Read from
+        secret: The signing secret this route verifies against. Read from
             `ENCORD_WEBHOOK_SECRET` when not given.
         tolerance_seconds: How far the signed timestamp may be from now. Widen it only
             for a deployment whose clock cannot be kept closer than the default.

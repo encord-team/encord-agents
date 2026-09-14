@@ -5,9 +5,9 @@ an agent stage sends, and the calls it makes to a custom agent endpoint. Those U
 have to be publicly reachable, so the signature is what separates a genuine request
 from anything else that finds them.
 
-Verification needs the signing secret for that URL, which Encord derives from the URL
-itself and shows next to it in the app. Set it as `ENCORD_WEBHOOK_SECRET`, or pass it
-explicitly. Changing the URL changes the secret.
+Verification needs the signing secret, which Encord shows in the app alongside the
+endpoint's configuration. Set it as `ENCORD_WEBHOOK_SECRET`, or pass it explicitly, and
+check it again if you change that configuration.
 """
 
 import hashlib
@@ -173,7 +173,7 @@ def _resolve_secret(secret: str | None) -> str:
         raise PrintableError(
             "No signing secret to verify against. Pass `[blue]secret[/blue]` or set the "
             "`[blue]ENCORD_WEBHOOK_SECRET[/blue]` environment variable to the secret shown "
-            "next to the URL in the Encord app."
+            "in the Encord app."
         )
     return resolved
 
@@ -193,7 +193,7 @@ def verify_signature(
             verify -- the signature covers the bytes that were sent.
         signature: The `X-Encord-Signature` header, if present.
         timestamp: The `X-Encord-Timestamp` header, if present.
-        secret: The signing secret for the URL the request arrived at. Read from
+        secret: The signing secret to verify against. Read from
             `ENCORD_WEBHOOK_SECRET` when not given.
         tolerance_seconds: How far from now the signed timestamp may be.
 
