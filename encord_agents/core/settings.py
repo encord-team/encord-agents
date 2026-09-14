@@ -99,12 +99,12 @@ class WebhookSettings(BaseSettings):
 
     webhook_secret: Optional[str] = Field(validation_alias="ENCORD_WEBHOOK_SECRET", default=None)
     """
-    The signing secret for the URL that receives the requests.
+    The signing secret this deployment verifies incoming requests with.
 
-    Encord derives it from the URL and displays it next to that URL in the app; changing
-    the URL changes the secret. Read only when the secret is not passed explicitly.
+    Encord shows it in the app alongside the endpoint's configuration; check it again
+    if you change that configuration. Read only when the secret is not passed
+    explicitly.
 
-    One URL, one secret. A deployment that serves more than one URL Encord calls -- a
-    notification receiver and a custom agent endpoint, say -- cannot cover both from
-    here, and should pass each endpoint's secret explicitly instead.
+    Use this when a single secret covers everything this deployment verifies.
+    Otherwise, pass the secret explicitly.
     """
