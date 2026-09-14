@@ -20,6 +20,7 @@ from encord_agents.core.utils import batch_iterator
 from encord_agents.exceptions import PrintableError
 from encord_agents.tasks import SequentialRunner
 from encord_agents.tasks.models import TaskAgentReturnStruct
+from encord_agents.tasks.runner.runner_base import RunnerAgent
 from encord_agents.tasks.runner.sequential_runner import MAX_LABEL_ROW_BATCH_SIZE
 from tests.fixtures import (
     AGENT_STAGE_NAME,
@@ -443,6 +444,112 @@ def test_run_stage_rejects_a_stage_with_no_implementation(ephemeral_project_hash
 
     with pytest.raises(PrintableError, match="No agent implementation is registered"):
         runner.run_stage(AGENT_STAGE_NAME)
+
+
+def test_run_stage_accepts_the_uuid_of_a_stage_registered_by_name(
+    ephemeral_image_project_hash: str, mock_agent: MagicMock
+) -> None:
+    """A notification names a stage by uuid; an agent is usually registered by name.
+
+    Registering by name is what lets one deployment serve several projects, since a
+    stage's uuid differs between them and its title does not.
+    """
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        mock_agent(task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    project = runner.project
+    assert project
+    stage_uuid = project.workflow.get_stage(name=AGENT_STAGE_NAME, type_=AgentStage).uuid
+
+    runner.run_stage(stage_uuid, max_tasks=1)
+
+    assert mock_agent.call_count == 1
+
+
+def test_run_stage_ignores_agents_registered_for_other_stages(
+    ephemeral_image_project_hash: str, mock_agent: MagicMock
+) -> None:
+    """One deployment can hold agents for stages a given project does not have.
+
+    `__call__` runs every registered agent and so requires them all; `run_stage` runs
+    one, and must not fail because a sibling registration is absent here.
+    """
+    runner = SequentialRunner()
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        mock_agent(task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    @runner.stage("a-stage-this-project-does-not-have")
+    def unrelated_agent(task: AgentTask) -> str:
+        raise AssertionError("The agent for another stage must not run.")
+
+    runner.run_stage(AGENT_STAGE_NAME, project_hash=ephemeral_image_project_hash, max_tasks=1)
+
+    assert mock_agent.call_count == 1
+
+
+def test_a_bound_runner_refuses_a_different_project(
+    ephemeral_project_hash: str, ephemeral_image_project_hash: str
+) -> None:
+    """Passing a project to a runner already bound to another is a mistake, not an override.
+
+    Serving several projects is what a runner built without a `project_hash` is for;
+    silently ignoring the one given at instantiation hides which project ran.
+    """
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    with pytest.raises(PrintableError, match="is bound to project"):
+        runner.run_stage(AGENT_STAGE_NAME, project_hash=ephemeral_image_project_hash)
+
+
+def test_a_bound_runner_accepts_its_own_project(ephemeral_image_project_hash: str, mock_agent: MagicMock) -> None:
+    """Naming the project the runner already holds is redundant, not wrong."""
+    runner = SequentialRunner(project_hash=ephemeral_image_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        mock_agent(task)
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    runner.run_stage(AGENT_STAGE_NAME, project_hash=ephemeral_image_project_hash, max_tasks=1)
+
+    assert mock_agent.call_count == 1
+
+
+def test_call_still_requires_every_registered_agent(ephemeral_project_hash: str) -> None:
+    """`run_stage` validates only the stage it runs; `__call__` runs them all, so it does not."""
+    runner = SequentialRunner(project_hash=ephemeral_project_hash)
+
+    @runner.stage(AGENT_STAGE_NAME)
+    def agent_function(task: AgentTask) -> str:
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    runner.agents.append(RunnerAgent(identity="a-stage-this-project-does-not-have", callable=agent_function))
+
+    with pytest.raises(PrintableError, match="not present as an agent stage"):
+        runner()
+
+
+def test_run_stage_rejects_a_stage_absent_from_the_project(ephemeral_project_hash: str) -> None:
+    """Naming a stage the project does not have says so, rather than failing later."""
+    runner = SequentialRunner()
+
+    @runner.stage("a-stage-this-project-does-not-have")
+    def agent_function(task: AgentTask) -> str:
+        return AGENT_TO_COMPLETE_PATHWAY_NAME
+
+    with pytest.raises(PrintableError, match="is not an agent stage in this project"):
+        runner.run_stage("a-stage-this-project-does-not-have", project_hash=ephemeral_project_hash)
 
 
 def test_a_task_advanced_mid_run_does_not_strand_the_batch(ephemeral_image_project_hash: str) -> None:

@@ -311,16 +311,38 @@ def {fn_name}(...):
 [{agent_stage_names}]."""
                 )
 
-    def _prepare(self, project_hash: str | UUID | None) -> tuple[Project, dict[str | UUID, AgentStage]]:
+    def _prepare(
+        self,
+        project_hash: str | UUID | None,
+        *,
+        validate_agents: bool = True,
+    ) -> tuple[Project, dict[str | UUID, AgentStage]]:
         """Resolve and validate the project and its agent stages before any execution.
 
         Shared by `__call__` and `run_stage` so both apply the same validation and fire
         the `pre_execution_callback` exactly once per execution.
+
+        Args:
+            project_hash: The project to run against, if not given at instantiation.
+                Giving a different one than the runner was built with is an error: a
+                runner bound to a project serves that project, and a runner built
+                without one takes the project on each call.
+            validate_agents: Whether every registered agent must match a stage in this
+                project. True for `__call__`, which runs all of them. `run_stage` runs
+                one, and passes False so that a runner serving several projects is not
+                required to have every one of its stages in each.
         """
         # Verify Project
         if project_hash is not None:
             project_hash = self._verify_project_hash(project_hash)
-            project = self.client.get_project(project_hash)
+            if self.project_hash is not None and project_hash != self.project_hash:
+                raise PrintableError(
+                    f"This runner is bound to project [blue]`{self.project_hash}`[/blue], so it cannot run "
+                    f"[blue]`{project_hash}`[/blue]. Leaving out [blue]`project_hash`[/blue] at instantiation "
+                    "builds a runner that takes the project on each call, and can serve more than one."
+                )
+            # Reused rather than re-fetched when it is the project the runner already holds.
+            project = self.project if self.project is not None else self.client.get_project(project_hash)
         elif self.project is not None:
             project = self.project
         else:
@@ -345,7 +367,8 @@ def {fn_name}(...):
             **{s.title: s for s in valid_stages},
             **{s.uuid: s for s in valid_stages},
         }
-        self._validate_agent_stages(valid_stages, agent_stages)
+        if validate_agents:
+            self._validate_agent_stages(valid_stages, agent_stages)
         if self.pre_execution_callback:
             self.pre_execution_callback(self)  # type: ignore  [arg-type]
         return project, agent_stages
@@ -587,10 +610,27 @@ def {fn_name}(...):
             None
         """
         max_tasks = self._validate_max_tasks_per_stage(max_tasks)
-        project, agent_stages = self._prepare(project_hash)
+        project, agent_stages = self._prepare(project_hash, validate_agents=False)
 
-        stage_uuid, printable_name = self._validate_stage(stage)
-        runner_agent = next((agent for agent in self.agents if agent.identity == stage_uuid), None)
+        printable_name = str(stage)
+        stage_key: str | UUID
+        try:
+            stage_key = UUID(printable_name)
+        except ValueError:
+            stage_key = printable_name
+
+        target_stage = agent_stages.get(stage_key)
+        if target_stage is None:
+            valid_stages = list({s.uuid: s for s in agent_stages.values()}.values())
+            raise PrintableError(
+                rf"Stage [blue]`{printable_name}`[/blue] is not an agent stage in this project. "
+                rf"Valid stages are \[{self._get_stage_names(valid_stages)}]."
+            )
+
+        runner_agent = next(
+            (agent for agent in self.agents if agent.identity in (target_stage.uuid, target_stage.title)),
+            None,
+        )
         if runner_agent is None:
             raise PrintableError(
                 f"No agent implementation is registered for stage [blue]`{printable_name}`[/blue]. "
@@ -599,7 +639,7 @@ def {fn_name}(...):
 
         self._drain_stage(
             runner_agent,
-            agent_stages[runner_agent.identity],
+            target_stage,
             project,
             num_retries=num_retries,
             task_batch_size=task_batch_size,
