@@ -190,7 +190,7 @@ class EditorAgentResponse(BaseModel):
     """
     The name of the workflow pathway that the task should follow.
 
-    Only honoured for workflow-triggered agents. An agent invoked from the Label
+    Only honored for workflow-triggered agents. An agent invoked from the Label
     Editor has no task to route, so Encord ignores the field there.
 
     The value must match one of the agent stage's configured pathway names. An

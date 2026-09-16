@@ -4,7 +4,7 @@ Register this endpoint on an agent stage whose pathways are named `accept` and `
 When the workflow triggers the agent, Encord matches the returned `decision` against
 those pathway names and moves the task along that pathway.
 
-Note that `decision` is only honoured for workflow-triggered runs. The same endpoint
+Note that `decision` is only honored for workflow-triggered runs. The same endpoint
 invoked from the Label Editor has no task to route, so Encord ignores `decision` there
 and only `message` is surfaced -- which means one endpoint can serve both, as below.
 """
@@ -23,7 +23,7 @@ from encord_agents.fastapi.dependencies import FrameData, dep_label_row
 app = get_encord_app()
 
 # Reject a frame whose boxes are implausibly small; a real agent would do something
-# more interesting here. Coordinates are normalised, so this is a fraction of the image.
+# more interesting here. Coordinates are normalized, so this is a fraction of the image.
 MIN_BOX_AREA = 0.001
 
 
