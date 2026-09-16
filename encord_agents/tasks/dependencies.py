@@ -46,7 +46,7 @@ def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     r"""
     Get the storage item associated with the underlying agent task.
 
-    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/storage#storageitem-objects){ target="\_blank", rel="noopener noreferrer" }
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/storage#storageitem-objects)
     is useful for multiple things like
 
     * Updating client metadata
