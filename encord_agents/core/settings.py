@@ -87,3 +87,24 @@ class Settings(BaseSettings):
 
     def __hash__(self) -> int:
         return hash((self.ssh_key_content, self.ssh_key_file, self.domain))
+
+
+class WebhookSettings(BaseSettings):
+    """Settings for verifying the requests Encord signs.
+
+    Deliberately separate from `Settings`: checking that a request came from Encord is
+    something an endpoint should be able to do before -- or without ever -- holding
+    Encord credentials.
+    """
+
+    webhook_secret: Optional[str] = Field(validation_alias="ENCORD_WEBHOOK_SECRET", default=None)
+    """
+    The signing secret this deployment verifies incoming requests with.
+
+    Encord shows it in the app alongside the endpoint's configuration; check it again
+    if you change that configuration. Read only when the secret is not passed
+    explicitly.
+
+    Use this when a single secret covers everything this deployment verifies.
+    Otherwise, pass the secret explicitly.
+    """
