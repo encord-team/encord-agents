@@ -30,7 +30,7 @@ The example:
 
 ## Setting up authentication
 
-You need to [authenticate](../authentication.md) with Encord first.
+You need to [authenticate](https://docs.encord.com/platform-documentation/General/general-access-keys) with Encord first.
 Once you have a private ssh key (preferably corresponding to a service account), you should also ensure that you have [signed up for Modal](https://modal.com/signup).
 
 Now you can configure the secret:

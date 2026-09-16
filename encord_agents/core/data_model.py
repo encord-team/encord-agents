@@ -170,7 +170,7 @@ class InstanceCrop(Frame):
 
     instance: ObjectInstance
     r"""
-    The [ObjectInstance](https://docs.encord.com/sdk-documentation/sdk-references/ObjectInstance#objectinstance){ target="\_blank", rel="noopener noreferrer" } associated to the crop.
+    The [ObjectInstance](https://docs.encord.com/sdk-documentation/sdk-references/objects.ontology_object_instance) associated to the crop.
     """
 
 

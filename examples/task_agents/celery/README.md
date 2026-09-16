@@ -12,7 +12,7 @@ This example demonstrates how to use the Encord Agents QueueRunner with Celery a
 Before running the example, you need to set up authentication:
 
 1. Ensure you have an Encord account (register at [app.encord.com/register](https://app.encord.com/register))
-2. Create an SSH key pair following [the documentation](https://docs.encord.com/platform-documentation/Annotate/annotate-api-keys)
+2. Create an SSH key pair following [the documentation](https://docs.encord.com/platform-documentation/General/general-access-keys)
 3. Set one of these environment variables:
 
    ```bash
