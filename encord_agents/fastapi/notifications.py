@@ -37,8 +37,7 @@ is re-notified while the first drain is still running.
 
 Requests that cannot be verified never reach the route. They are turned into responses
 by the handlers `get_encord_app` installs; on an app built by hand, call
-[`add_notification_handlers`](#encord_agents.fastapi.notifications.add_notification_handlers)
-instead, or they surface as unhandled errors.
+`add_notification_handlers` instead, or they surface as unhandled errors.
 """
 
 import logging
@@ -77,9 +76,8 @@ async def dep_task_notification(request: Request) -> TaskNotification:
     before doing any work -- see the example above.
 
     The signing secret comes from `ENCORD_WEBHOOK_SECRET`. To pass one explicitly, or
-    to widen the timestamp tolerance, call
-    [`verify_and_parse_notification`](../core/#encord_agents.core.webhooks.verify_and_parse_notification)
-    from a dependency of your own.
+    to widen the timestamp tolerance, call `verify_and_parse_notification` from a
+    dependency of your own.
 
     Raises:
         WebhookVerificationError: The request is not provably from Encord.
@@ -159,9 +157,9 @@ async def _unsupported_version_exception_handler(request: Request, exc: Unsuppor
 def add_notification_handlers(app: FastAPI) -> None:
     """Install the exception handlers that turn notification outcomes into responses.
 
-    [`get_encord_app`](../fastapi/#encord_agents.fastapi.cors.get_encord_app) calls this
-    already. Use it on an app constructed by hand, so that a request which fails
-    verification is refused rather than raised as an unhandled error.
+    [`get_encord_app`](https://docs.encord.com/agents-documentation/Reference/Custom-Agents/Agents-Reference-Custom-Agents#get_encord_app)
+    calls this already. Use it on an app constructed by hand, so that a request which
+    fails verification is refused rather than raised as an unhandled error.
 
     Args:
         app: The FastAPI app serving the notification route.

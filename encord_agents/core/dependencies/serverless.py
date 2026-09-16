@@ -17,9 +17,9 @@ def my_agent(
     ...
 ```
 
-- [`FrameData`](../../reference/core/#encord_agents.core.data_model.FrameData) is automatically injected via the api request body.
+- [`FrameData`](https://docs.encord.com/agents-documentation/Reference/Core/Agents-Reference-Core#framedata-objects) is automatically injected via the api request body.
 - [`Project`](https://docs.encord.com/sdk-documentation/sdk-references/project){ target="_blank", rel="noopener noreferrer" } is automatically loaded based on the frame data.
-- [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2) is automatically loaded based on the frame data.
+- [`label_row_v2`](https://docs.encord.com/sdk-documentation/sdk-references/objects.ontology_labels_impl#labelrowv2-objects) is automatically loaded based on the frame data.
 """
 
 from pathlib import Path
@@ -245,7 +245,7 @@ def dep_storage_item(storage_item: StorageItem) -> StorageItem:
     r"""
     Get the storage item associated with the underlying agent task.
 
-    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/StorageItem){ target="\_blank", rel="noopener noreferrer" }
+    The [`StorageItem`](https://docs.encord.com/sdk-documentation/sdk-references/storage#storageitem-objects){ target="\_blank", rel="noopener noreferrer" }
     is useful for multiple things like
 
     * Updating client metadata

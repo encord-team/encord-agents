@@ -173,8 +173,8 @@ class SequentialRunner(RunnerBase):
         ```
 
         [docs-project]:    https://docs.encord.com/sdk-documentation/sdk-references/project
-        [docs-label-row]:  https://docs.encord.com/sdk-documentation/sdk-references/LabelRowV2
-        [docs-agent-task]: https://docs.encord.com/sdk-documentation/sdk-references/AgentTask
+        [docs-label-row]:  https://docs.encord.com/sdk-documentation/sdk-references/objects.ontology_labels_impl#labelrowv2-objects
+        [docs-agent-task]: https://docs.encord.com/sdk-documentation/sdk-references/workflow.stages.agent#agenttask-objects
 
         Args:
             stage: The name or uuid of the stage that the function should be
