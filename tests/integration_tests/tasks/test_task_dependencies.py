@@ -216,7 +216,7 @@ class TestDependencyResolution:
             assert sampler_frame.frame == video_frame.frame
             assert np.equal(sampler_frame.content, video_frame.content).all()
 
-        # Test non-trvial float aligns with previous behaviour
+        # Test non-trvial float aligns with previous behavior
         frames_from_sampler = video_sampler(0.5)
         video_iter_gen = dep_video_iterator(self.context.video_storage_item)
         video_frames = next(video_iter_gen)

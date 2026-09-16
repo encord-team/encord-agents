@@ -1,4 +1,4 @@
-"""Serialisation contract for `EditorAgentResponse` across the serverless wrappers.
+"""Serialization contract for `EditorAgentResponse` across the serverless wrappers.
 
 Encord reads `decision` and `message` off the JSON body of a 2xx agent response, so
 these tests assert the wire shape each wrapper produces, not just that it returned.

@@ -56,4 +56,4 @@ def test_max_tasks_per_stage_validation() -> None:
 
     with pytest.raises(PrintableError):
         runner(max_tasks_per_stage=-1)
-    # Actual behaviour checked in integration_tests/tasks/test_queue_runner via integration test
+    # Actual behavior checked in integration_tests/tasks/test_queue_runner via integration test

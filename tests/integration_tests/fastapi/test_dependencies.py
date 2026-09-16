@@ -234,7 +234,7 @@ class TestDependencyResolutionFastapi:
         # Include children to test children of data groups
         for row in self.context.project.list_label_rows_v2(include_children=True):
             if row.data_type == DataType.GROUP:
-                # Intended behaviour is that triggering dep_asset on a group raises an error
+                # Intended behavior is that triggering dep_asset on a group raises an error
                 # As we want users to trigger agents on individual items from the front end
                 continue
             resp = self.client.post(
