@@ -20,11 +20,6 @@ def legal_origins() -> list[str]:
         "https://cord-ai-development--a3353fa9-0wf42o8h.web.app",
         # Main deployment,
         "https://app.encord.com",
-        "https://dev.encord.com",
-        "https://staging.encord.com",
-        # US Deployments,
-        "https://staging.us.encord.com",
-        "https://dev.us.encord.com",
         "https://app.us.encord.com",
     ]
 
@@ -36,8 +31,6 @@ def illegal_origins() -> list[str]:
         "https://test.encord.com",
         "https://us.app.encord.com",
         "https://app.encord.com.something-else.com",
-        "https://dev.encord.com.something-else.com",
-        "https://staging.encord.com.something-else.com",
     ]
 
 

@@ -13,9 +13,17 @@ repos:
     rev: 275c27c5035a5b4a656fe0e21a4c1403c118c767 # v3.15.0
     hooks:
       - id: markdown-link-check
+        name: markdown-link-check (docs)
         files: \.(md|mdx)$
         types: [ text ]
         args: [ -q, --config=.markdown-link-check.json ]
+
+      - id: markdown-link-check
+        name: markdown-link-check (python)
+        files: \.py$
+        exclude: ^tests/
+        types: [ text ]
+        args: [ -q, --config=.markdown-link-check.python.json ]
 
   - repo: local
     hooks:

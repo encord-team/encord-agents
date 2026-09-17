@@ -28,13 +28,13 @@ app = Typer(
 
 def parse_editor_url(editor_url: str) -> tuple[FrameData, str]:
     """
-    Reads project_hash, data_hash, frame and domain from the editor url.
+    Reads project_hash, data_hash, frame and domain from the editor URL.
 
     Args:
-        - editor_url: The url obtained from the Label Editor.
+        - editor_url: The URL obtained from the Label Editor.
 
     Returns:
-        The FrameData object and the domain of the url.
+        The FrameData object and the domain of the URL.
     """
     try:
         match = re.match(EDITOR_URL_PARTS_REGEX, editor_url)
@@ -50,9 +50,7 @@ def parse_editor_url(editor_url: str) -> tuple[FrameData, str]:
         return FrameData.model_validate(payload), domain
     except Exception:
         rich.print(
-            """Could not match url to the expected format.
-Format is expected to be [blue]https://app.(us.)?encord.com/label_editor/[magenta]{project_hash}[/magenta]/[magenta]{data_hash}[/magenta](/[magenta]{frame}[/magenta])[/blue]
-""",
+            f"Could not match URL to the expected format. Format is expected to be '{EDITOR_URL_PARTS_REGEX}'",
             file=sys.stderr,
         )
         raise typer.Abort()
