@@ -3,10 +3,28 @@ repos:
     rev: v2.2.4
     hooks:
     - id: codespell
+
   - repo: https://github.com/srstevenson/nb-clean
     rev: 4.0.1
     hooks:
       - id: nb-clean
+
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: 275c27c5035a5b4a656fe0e21a4c1403c118c767 # v3.15.0
+    hooks:
+      - id: markdown-link-check
+        name: markdown-link-check (docs)
+        files: \.(md|mdx)$
+        types: [ text ]
+        args: [ -q, --config=.markdown-link-check.json ]
+
+      - id: markdown-link-check
+        name: markdown-link-check (python)
+        files: \.py$
+        exclude: ^tests/
+        types: [ text ]
+        args: [ -q, --config=.markdown-link-check.python.json ]
+
   - repo: local
     hooks:
       - id: ruff-fmt

@@ -1,0 +1,11 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "^http://localhost"
+        },
+        {
+            "pattern": "^https://modal\\.com/(apps|secrets)"
+        }
+    ],
+    "timeout": "60s"
+}
