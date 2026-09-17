@@ -4,10 +4,6 @@
             "pattern": "^http://localhost"
         },
         {
-            "pattern": "[{}\\[\\]]|%7B|%5B",
-            "reason": "Rich console markup and f-string placeholders in docstrings are not links"
-        },
-        {
             "pattern": "^https://modal\\.com/(apps|secrets)"
         }
     ],
