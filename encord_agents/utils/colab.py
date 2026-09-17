@@ -26,8 +26,8 @@ def is_running_on_colab() -> bool:
 
 IS_COLAB = is_running_on_colab()
 
-DARK_LOGO = "https://storage.googleapis.com/docs-media.encord.com/Primary%20logo%20Dark%20mode%20-%20Horizontal.png"
-LIGHT_LOGO = "https://storage.googleapis.com/docs-media.encord.com/Primary%20logo%20Light%20mode%20-%20Horizontal.png"
+DARK_LOGO = "https://storage.googleapis.com/docs-media.encord.com/primary-logo-dark.png"
+LIGHT_LOGO = "https://storage.googleapis.com/docs-media.encord.com/primary-logo-light.png"
 
 
 def _generate_public_private_key_content() -> tuple[str, str]:
