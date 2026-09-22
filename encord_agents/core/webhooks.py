@@ -166,6 +166,19 @@ def _read_header(headers: Mapping[str, str], name: str) -> str | None:
     return next((value for key, value in headers.items() if key.lower() == wanted), None)
 
 
+def _unreadable_signature_headers(headers: Mapping[str, str]) -> list[str]:
+    """Signature headers on the request that this version of the package cannot read.
+
+    Encord may add a signature header alongside `X-Encord-Signature` and retire that
+    one after a grace period. A version released before the new header exists has no
+    way to verify against it, but it can name it -- so that the request reads as one
+    this package is too old for, rather than as an unsigned request, and the fix reads
+    as "upgrade" rather than "check your secret".
+    """
+    known = WEBHOOK_SIGNATURE_HEADER.lower()
+    return sorted(key for key in headers if key.lower().startswith(known) and key.lower() != known)
+
+
 def _resolve_secret(secret: str | None) -> str:
     """Use the secret given, else the one in the environment."""
     resolved = secret or WebhookSettings().webhook_secret
@@ -272,10 +285,20 @@ def verify_and_parse_notification(
         UnsupportedNotificationVersion: If it is on a later envelope version.
         PrintableError: If no secret was given or configured.
     """
+    signature = _read_header(headers, WEBHOOK_SIGNATURE_HEADER)
+    if signature is None:
+        unreadable = _unreadable_signature_headers(headers)
+        if unreadable:
+            raise WebhookVerificationError(
+                f"Request carries {', '.join(f'`{header}`' for header in unreadable)} but not "
+                f"`{WEBHOOK_SIGNATURE_HEADER}`, which is the signature this version of "
+                "`encord-agents` reads. Upgrade the package to verify against the newer header."
+            )
+
     verify_signature(
         body,
         secret=secret,
-        signature=_read_header(headers, WEBHOOK_SIGNATURE_HEADER),
+        signature=signature,
         timestamp=_read_header(headers, WEBHOOK_TIMESTAMP_HEADER),
         tolerance_seconds=tolerance_seconds,
     )

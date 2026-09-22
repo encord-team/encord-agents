@@ -59,6 +59,14 @@ def sign(body: bytes, *, secret: str = SECRET, timestamp: int | None = None) -> 
     return {WEBHOOK_SIGNATURE_HEADER: signature, WEBHOOK_TIMESTAMP_HEADER: str(signed_at)}
 
 
+FUTURE_SIGNATURE_HEADER = f"{WEBHOOK_SIGNATURE_HEADER}-V2"
+"""Stands in for a signature header added after this version of the package shipped.
+
+The name is a placeholder: the test asserts that whatever such a header is called, it is
+named back to the reader rather than swallowed.
+"""
+
+
 def test_accepts_a_genuine_request() -> None:
     body = serialize(ENVELOPE)
     notification = verify_and_parse_notification(body, sign(body), secret=SECRET)
@@ -232,3 +240,41 @@ def test_parses_a_notification_without_verifying() -> None:
 
     assert isinstance(notification, TaskNotification)
     assert notification.reason is AgentStageWorkReason.BATCH_SIZE_REACHED
+
+
+@pytest.mark.parametrize("recase", [str.title, str.lower, str.upper])
+def test_names_a_signature_header_this_version_cannot_read(recase: Callable[[str], str]) -> None:
+    """Reporting a newer signature as a missing one sends the reader to the wrong fix.
+
+    Encord may sign with a header added after this version shipped, and retire the one
+    read here. Pointing at the secret would be misleading; the request is signed, just
+    not in a way this version can check.
+    """
+    body = serialize(ENVELOPE)
+    headers = sign(body)
+    headers[recase(FUTURE_SIGNATURE_HEADER)] = headers.pop(WEBHOOK_SIGNATURE_HEADER)
+
+    with pytest.raises(WebhookVerificationError) as exc_info:
+        verify_and_parse_notification(body, headers, secret=SECRET)
+
+    message = str(exc_info.value)
+    assert recase(FUTURE_SIGNATURE_HEADER) in message
+    assert "Upgrade the package" in message
+
+
+def test_verifies_against_the_known_header_when_a_newer_one_is_also_sent() -> None:
+    """Encord sends both while a signature change is rolling out; this version keeps working."""
+    body = serialize(ENVELOPE)
+    headers = dict(sign(body), **{FUTURE_SIGNATURE_HEADER: "a signature this version cannot verify"})
+
+    assert verify_and_parse_notification(body, headers, secret=SECRET).pending_count == 7
+
+
+def test_an_unsigned_request_still_reads_as_unsigned() -> None:
+    """The newer-header message must not displace the one for a request carrying no signature."""
+    body = serialize(ENVELOPE)
+    headers = sign(body)
+    del headers[WEBHOOK_SIGNATURE_HEADER]
+
+    with pytest.raises(WebhookVerificationError, match=f"missing `{WEBHOOK_SIGNATURE_HEADER}`"):
+        verify_and_parse_notification(body, headers, secret=SECRET)
