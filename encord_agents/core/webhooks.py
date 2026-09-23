@@ -224,7 +224,8 @@ def verify_signature(
         ]
         raise WebhookVerificationError(
             f"Request is missing {' and '.join(f'`{header}`' for header in missing)}. "
-            "Encord only sends them once a signing secret exists for the URL."
+            "Encord signs every request it makes to a configured URL, so either this one did "
+            "not come from Encord, or something between it and this endpoint dropped the header."
         )
 
     try:
