@@ -1,0 +1,37 @@
+name: Update documentation
+
+# Proposes encord-docs-mint updates for merged pull requests: user-facing
+# features, customer-facing platform limits and system requirements, and
+# feature flag releases. See encord-team/custom-github-actions/update-documentation.
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: update-documentation-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  update-documentation:
+    name: Update documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: docs-app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: encord-team
+          repositories: |
+            encord-agents
+            encord-docs-mint
+
+      - name: Update documentation
+        uses: encord-team/custom-github-actions/update-documentation@main
+        with:
+          github-token: ${{ steps.docs-app-token.outputs.token }}
+          openai-api-key: ${{ secrets.DOCS_CODEX_OPENAI_API_KEY }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          linear-api-key: ${{ secrets.LINEAR_API_KEY }}
