@@ -4,33 +4,55 @@ import typing
 
 import pytest
 from fastapi.testclient import TestClient
+from flask import Flask, Response, request
 from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
+from encord_agents.core.data_model import FrameData
 from encord_agents.fastapi.cors import EncordCORSMiddleware, get_encord_app
+from encord_agents.gcp.wrappers import editor_agent as gcp_editor_agent
 
 
 @pytest.fixture
 def legal_origins() -> list[str]:
     return [
-        # Example development previews
-        "https://cord-ai-development--eb393d03-pccc0hqn.web.app",
-        "https://cord-ai-development--40816cb1-dij7k5yt.web.app",
-        "https://cord-ai-development--a3353fa9-0wf42o8h.web.app",
-        # Main deployment,
         "https://app.encord.com",
         "https://app.us.encord.com",
     ]
 
 
 @pytest.fixture
-def illegal_origins() -> list[str]:
+def other_origins() -> list[str]:
+    """Frontends the default rejects; an agent author can opt in with a custom regex."""
     return [
+        "https://other.encord.com",
+        "https://other.us.encord.com",
+        "https://my-frontend.example.com",
+    ]
+
+
+@pytest.fixture
+def illegal_origins(other_origins: list[str]) -> list[str]:
+    return [
+        *other_origins,
         "https://google.com",
         "https://test.encord.com",
         "https://us.app.encord.com",
+        "https://eu.app.encord.com",
+        "https://app.eu.encord.com",
+        "https://evil-app.encord.com",
         "https://app.encord.com.something-else.com",
+        "https://app.us.encord.com.something-else.com",
+        "https://appxencord.com",
+        "https://app.encordxcom",
+        "http://app.encord.com",
+        "http://app.us.encord.com",
+        "https://app.encord.com:8443",
+        "https://app.encord.com/",
+        "https://app.encord.com/label_editor",
+        "https://app.encord.com\n",
+        "",
     ]
 
 
@@ -47,6 +69,14 @@ def test_legal_domains_against_CORS_regex(legal_origins: list[str], compiled_reg
 def test_illegal_domains_against_CORS_regex(illegal_origins: list[str], compiled_regex: re.Pattern[str]) -> None:
     for origin in illegal_origins:
         assert not compiled_regex.fullmatch(origin), f"Origin should _not_ have been allowed: `{origin}`"
+
+
+def test_default_CORS_regex_is_pinned() -> None:
+    """Made-up hosts cannot catch the default growing to trust a real non-allowed host, so pin it.
+
+    Widening this allowlist is a security decision: change it deliberately, not as a side effect.
+    """
+    assert ENCORD_DOMAIN_REGEX == r"^https:\/\/app\.(?:us\.)?encord\.com$"
 
 
 async def _noop_app(scope: Scope, receive: Receive, send: Send) -> None:
@@ -125,3 +155,38 @@ def test_forwarded_argument_names_exist_in_starlette_signature() -> None:
 
     missing = sorted(forwarded - starlette_parameters)
     assert not missing, f"Arguments no longer accepted by Starlette's CORSMiddleware: {missing}"
+
+
+def _gcp_preflight(origin: str, custom_cors_regex: str | None = None) -> Response:
+    @gcp_editor_agent(custom_cors_regex=custom_cors_regex)
+    def agent(frame_data: FrameData) -> None:
+        pass
+
+    headers = {"Origin": origin, "Access-Control-Request-Method": "POST"}
+    with Flask(__name__).test_request_context("/", method="OPTIONS", headers=headers):
+        return agent(request)
+
+
+def test_gcp_preflight_allows_production_origins(legal_origins: list[str]) -> None:
+    for origin in legal_origins:
+        response = _gcp_preflight(origin)
+        assert response.status_code == 204, origin
+        assert response.headers["Access-Control-Allow-Origin"] == origin
+
+
+def test_gcp_preflight_rejects_other_origins_by_default(other_origins: list[str]) -> None:
+    for origin in other_origins:
+        response = _gcp_preflight(origin)
+        assert response.status_code == 403, origin
+        assert "Access-Control-Allow-Origin" not in response.headers
+
+
+def test_gcp_preflight_allows_other_origin_with_custom_cors_regex() -> None:
+    custom_cors_regex = r"^https:\/\/(?:app\.(?:us\.)?encord\.com|my-frontend\.example\.com)$"
+
+    response = _gcp_preflight("https://my-frontend.example.com", custom_cors_regex=custom_cors_regex)
+    assert response.status_code == 204
+    assert response.headers["Access-Control-Allow-Origin"] == "https://my-frontend.example.com"
+
+    response = _gcp_preflight("https://other.encord.com", custom_cors_regex=custom_cors_regex)
+    assert response.status_code == 403
