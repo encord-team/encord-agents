@@ -1,6 +1,7 @@
-ENCORD_DOMAIN_REGEX = (
-    r"^https:\/\/(?:(?:cord-ai-development--[\w\d]+-[\w\d]+\.web.app)|(?:(?:dev|staging|app)\.(us\.)?encord\.com))$"
-)
+# Default CORS origins: the production Encord apps only. Editor agents act with the
+# agent author's credentials, so any other frontend must be opted into explicitly
+# with `custom_cors_regex` (or `allow_origin_regex` on the middleware).
+ENCORD_DOMAIN_REGEX = r"^https:\/\/app\.(?:us\.)?encord\.com$"
 
 # Slashes escaped so the link checker doesn't parse this as a URL
 EDITOR_URL_PARTS_REGEX = r"(?P<domain>https:\/\/app\.(us\.)?encord\.com)/label_editor/(?P<projectHash>[\w\d-]{36})/(?P<dataHash>[\w\d-]{36})(/(?P<frame>\d+))?(/(?P<additional_path>[^?]*))?(\?(?P<query>.*))?"

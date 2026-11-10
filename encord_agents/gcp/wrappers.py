@@ -44,7 +44,7 @@ def editor_agent(
     label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
     custom_cors_regex: str | None = None,
 ) -> Callable[[AgentFunction], Callable[[Request], Response]]:
-    """
+    r"""
     Wrapper to make resources available for gcp editor agents.
 
     The editor agents are intended to be used using dependency injections.
@@ -55,8 +55,10 @@ def editor_agent(
             on `project.list_label_rows_v2()`.
         label_row_initialise_labels_args: Arguments to overwrite default arguments
             on `label_row.initialise_labels(...)`
-        custom_cors_regex: A regex to use for the CORS settings. If not provided, the default regex is used.
-            Only required if the agent is not deployed on Encord's platform.
+        custom_cors_regex: A regex to use for the CORS settings. Defaults to the production Encord apps,
+            `https://app.encord.com` and `https://app.us.encord.com`, only. The regex replaces the default,
+            so to also allow another frontend, match every origin you trust, e.g.,
+            `r"^https:\/\/(?:app\.(?:us\.)?encord\.com|my-frontend\.example\.com)$"`.
 
     Returns:
         A wrapped function suitable for gcp functions.

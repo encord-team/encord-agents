@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # Type checking does not work here because we do not enforce people to
 # install fastapi as they can use package for, e.g., task runner wo fastapi.
 class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore]
-    """
+    r"""
     Like a regular `fastapi.middleware.cors.CORSMiddleware` but matches against
     the Encord origin by default and handles X-Encord-Editor-Agent test header
 
@@ -46,7 +46,16 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
     app.add_middleware(EncordCORSMiddleware)
     ```
 
-    The CORS middleware allows POST requests from the Encord domain.
+    The CORS middleware allows POST requests from the production Encord apps,
+    `https://app.encord.com` and `https://app.us.encord.com`, only.
+    To also allow another frontend, pass a regex that matches every origin you trust:
+
+    ```python
+    app.add_middleware(
+        EncordCORSMiddleware,
+        allow_origin_regex=r"^https:\/\/(?:app\.(?:us\.)?encord\.com|my-frontend\.example\.com)$",
+    )
+    ```
     """
 
     def __init__(
@@ -130,12 +139,15 @@ async def _authorization_error_exception_handler(request: Request, exc: Authoris
 
 
 def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
-    """
+    r"""
     Get a FastAPI app with the Encord middleware.
 
     Args:
         custom_cors_regex (str | None, optional): A regex to use for the CORS middleware.
-            Only necessary if you are not using the default Encord domain.
+            Defaults to the production Encord apps, `https://app.encord.com` and
+            `https://app.us.encord.com`, only. The regex replaces the default, so to also
+            allow another frontend, match every origin you trust, e.g.,
+            `r"^https:\/\/(?:app\.(?:us\.)?encord\.com|my-frontend\.example\.com)$"`.
 
     Returns:
         FastAPI: A FastAPI app with the Encord middleware.

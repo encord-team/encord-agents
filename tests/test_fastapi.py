@@ -3,8 +3,9 @@ from typing import Annotated
 from unittest.mock import MagicMock, patch
 
 from encord.user_client import EncordUserClient
-from fastapi import Depends
+from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
+from httpx import Response
 from requests import Session
 
 from encord_agents.core.constants import HEADER_CLOUD_TRACE_CONTEXT
@@ -54,6 +55,24 @@ class TestCustomCorsRegex:
         resp = client.post("/client-throws", headers={"Origin": "https://app.encord.com"})
         assert resp.status_code == 400, resp.content
         assert resp.headers["Access-Control-Allow-Origin"] == "https://app.encord.com"
+
+    def test_other_origin_requires_custom_cors_regex(self) -> None:
+        def preflight(app: FastAPI, origin: str) -> Response:
+            @app.post("/")
+            def post_root() -> None:
+                return None
+
+            return TestClient(app).options("/", headers={"Origin": origin, "Access-Control-Request-Method": "POST"})
+
+        origin = "https://other.encord.com"
+
+        resp = preflight(get_encord_app(), origin)
+        assert resp.status_code == 400, resp.content
+        assert "Access-Control-Allow-Origin" not in resp.headers
+
+        resp = preflight(get_encord_app(custom_cors_regex=r"^https:\/\/(?:app|other)\.encord\.com$"), origin)
+        assert resp.status_code == 200, resp.content
+        assert resp.headers["Access-Control-Allow-Origin"] == origin
 
 
 def test_trace_id_used_appropriately() -> None:
