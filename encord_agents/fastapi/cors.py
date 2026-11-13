@@ -24,7 +24,12 @@ except ModuleNotFoundError:
     )
     exit()
 
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
+from encord_agents.core.constants import (
+    AGENT_RUN_TOKEN_HEADER,
+    EDITOR_TEST_REQUEST_HEADER,
+    ENCORD_DOMAIN_REGEX,
+    HEADER_CLOUD_TRACE_CONTEXT,
+)
 from encord_agents.fastapi.notifications import add_notification_handlers
 
 logger = logging.getLogger(__name__)
@@ -63,7 +68,11 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
         app: ASGIApp,
         allow_origins: typing.Sequence[str] = (),
         allow_methods: typing.Sequence[str] = ("POST",),
-        allow_headers: typing.Sequence[str] = (EDITOR_TEST_REQUEST_HEADER, HEADER_CLOUD_TRACE_CONTEXT),
+        allow_headers: typing.Sequence[str] = (
+            EDITOR_TEST_REQUEST_HEADER,
+            HEADER_CLOUD_TRACE_CONTEXT,
+            AGENT_RUN_TOKEN_HEADER,
+        ),
         allow_credentials: bool = False,
         allow_origin_regex: str = ENCORD_DOMAIN_REGEX,
         expose_headers: typing.Sequence[str] = (),

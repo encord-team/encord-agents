@@ -3,16 +3,22 @@ import re
 from contextlib import ExitStack
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from encord.exceptions import AuthorisationError
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.storage import StorageItem
 from flask import Request, Response, make_response
+from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
+from encord_agents.core.constants import (
+    AGENT_RUN_TOKEN_HEADER,
+    EDITOR_TEST_REQUEST_HEADER,
+    ENCORD_DOMAIN_REGEX,
+    HEADER_CLOUD_TRACE_CONTEXT,
+)
 from encord_agents.core.data_model import (
     EditorAgentResponse,
     LabelRowInitialiseLabelsArgs,
@@ -21,6 +27,12 @@ from encord_agents.core.data_model import (
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.exceptions import EncordEditorAgentException
+from encord_agents.core.run_token import (
+    AgentRunTokenMode,
+    AgentRunTokenSettings,
+    check_agent_run_token,
+    forwarding_agent_run_token,
+)
 from encord_agents.core.utils import get_user_client
 
 AgentFunction = Callable[..., Any]
@@ -43,6 +55,9 @@ def editor_agent(
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
     label_row_initialise_labels_args: LabelRowInitialiseLabelsArgs | None = None,
     custom_cors_regex: str | None = None,
+    agent_run_token_mode: AgentRunTokenMode | None = None,
+    agent_run_token_audiences: Sequence[str] | None = None,
+    agent_run_token_organisations: Sequence[str] | None = None,
 ) -> Callable[[AgentFunction], Callable[[Request], Response]]:
     r"""
     Wrapper to make resources available for gcp editor agents.
@@ -59,6 +74,14 @@ def editor_agent(
             `https://app.encord.com` and `https://app.us.encord.com`, only. The regex replaces the default,
             so to also allow another frontend, match every origin you trust, e.g.,
             `r"^https:\/\/(?:app\.(?:us\.)?encord\.com|my-frontend\.example\.com)$"`.
+        agent_run_token_mode: Whether to check the agent run token Encord sends with each call:
+            `off`, `warn` (log only) or `enforce` (refuse calls without a valid token). Overrides
+            `ENCORD_AGENT_RUN_TOKEN_MODE`, which defaults to `off`. See `encord_agents.core.run_token`.
+        agent_run_token_audiences: The addresses this agent is registered under in Encord, checked
+            against the token's audience. Overrides `ENCORD_AGENT_RUN_TOKEN_AUDIENCES`.
+            Required in `enforce` mode.
+        agent_run_token_organisations: The Encord organisation UUIDs this agent serves. When set,
+            tokens for other organisations do not verify. Overrides `ENCORD_AGENT_RUN_TOKEN_ORGANISATIONS`.
 
     Returns:
         A wrapped function suitable for gcp functions.
@@ -68,8 +91,11 @@ def editor_agent(
         dependant = get_dependant(func=func)
         cors_regex = re.compile(custom_cors_regex or ENCORD_DOMAIN_REGEX)
 
-        @wraps(func)
-        def wrapper(request: Request) -> Response:
+        run_token_settings = AgentRunTokenSettings.resolve(
+            agent_run_token_mode, agent_run_token_audiences, agent_run_token_organisations
+        )
+
+        def handle(request: Request) -> Response:
             if request.method == "OPTIONS":
                 response = make_response("")
                 response.headers["Vary"] = "Origin"
@@ -81,7 +107,10 @@ def editor_agent(
                 headers = {
                     "Access-Control-Allow-Origin": request.origin,
                     "Access-Control-Allow-Methods": "POST",
-                    "Access-Control-Allow-Headers": f"Content-Type, {EDITOR_TEST_REQUEST_HEADER}, {HEADER_CLOUD_TRACE_CONTEXT}",
+                    "Access-Control-Allow-Headers": (
+                        f"Content-Type, {EDITOR_TEST_REQUEST_HEADER}, {HEADER_CLOUD_TRACE_CONTEXT}, "
+                        f"{AGENT_RUN_TOKEN_HEADER}"
+                    ),
                     "Access-Control-Max-Age": "3600",
                 }
                 response.headers.update(headers)
@@ -154,6 +183,29 @@ def editor_agent(
                     )
                     return response
             return _generate_response()
+
+        @wraps(func)
+        def wrapper(request: Request) -> Response:
+            if (
+                run_token_settings.mode is AgentRunTokenMode.OFF
+                or request.method == "OPTIONS"
+                or request.headers.get(EDITOR_TEST_REQUEST_HEADER)
+                or not request.is_json
+            ):
+                return handle(request)
+            try:
+                frame_data = FrameData.model_validate(request.get_json())
+            except ValidationError:
+                return handle(request)
+
+            check = check_agent_run_token(request.headers.get(AGENT_RUN_TOKEN_HEADER), frame_data, run_token_settings)
+            if check.refused:
+                return _generate_response(
+                    to_jsonable_python({"message": "A valid Encord agent run token is required."}),
+                    HTTPStatus.UNAUTHORIZED,
+                )
+            with forwarding_agent_run_token(check):
+                return handle(request)
 
         return wrapper
 
