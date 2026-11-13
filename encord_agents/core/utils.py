@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import mimetypes
 import random
@@ -9,6 +10,7 @@ from typing import Any, Callable, Generator, Iterable, List, TypeVar
 
 import requests
 from encord.constants.enums import DataType
+from encord.http.constants import DEFAULT_REQUESTS_SETTINGS
 from encord.objects.ontology_labels_impl import LabelRowV2
 from encord.orm.storage import StorageItemType
 from encord.storage import StorageItem
@@ -16,6 +18,7 @@ from encord.user_client import EncordUserClient
 
 from encord_agents import __version__
 from encord_agents.core.data_model import FrameData, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
+from encord_agents.core.run_token import current_agent_run_token
 from encord_agents.core.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -59,6 +62,9 @@ def get_user_client(settings: Settings | None = None, *, trace_id: str | None = 
     """
     settings = settings or Settings()
     user_client = get_user_client_from_settings(settings)
+    requests_settings = user_client._config.requests_settings
+    if hasattr(requests_settings, "agent_run_token_provider"):  # Needs a recent encord SDK.
+        requests_settings.agent_run_token_provider = current_agent_run_token
     if trace_id is not None:
         trace_id_provider = trace_provider(trace_id=trace_id)
         user_client._config.requests_settings.trace_id_provider = trace_id_provider
@@ -67,7 +73,12 @@ def get_user_client(settings: Settings | None = None, *, trace_id: str | None = 
 
 @lru_cache(maxsize=1)
 def get_user_client_from_settings(settings: Settings) -> EncordUserClient:
-    kwargs: dict[str, Any] = {"user_agent_suffix": f"encord-agents/{__version__}"}
+    kwargs: dict[str, Any] = {
+        "user_agent_suffix": f"encord-agents/{__version__}",
+        # A copy of the SDK defaults, so per-request settings applied in `get_user_client`
+        # stay on this client and don't reach other clients in the process.
+        "requests_settings": dataclasses.replace(DEFAULT_REQUESTS_SETTINGS),
+    }
 
     if settings.domain:
         kwargs["domain"] = settings.domain
