@@ -16,8 +16,9 @@ try:
     from fastapi import FastAPI, Request
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse, Response
+    from starlette.datastructures import Headers
     from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-    from starlette.types import ASGIApp
+    from starlette.types import ASGIApp, Receive, Scope, Send
 except ModuleNotFoundError:
     print(
         'To use the `fastapi` dependencies, you must also install fastapi. `python -m pip install "fastapi[standard]"'
@@ -30,6 +31,7 @@ from encord_agents.core.constants import (
     ENCORD_DOMAIN_REGEX,
     HEADER_CLOUD_TRACE_CONTEXT,
 )
+from encord_agents.core.run_token import forwarding_agent_run_token
 from encord_agents.fastapi.notifications import add_notification_handlers
 
 logger = logging.getLogger(__name__)
@@ -45,13 +47,14 @@ class EncordCORSMiddleware(CORSMiddleware):  # type: ignore [misc, unused-ignore
     **Example:**
     ```python
     from fastapi import FastAPI
-    from encord_agents.fastapi.cors import EncordCORSMiddleware
+    from encord_agents.fastapi.cors import AgentRunTokenMiddleware, EncordCORSMiddleware
 
     app = FastAPI()
     app.add_middleware(EncordCORSMiddleware)
+    app.add_middleware(AgentRunTokenMiddleware)
     ```
 
-    The CORS middleware allows POST requests from the production Encord apps,
+    `get_encord_app` adds both. The CORS middleware allows POST requests from the production Encord apps,
     `https://app.encord.com` and `https://app.us.encord.com`, only.
     To also allow another frontend, pass a regex that matches every origin you trust:
 
@@ -147,6 +150,25 @@ async def _authorization_error_exception_handler(request: Request, exc: Authoris
     )
 
 
+class AgentRunTokenMiddleware:
+    """
+    Passes an incoming `X-Encord-Agent-Run-Token` header back unchanged on the Encord SDK
+    calls made (through `get_user_client` or the dependencies) while handling the request.
+
+    Threads that an agent starts itself don't see the token.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        with forwarding_agent_run_token(Headers(scope=scope).get(AGENT_RUN_TOKEN_HEADER)):
+            await self.app(scope, receive, send)
+
+
 def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
     r"""
     Get a FastAPI app with the Encord middleware.
@@ -167,6 +189,7 @@ def get_encord_app(*, custom_cors_regex: str | None = None) -> FastAPI:
         allow_origin_regex=custom_cors_regex or ENCORD_DOMAIN_REGEX,
     )
     app.add_middleware(EncordTestHeaderMiddleware)
+    app.add_middleware(AgentRunTokenMiddleware)
     app.exception_handlers[AuthorisationError] = _authorization_error_exception_handler
     app.exception_handlers[EncordEditorAgentException] = _encord_editor_agent_exception_handler
     add_notification_handlers(app)

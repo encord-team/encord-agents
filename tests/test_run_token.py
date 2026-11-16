@@ -1,10 +1,13 @@
 import dataclasses
 import json
 import uuid
-from typing import Callable, Optional
+from typing import Annotated, Callable, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
+from encord.user_client import EncordUserClient
+from fastapi import Depends
+from fastapi.testclient import TestClient
 from flask import Flask, request
 
 from encord_agents.aws.wrappers import editor_agent as aws_editor_agent
@@ -12,6 +15,8 @@ from encord_agents.core.constants import AGENT_RUN_TOKEN_HEADER
 from encord_agents.core.data_model import FrameData
 from encord_agents.core.run_token import current_agent_run_token, forwarding_agent_run_token
 from encord_agents.core.utils import get_user_client, get_user_client_from_settings
+from encord_agents.fastapi.cors import get_encord_app
+from encord_agents.fastapi.dependencies import dep_client
 from encord_agents.gcp.wrappers import editor_agent
 
 BODY = {"projectHash": str(uuid.uuid4()), "dataHash": str(uuid.uuid4()), "frame": 0}
@@ -108,3 +113,44 @@ def test_aws_makes_the_token_available_during_the_call(name: str) -> None:
 @pytest.mark.parametrize("headers", [{}, None], ids=["no-token", "no-headers"])
 def test_aws_calls_without_a_token_are_unchanged(headers: Optional[dict[str, str]]) -> None:
     assert _aws_call(headers) == [None]
+
+
+def _fake_client() -> MagicMock:
+    client = MagicMock()
+    client._config.requests_settings = _RequestsSettings()
+    return client
+
+
+def _sent_by(client: MagicMock) -> Optional[str]:
+    """What an SDK that supports the provider would put on an outgoing request."""
+    provider = client._config.requests_settings.agent_run_token_provider
+    return provider() if provider else None
+
+
+@pytest.mark.parametrize("is_async", [False, True], ids=["sync-route", "async-route"])
+def test_fastapi_forwards_the_token_only_for_requests_that_carry_it(is_async: bool) -> None:
+    app = get_encord_app()
+    sent: list[Optional[str]] = []
+
+    if is_async:
+
+        @app.post("/agent")
+        async def async_agent(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
+            sent.append(_sent_by(client))
+
+    else:
+
+        @app.post("/agent")
+        def sync_agent(client: Annotated[EncordUserClient, Depends(dep_client)]) -> None:
+            sent.append(_sent_by(client))
+
+    with (
+        patch("encord_agents.core.utils.get_user_client_from_settings", return_value=_fake_client()),
+        patch("encord_agents.core.utils.Settings"),
+    ):
+        http = TestClient(app)
+        http.post("/agent", headers={AGENT_RUN_TOKEN_HEADER: "opaque-token"})
+        http.post("/agent")
+
+    assert sent == ["opaque-token", None]
+    assert current_agent_run_token() is None
