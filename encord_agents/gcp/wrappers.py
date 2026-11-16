@@ -12,7 +12,12 @@ from flask import Request, Response, make_response
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX, HEADER_CLOUD_TRACE_CONTEXT
+from encord_agents.core.constants import (
+    AGENT_RUN_TOKEN_HEADER,
+    EDITOR_TEST_REQUEST_HEADER,
+    ENCORD_DOMAIN_REGEX,
+    HEADER_CLOUD_TRACE_CONTEXT,
+)
 from encord_agents.core.data_model import (
     EditorAgentResponse,
     LabelRowInitialiseLabelsArgs,
@@ -21,6 +26,7 @@ from encord_agents.core.data_model import (
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.exceptions import EncordEditorAgentException
+from encord_agents.core.run_token import forwarding_agent_run_token
 from encord_agents.core.utils import get_user_client
 
 AgentFunction = Callable[..., Any]
@@ -50,6 +56,10 @@ def editor_agent(
     The editor agents are intended to be used using dependency injections.
     You can learn more via out [documentation](https://docs.encord.com/platform-documentation/).
 
+    If a call carries an `X-Encord-Agent-Run-Token` header, Encord SDK calls made through
+    `get_user_client` while handling it pass the token back unchanged. Threads that the agent
+    starts itself don't see the token.
+
     Args:
         label_row_metadata_include_args: arguments to overwrite default arguments
             on `project.list_label_rows_v2()`.
@@ -68,8 +78,7 @@ def editor_agent(
         dependant = get_dependant(func=func)
         cors_regex = re.compile(custom_cors_regex or ENCORD_DOMAIN_REGEX)
 
-        @wraps(func)
-        def wrapper(request: Request) -> Response:
+        def handle(request: Request) -> Response:
             if request.method == "OPTIONS":
                 response = make_response("")
                 response.headers["Vary"] = "Origin"
@@ -81,7 +90,10 @@ def editor_agent(
                 headers = {
                     "Access-Control-Allow-Origin": request.origin,
                     "Access-Control-Allow-Methods": "POST",
-                    "Access-Control-Allow-Headers": f"Content-Type, {EDITOR_TEST_REQUEST_HEADER}, {HEADER_CLOUD_TRACE_CONTEXT}",
+                    "Access-Control-Allow-Headers": (
+                        f"Content-Type, {EDITOR_TEST_REQUEST_HEADER}, {HEADER_CLOUD_TRACE_CONTEXT}, "
+                        f"{AGENT_RUN_TOKEN_HEADER}"
+                    ),
                     "Access-Control-Max-Age": "3600",
                 }
                 response.headers.update(headers)
@@ -154,6 +166,11 @@ def editor_agent(
                     )
                     return response
             return _generate_response()
+
+        @wraps(func)
+        def wrapper(request: Request) -> Response:
+            with forwarding_agent_run_token(request.headers.get(AGENT_RUN_TOKEN_HEADER)):
+                return handle(request)
 
         return wrapper
 

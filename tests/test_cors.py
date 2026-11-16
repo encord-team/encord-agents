@@ -8,7 +8,7 @@ from flask import Flask, Response, request
 from starlette.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
+from encord_agents.core.constants import AGENT_RUN_TOKEN_HEADER, EDITOR_TEST_REQUEST_HEADER, ENCORD_DOMAIN_REGEX
 from encord_agents.core.data_model import FrameData
 from encord_agents.fastapi.cors import EncordCORSMiddleware, get_encord_app
 from encord_agents.gcp.wrappers import editor_agent as gcp_editor_agent
@@ -190,3 +190,28 @@ def test_gcp_preflight_allows_other_origin_with_custom_cors_regex() -> None:
 
     response = _gcp_preflight("https://other.encord.com", custom_cors_regex=custom_cors_regex)
     assert response.status_code == 403
+
+
+def test_gcp_preflight_allows_agent_run_token_header() -> None:
+    response = _gcp_preflight("https://app.encord.com")
+    assert AGENT_RUN_TOKEN_HEADER in response.headers["Access-Control-Allow-Headers"]
+
+
+def test_cors_middleware_allows_agent_run_token_header() -> None:
+    app = get_encord_app()
+
+    @app.post("/")
+    def post_root() -> None:
+        return None
+
+    response = TestClient(app).options(
+        "/",
+        headers={
+            "Origin": "https://app.encord.com",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": AGENT_RUN_TOKEN_HEADER,
+        },
+    )
+
+    assert response.status_code == 200, response.content
+    assert AGENT_RUN_TOKEN_HEADER.lower() in response.headers["Access-Control-Allow-Headers"].lower()
