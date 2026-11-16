@@ -63,7 +63,7 @@ def get_user_client(settings: Settings | None = None, *, trace_id: str | None = 
     settings = settings or Settings()
     user_client = get_user_client_from_settings(settings)
     requests_settings = user_client._config.requests_settings
-    if hasattr(requests_settings, "agent_run_token_provider"):  # Needs a recent encord SDK.
+    if hasattr(requests_settings, "agent_run_token_provider"):  # Older encord SDK versions lack this setting.
         requests_settings.agent_run_token_provider = current_agent_run_token
     if trace_id is not None:
         trace_id_provider = trace_provider(trace_id=trace_id)

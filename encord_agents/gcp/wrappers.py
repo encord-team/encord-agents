@@ -56,6 +56,10 @@ def editor_agent(
     The editor agents are intended to be used using dependency injections.
     You can learn more via out [documentation](https://docs.encord.com/platform-documentation/).
 
+    If a call carries an `X-Encord-Agent-Run-Token` header, Encord SDK calls made through
+    `get_user_client` while handling it pass the token back unchanged. Threads that the agent
+    starts itself don't see the token.
+
     Args:
         label_row_metadata_include_args: arguments to overwrite default arguments
             on `project.list_label_rows_v2()`.

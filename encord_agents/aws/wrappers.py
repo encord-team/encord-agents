@@ -43,6 +43,12 @@ def _generate_response(body: dict[str, Any] | None = None, status_code: int | No
     }
 
 
+def _header(event: Dict[str, Any], name: str) -> Any:
+    """A header from a Lambda event, matched case-insensitively: API Gateway versions differ in casing."""
+    wanted = name.lower()
+    return next((value for key, value in (event.get("headers") or {}).items() if key.lower() == wanted), None)
+
+
 def editor_agent(
     *,
     label_row_metadata_include_args: LabelRowMetadataIncludeArgs | None = None,
@@ -52,8 +58,9 @@ def editor_agent(
     Wrapper to make resources available for AWS Lambda editor agents.
 
     If a call carries an `X-Encord-Agent-Run-Token` header, Encord SDK calls made through
-    `get_user_client` while handling it pass the token back unchanged. CORS for Lambda is
-    configured in AWS, so allow that header there for browser-called agents.
+    `get_user_client` while handling it pass the token back unchanged. Threads that the agent
+    starts itself don't see the token. CORS for Lambda is configured in AWS, so allow that header
+    there for browser-called agents.
     """
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Dict[str, Any], Any], Dict[str, Any]]:
@@ -149,10 +156,7 @@ def editor_agent(
 
         @wraps(func)
         def wrapper(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-            # Some API Gateway setups lowercase header names.
-            headers = event.get("headers") or {}
-            token = headers.get(AGENT_RUN_TOKEN_HEADER) or headers.get(AGENT_RUN_TOKEN_HEADER.lower())
-            with forwarding_agent_run_token(token):
+            with forwarding_agent_run_token(_header(event, AGENT_RUN_TOKEN_HEADER)):
                 return handle(event, context)
 
         return wrapper

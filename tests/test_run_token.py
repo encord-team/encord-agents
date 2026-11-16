@@ -1,7 +1,7 @@
 import dataclasses
 import json
 import uuid
-from typing import Annotated, Callable, Optional
+from typing import Annotated, Any, Callable, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -104,7 +104,7 @@ def _aws_call(headers: Optional[dict[str, str]]) -> list[Optional[str]]:
     return seen
 
 
-@pytest.mark.parametrize("name", [AGENT_RUN_TOKEN_HEADER, AGENT_RUN_TOKEN_HEADER.lower()])
+@pytest.mark.parametrize("name", [AGENT_RUN_TOKEN_HEADER, AGENT_RUN_TOKEN_HEADER.lower(), "x-ENCORD-agent-RUN-token"])
 def test_aws_makes_the_token_available_during_the_call(name: str) -> None:
     assert _aws_call({name: "opaque-token"}) == ["opaque-token"]
     assert current_agent_run_token() is None
@@ -121,7 +121,7 @@ def _fake_client() -> MagicMock:
     return client
 
 
-def _sent_by(client: MagicMock) -> Optional[str]:
+def _sent_by(client: Any) -> Optional[str]:
     """What an SDK that supports the provider would put on an outgoing request."""
     provider = client._config.requests_settings.agent_run_token_provider
     return provider() if provider else None
