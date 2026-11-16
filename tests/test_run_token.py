@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import uuid
 from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
@@ -6,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask, request
 
+from encord_agents.aws.wrappers import editor_agent as aws_editor_agent
 from encord_agents.core.constants import AGENT_RUN_TOKEN_HEADER
 from encord_agents.core.data_model import FrameData
 from encord_agents.core.run_token import current_agent_run_token, forwarding_agent_run_token
@@ -80,3 +82,29 @@ def test_the_cached_client_has_its_own_requests_settings() -> None:
     assert requests_settings is not DEFAULT_REQUESTS_SETTINGS
     assert requests_settings == DEFAULT_REQUESTS_SETTINGS
     get_user_client_from_settings.cache_clear()
+
+
+def _aws_call(headers: Optional[dict[str, str]]) -> list[Optional[str]]:
+    seen: list[Optional[str]] = []
+
+    @aws_editor_agent()
+    def agent(frame_data: FrameData) -> None:
+        seen.append(current_agent_run_token())
+
+    event: dict[str, object] = {"body": json.dumps(BODY)}
+    if headers is not None:
+        event["headers"] = headers
+    with patch("encord_agents.aws.wrappers.get_user_client", return_value=MagicMock()):
+        agent(event, None)
+    return seen
+
+
+@pytest.mark.parametrize("name", [AGENT_RUN_TOKEN_HEADER, AGENT_RUN_TOKEN_HEADER.lower()])
+def test_aws_makes_the_token_available_during_the_call(name: str) -> None:
+    assert _aws_call({name: "opaque-token"}) == ["opaque-token"]
+    assert current_agent_run_token() is None
+
+
+@pytest.mark.parametrize("headers", [{}, None], ids=["no-token", "no-headers"])
+def test_aws_calls_without_a_token_are_unchanged(headers: Optional[dict[str, str]]) -> None:
+    assert _aws_call(headers) == [None]

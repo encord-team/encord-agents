@@ -12,11 +12,16 @@ from pydantic import ValidationError
 from pydantic_core import to_jsonable_python
 
 from encord_agents import FrameData
-from encord_agents.core.constants import EDITOR_TEST_REQUEST_HEADER, HEADER_CLOUD_TRACE_CONTEXT
+from encord_agents.core.constants import (
+    AGENT_RUN_TOKEN_HEADER,
+    EDITOR_TEST_REQUEST_HEADER,
+    HEADER_CLOUD_TRACE_CONTEXT,
+)
 from encord_agents.core.data_model import EditorAgentResponse, LabelRowInitialiseLabelsArgs, LabelRowMetadataIncludeArgs
 from encord_agents.core.dependencies.models import Context
 from encord_agents.core.dependencies.utils import get_dependant, solve_dependencies
 from encord_agents.core.exceptions import EncordEditorAgentException
+from encord_agents.core.run_token import forwarding_agent_run_token
 from encord_agents.core.utils import get_user_client
 
 AgentFunction = Callable[..., Any]
@@ -45,13 +50,16 @@ def editor_agent(
 ) -> Callable[[AgentFunction], Callable[[Dict[str, Any], Any], Dict[str, Any]]]:
     """
     Wrapper to make resources available for AWS Lambda editor agents.
+
+    If a call carries an `X-Encord-Agent-Run-Token` header, Encord SDK calls made through
+    `get_user_client` while handling it pass the token back unchanged. CORS for Lambda is
+    configured in AWS, so allow that header there for browser-called agents.
     """
 
     def context_wrapper_inner(func: AgentFunction) -> Callable[[Dict[str, Any], Any], Dict[str, Any]]:
         dependant = get_dependant(func=func)
 
-        @wraps(func)
-        def wrapper(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+        def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             headers = event.get("headers", {})
             if headers.get(EDITOR_TEST_REQUEST_HEADER) or headers.get(EDITOR_TEST_REQUEST_HEADER.lower()):
                 logging.info("Editor test request")
@@ -138,6 +146,14 @@ def editor_agent(
                         HTTPStatus.INTERNAL_SERVER_ERROR,
                     )
                     return response
+
+        @wraps(func)
+        def wrapper(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+            # Some API Gateway setups lowercase header names.
+            headers = event.get("headers") or {}
+            token = headers.get(AGENT_RUN_TOKEN_HEADER) or headers.get(AGENT_RUN_TOKEN_HEADER.lower())
+            with forwarding_agent_run_token(token):
+                return handle(event, context)
 
         return wrapper
 
