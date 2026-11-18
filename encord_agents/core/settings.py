@@ -105,6 +105,7 @@ class WebhookSettings(BaseSettings):
     if you change that configuration. Read only when the secret is not passed
     explicitly.
 
-    Use this when a single secret covers everything this deployment verifies.
-    Otherwise, pass the secret explicitly.
+    Each agent stage and custom agent endpoint can have its own secret, even when
+    several use the same URL, so this covers one of them. Use it when this deployment
+    receives requests for only one. Otherwise, pass each secret explicitly.
     """
