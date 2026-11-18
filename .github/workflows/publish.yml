@@ -15,21 +15,21 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v2.2.2
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           repositories: "encord-agents"
 
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
           ref: main
 
       - name: Setup root uv environment
-        uses: ./.github/actions/setup-root-uv-environment
+        uses: $/.github/actions/setup-root-uv-environment
 
       - name: uv Version Bump
         run: uv version ${{ github.ref_name }}
@@ -38,7 +38,7 @@ jobs:
         run: 'sed -i "s/__version__ = \".*\"/__version__ = \"${{ github.ref_name }}\"/g" encord_agents/__init__.py'
 
       - name: Version Bump commit
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
         with:
           commit_message: "Version bump to ${{ github.ref_name }}"
           push_options: --force
