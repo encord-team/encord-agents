@@ -9,7 +9,7 @@ jobs:
     container:
       image: aikidosecurity/local-scanner:v1.0.52
     steps: 
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4.4.0 
 
       - name: Run scan
         run: aikido-local-scanner scan ./ --apikey ${{ secrets.AIKIDO_API_Key }} --repositoryname encord-agents --branchname main
