@@ -101,11 +101,12 @@ class WebhookSettings(BaseSettings):
     """
     The signing secret this deployment verifies incoming requests with.
 
-    Encord shows it in the app alongside the endpoint's configuration; check it again
-    if you change that configuration. Read only when the secret is not passed
-    explicitly.
+    Encord shows it in the app alongside the endpoint's configuration; copy it again
+    if you change the URL. Read only when the secret is not passed explicitly.
 
-    Each agent stage and custom agent endpoint can have its own secret, even when
-    several use the same URL, so this covers one of them. Use it when this deployment
-    receives requests for only one. Otherwise, pass each secret explicitly.
+    The secret belongs to the URL within your organization: every agent stage and
+    custom agent endpoint in the organization that uses the same URL has the same
+    secret, so one value covers everything this deployment receives at one URL. A
+    different URL, including a different path, has its own secret; pass each one
+    explicitly if this deployment serves several.
     """

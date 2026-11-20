@@ -7,11 +7,12 @@ from anything else that finds them.
 
 Verification needs the signing secret, which Encord shows in the app alongside the
 endpoint's configuration. Set it as `ENCORD_WEBHOOK_SECRET`, or pass it explicitly, and
-check it again if you change that configuration.
+copy it again if you change the URL.
 
-Each agent stage and custom agent endpoint can have its own secret, even when several
-use the same URL. A deployment that receives requests for more than one needs each of
-their secrets.
+The secret belongs to the URL within your organization: every agent stage and custom
+agent endpoint in the organization that uses the same URL has the same secret. Use the
+secret shown for the URL in the organization you are configuring. A deployment that
+receives requests at several URLs, or several paths, needs the secret of each.
 """
 
 import hashlib

@@ -93,10 +93,10 @@ def dep_task_notification_with_args(
 ) -> Callable[[Request], Awaitable[TaskNotification]]:
     """Build a notification dependency that does not read its secret from the environment.
 
-    `ENCORD_WEBHOOK_SECRET` holds one secret, but each agent stage can have its own,
-    even when several stages use the same URL. When one deployment receives
-    notifications for more than one stage, give each stage its own route and webhook
-    URL, and use this to verify each route against that stage's secret.
+    Stages in your organization that use the same URL share one secret, which
+    `ENCORD_WEBHOOK_SECRET` covers. To give stages separate secrets, give each stage
+    its own route and webhook URL (a different path is enough), and use this to verify
+    each route against that URL's secret.
 
     **Example:**
 
